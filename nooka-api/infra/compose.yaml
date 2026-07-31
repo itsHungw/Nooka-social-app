@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: nooka-postgres
+    environment:
+      POSTGRES_DB: nooka
+      POSTGRES_USER: nooka
+      POSTGRES_PASSWORD: nooka
+    ports:
+      - "5432:5432"
+    volumes:
+      - nooka-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nooka -d nooka"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  nooka-pgdata:

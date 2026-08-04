@@ -1,39 +1,140 @@
 {
+  "brand": {
+    "name": "Nooka"
+  },
+  "common": {
+    "back": "Back"
+  },
+  "navigation": {
+    "home": "Home",
+    "search": "Search",
+    "create": "Create",
+    "saved": "Saved",
+    "profile": "Profile"
+  },
   "home": {
-    "spottedBy": "Spotted by {{name}}",
-    "mutualFollow": "You follow each other",
-    "friendsBeenHere": {
-      "one": "{{count}} person you follow has been here",
-      "other": "{{count}} people you follow have been here"
+    "location": "Binh Thanh",
+    "workshopName": "The Workshop Coffee",
+    "author": {
+      "name": "Linh",
+      "postedAt": "Yesterday"
     },
+    "caption": "A quiet corner for an afternoon of work.",
+    "locationDetail": "District 1, Ho Chi Minh City",
+    "like": "Like",
+    "wantToGo": "Want to go",
+    "ask": "Ask",
+    "been": "Been",
+    "friendsVisited": "3 friends have visited",
+    "categories": {
+      "quiet": "Quiet",
+      "work": "Work friendly",
+      "outdoor": "Outdoor"
+    },
+    "hashtags": "#coffeeDistrict1 #workcorner #quietspace"
+  },
+  "create": {
+    "title": "Add a place",
+    "stepCount": "4 steps",
+    "steps": {
+      "photo": "Photo",
+      "place": "Place",
+      "details": "Details",
+      "share": "Share"
+    },
+    "addPhoto": "Add photo",
+    "tapUpload": "Tap to upload",
+    "photoAdded": "Photo added",
+    "pickPlace": "Choose a place",
+    "search": "Search",
+    "needToKnow": "Good to know",
+    "optional": "Optional",
+    "visibility": {
+      "followers": "Followers",
+      "followersDesc": "Default",
+      "closeFriends": "Close friends",
+      "closeFriendsDesc": "Separate list",
+      "public": "Public",
+      "publicDesc": "Anyone can discover",
+      "private": "Private",
+      "privateDesc": "Only me"
+    },
+    "hideTime": "Hide time",
+    "publish": "Publish"
+  },
+  "search": {
+    "title": "Search",
+    "askNooka": "Ask Nooka",
+    "placeholder": "Places, food, or atmosphere...",
+    "filters": {
+      "district": "D1–D3",
+      "quiet": "Quiet",
+      "under500": "Under 500K",
+      "indoor": "Indoor"
+    },
+    "summary": "Results: quiet, under 500K, 2 friends have been",
+    "friendBeen": {
+      "one": "{{count}} friend has been",
+      "other": "{{count}} friends have been"
+    }
+  },
+  "saved": {
+    "title": "Saved",
+    "locationCount": "18 places",
     "wantToGo": "Want to go",
     "been": "Been"
   },
-  "create": {
-    "whereWereYou": "Where were you?",
-    "addPhoto": "Add a photo",
-    "pickPlace": "Pick a place",
-    "whoCanSee": "Who can see this?"
-  },
-  "search": {
-    "placeholder": "Search places, people, posts…",
-    "askNooka": "✨ Ask Nooka",
-    "notSure": "Not sure where to go?"
-  },
-  "askNooka": {
-    "mood": "What are you in the mood for?",
-    "matches": "Matches: {{reasons}}",
-    "thinData": {
-      "one": "Only {{count}} spot so far — data is still thin here.",
-      "other": "Only {{count}} spots so far — data is still thin here."
-    }
-  },
-  "empty": {
-    "noPosts": "Nobody's posted around here yet.",
-    "beFirst": "Be the first to spot something."
-  },
   "profile": {
-    "nameAndPlaces": "{{name}} · {{count}} places",
-    "myMap": "My Nooka Map"
+    "displayName": "Mai Anh",
+    "username": "@maianh.nooka",
+    "bio": "Quiet corners, strong coffee, and places worth returning to.",
+    "menu": "Open menu",
+    "posts": "Posts",
+    "followers": "Followers",
+    "following": "Following"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "appearanceDescription": "Choose how Nooka looks on this device.",
+    "system": "System",
+    "systemDescription": "Match your device setting",
+    "light": "Light",
+    "lightDescription": "Always use the light appearance",
+    "dark": "Dark",
+    "darkDescription": "Always use the dark appearance"
+  },
+  "post": {
+    "title": "Post",
+    "notFound": "This post is no longer available.",
+    "today": "Today",
+    "threeDaysAgo": "3 days ago",
+    "oneWeekAgo": "1 week ago",
+    "twoWeeksAgo": "2 weeks ago",
+    "threeWeeksAgo": "3 weeks ago",
+    "oneMonthAgo": "1 month ago",
+    "twoMonthsAgo": "2 months ago"
+  },
+  "places": {
+    "blank": {
+      "name": "Blank Lounge",
+      "meta": "District 3 · Good for conversation",
+      "social": "From Anh's photo set · 2 weeks ago"
+    },
+    "littleHanoi": {
+      "name": "Little Hanoi Cafe",
+      "meta": "District 1 · Good drinks",
+      "social": "Followed by Nam · 3 days ago"
+    },
+    "saigon": {
+      "name": "Saigon Coffee Roastery",
+      "meta": "District 2 · Spacious",
+      "social": "Followed by Linh · 1 week ago"
+    },
+    "workshop": {
+      "name": "The Workshop Coffee",
+      "meta": "District 1 · Work friendly",
+      "social": "Been"
+    }
   }
 }

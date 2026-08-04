@@ -2,6 +2,7 @@ import { getLocales } from 'expo-localization';
 import { I18n } from 'i18n-js';
 
 import en from '@/locales/en.json';
+import vi from '@/locales/vi.json';
 
 /**
  * Locale gốc là `en` — Phụ lục A của product spec.
@@ -12,7 +13,7 @@ import en from '@/locales/en.json';
  *
  * Nội suy dùng `{{tên}}`. Số nhiều dùng cặp `one`/`other` và truyền `count`.
  */
-const i18n = new I18n({ en });
+const i18n = new I18n({ en, vi });
 
 i18n.defaultLocale = 'en';
 i18n.enableFallback = true;

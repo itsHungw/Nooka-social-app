@@ -13,24 +13,18 @@
 
 ## Repository
 
-- Repo: `nooka-api`.
-- Branch tại snapshot: `main`.
-- Commit nền tại snapshot: `6089f14` — `Make Testcontainers work against Docker Engine 29`.
+- `nooka-api` **không phải một repo riêng**. Nó là một thư mục trong repo `Nooka-social-app`, cùng chỗ với `nooka-mobile/` và `nooka-docs/`. Không có repo lồng, không có submodule.
+- Remote: `https://github.com/itsHungw/Nooka-social-app`.
+- Branch chính: `master`.
+- Luật chung cho cả ba thư mục nằm ở `../AGENTS.md`.
 - Product spec nằm tại `../nooka-docs/product/specs/2026-07-27-nooka-design.md`.
 - Mobile client nằm tại `../nooka-mobile`.
 
-### Trạng thái working tree tại snapshot
+Không ghim số commit vào file này. Nó sai sau đúng một commit, và một `MEMORY.md` sai còn tệ hơn không có — nó dạy người đọc rằng file này không đáng tin. Cần thì chạy `git log --oneline -1`.
 
-Có implementation vertical slice chưa commit/untracked. Không xoá hoặc ghi đè:
+### Trạng thái working tree
 
-- `src/main/java/com/vinhung/nookaapi/common/`
-- `src/main/java/com/vinhung/nookaapi/post/`
-- `src/main/java/com/vinhung/nookaapi/spot/`
-- `src/main/java/com/vinhung/nookaapi/user/`
-- `src/main/resources/db/migration/V1__baseline.sql`
-- `src/test/java/com/vinhung/nookaapi/post/`
-
-Luôn chạy `git status --short` vì danh sách này sẽ thay đổi sau khi các file được commit.
+Toàn bộ vertical slice — `common/`, `post/`, `spot/`, `user/`, `V1__baseline.sql` và test — **đã được commit**. Vẫn luôn chạy `git status --short` trước khi sửa để không ghi đè việc đang dở của người khác.
 
 ## Stack hiện tại
 

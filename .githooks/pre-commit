@@ -1,0 +1,36 @@
+#!/bin/sh
+# Chặn commit không qua được kiểm tra tự động.
+#
+# Bật một lần cho mỗi clone (core.hooksPath là cấu hình cục bộ, không đi theo repo):
+#   git config core.hooksPath .githooks
+#
+# Bỏ qua khi thật sự cần: git commit --no-verify
+#
+# Chỉ chạy kiểm tra cho phần đã thay đổi. Backend cố ý không nằm ở đây:
+# `mvnw test` cần Docker và mất vài phút — hook chậm là hook bị --no-verify.
+
+set -e
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+
+case "$staged" in
+    *nooka-mobile/*) ;;
+    *) exit 0 ;;
+esac
+
+cd nooka-mobile
+
+echo "→ eslint"
+npm run --silent lint
+
+echo "→ typecheck"
+npx tsc --noEmit
+
+# expo-doctor gọi mạng và chỉ có ý nghĩa khi dependency đổi — đây là lưới bắt
+# việc nâng SDK ngoài ý muốn, luật số một trong nooka-mobile/AGENTS.md.
+case "$staged" in
+    *nooka-mobile/package.json*|*nooka-mobile/package-lock.json*)
+        echo "→ expo-doctor (dependency thay đổi)"
+        npx --yes expo-doctor
+        ;;
+esac

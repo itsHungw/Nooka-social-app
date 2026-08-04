@@ -503,7 +503,7 @@ Testcontainers Postgres thật, không H2 — giữ nguyên quyết định đan
 
 ### Chia lại V1 — cửa sổ chỉ mở một lần
 
-`V1__baseline.sql` **đang untracked**, chưa vào git, chưa chạy ở môi trường nào ngoài máy dev. Nên chia lại theo module còn miễn phí. Sau khi commit và chạy ở đâu đó thì không.
+`V1__baseline.sql` **đã được commit** (trong `init repo`) — câu "đang untracked" ở bản 2026-07-28 nay đã sai. Nhưng nó vẫn **chưa chạy ở môi trường nào ngoài máy dev**, và đó mới là điều kiện thật sự khiến việc chia lại còn miễn phí: quy ước "không sửa migration đã chạy" nói về database dùng chung, không nói về git. Cửa sổ đóng lại vào lần đầu migration chạy trên staging hoặc production, không phải vào lúc commit.
 
 ```
 V1__user.sql                 users, follows, close_friends, blocks

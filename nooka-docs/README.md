@@ -21,15 +21,15 @@ contracts/          OpenAPI contract — sinh từ nooka-api, không sửa tay
 
 Khi hai tài liệu xung đột: tài liệu sản phẩm ưu tiên về *cái gì*, tài liệu kiến trúc ưu tiên về *dựng thế nào*.
 
-## Các repo khác
+## Các thư mục khác
 
-| Repo | Trách nhiệm |
+| Thư mục | Trách nhiệm |
 |---|---|
 | `nooka-api` | Spring Boot — business rules, phân quyền, database, media, notification |
 | `nooka-mobile` | Expo — UI, state, offline, i18n, push |
 | `nooka-web` | Chưa tồn tại. Thêm khi cần, dùng chung API |
 
-Thư mục cha chứa cả ba repo **không phải** một Git repo. Không dùng submodule giữa chúng.
+Cả ba nằm trong **một** Git repo: `Nooka-social-app` (`github.com/itsHungw/Nooka-social-app`). Không có repo lồng, không có submodule. Luật chung cho cả ba ở `../AGENTS.md`.
 
 ## Quy trình API contract
 

@@ -1,0 +1,39 @@
+{
+  "home": {
+    "spottedBy": "Spotted by {{name}}",
+    "mutualFollow": "You follow each other",
+    "friendsBeenHere": {
+      "one": "{{count}} person you follow has been here",
+      "other": "{{count}} people you follow have been here"
+    },
+    "wantToGo": "Want to go",
+    "been": "Been"
+  },
+  "create": {
+    "whereWereYou": "Where were you?",
+    "addPhoto": "Add a photo",
+    "pickPlace": "Pick a place",
+    "whoCanSee": "Who can see this?"
+  },
+  "search": {
+    "placeholder": "Search places, people, posts…",
+    "askNooka": "✨ Ask Nooka",
+    "notSure": "Not sure where to go?"
+  },
+  "askNooka": {
+    "mood": "What are you in the mood for?",
+    "matches": "Matches: {{reasons}}",
+    "thinData": {
+      "one": "Only {{count}} spot so far — data is still thin here.",
+      "other": "Only {{count}} spots so far — data is still thin here."
+    }
+  },
+  "empty": {
+    "noPosts": "Nobody's posted around here yet.",
+    "beFirst": "Be the first to spot something."
+  },
+  "profile": {
+    "nameAndPlaces": "{{name}} · {{count}} places",
+    "myMap": "My Nooka Map"
+  }
+}

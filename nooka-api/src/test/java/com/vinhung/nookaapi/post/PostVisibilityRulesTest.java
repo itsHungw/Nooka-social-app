@@ -202,7 +202,10 @@ class PostVisibilityRulesTest {
     @DisplayName("Bài đã xoá mềm không hiện với bất kỳ ai, kể cả tác giả")
     void softDeletedPostIsInvisibleToEveryone() {
         Post post = persistPost(Visibility.PUBLIC);
-        post.setDeletedAt(java.time.Instant.now());
+        // persistPost kết thúc bằng em.clear(), nên `post` đã detached. Gọi
+        // setter trên nó không sinh UPDATE nào và bài chưa bao giờ thật sự bị
+        // xoá mềm — test sẽ đo nhầm. Phải lấy lại bản managed rồi mới sửa.
+        em.find(Post.class, post.getId()).setDeletedAt(java.time.Instant.now());
         em.flush();
         em.clear();
 

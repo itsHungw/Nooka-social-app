@@ -97,7 +97,9 @@ Code trong scaffold (`explore.tsx`, `hello-wave`, `parallax-scroll-view`, `modal
 
 ## Light/dark mode
 
-App khai `userInterfaceStyle: "automatic"` — nó đi theo cài đặt của hệ điều hành, không có nút đổi theme trong app và người dùng không chọn được. Nghĩa là **cả hai chế độ đều là chế độ mặc định**, không có cái nào là "bản chính".
+App khai `userInterfaceStyle: "automatic"` để chế độ **Theo hệ thống** có thể phản ứng với cài đặt của thiết bị. Người dùng có ba lựa chọn trong `Cài đặt > Giao diện`: `system`, `light`, và `dark`; mặc định lần đầu là `system`.
+
+Preference được quản lý tập trung bởi `providers/nooka-theme-provider.tsx`, lưu bằng AsyncStorage với key `@nooka/theme-preference`, và được đọc qua `useNookaTheme()`. Không đọc `useColorScheme()` trực tiếp trong màn hình hoặc component; hook hệ thống chỉ thuộc về provider. Theme phải đổi ngay khi người dùng chọn và vẫn giữ sau khi mở lại app.
 
 Bảng màu nằm ở `constants/theme.ts`, chia hai khối `light` và `dark`. **Mọi token phải có mặt ở cả hai khối** — thiếu một bên là lỗi lúc chạy chứ không phải lúc build.
 

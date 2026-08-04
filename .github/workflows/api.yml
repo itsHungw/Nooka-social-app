@@ -1,0 +1,33 @@
+name: api
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'nooka-api/**'
+      - '.github/workflows/api.yml'
+  pull_request:
+    paths:
+      - 'nooka-api/**'
+      - '.github/workflows/api.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nooka-api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Testcontainers dựng PostgreSQL 17 thật; runner ubuntu-latest có sẵn Docker.
+      # Không đổi sang H2 — migration viết cho Postgres, khác dialect sẽ khiến
+      # test xanh trong khi production đỏ.
+      - run: ./mvnw --batch-mode test

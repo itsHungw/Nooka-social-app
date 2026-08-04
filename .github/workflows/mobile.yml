@@ -1,0 +1,39 @@
+name: mobile
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'nooka-mobile/**'
+      - '.github/workflows/mobile.yml'
+  pull_request:
+    paths:
+      - 'nooka-mobile/**'
+      - '.github/workflows/mobile.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nooka-mobile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Khớp version đang dùng ở máy dev. Lệch version giữa CI và local là
+          # nguồn của loại lỗi "ở máy tôi chạy được".
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: nooka-mobile/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npx tsc --noEmit
+
+      # Bắt việc SDK/dependency lệch nhau — luật số một trong nooka-mobile/AGENTS.md.
+      - run: npx expo-doctor

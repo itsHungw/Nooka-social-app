@@ -1,35 +1,15 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { NookaTabBar } from '@/components/nooka/nooka-tab-bar';
+import { t } from '@/lib/i18n';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
+    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <NookaTabBar {...props} />}>
+      <Tabs.Screen name="index" options={{ title: t('navigation.home') }} />
+      <Tabs.Screen name="search" options={{ title: t('navigation.search') }} />
+      <Tabs.Screen name="saved" options={{ title: t('navigation.saved') }} />
+      <Tabs.Screen name="profile" options={{ title: t('navigation.profile') }} />
     </Tabs>
   );
 }

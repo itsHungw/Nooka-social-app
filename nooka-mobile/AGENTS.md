@@ -28,6 +28,7 @@ Trường `expoGoSdkVersion` là con số duy nhất quyết định. Tài liệ
 - `npx expo install --fix` chạy mù khi chưa biết mình đang sửa gì.
 - `npm update`, `npm install <pkg>@latest` cho package thuộc hệ Expo/React Native.
 - Sửa tay số version trong `package.json`.
+- **`npm audit fix --force`.** `npm audit` hiện báo 13 moderate + 1 high (`postcss`, `@expo/prebuild-config` qua `expo-splash-screen`). Tất cả là công cụ build, không nằm trong bundle gửi lên điện thoại, và `--force` sẽ nâng version vượt SDK 54 — phá đúng luật này. Con số đó là đã biết và chấp nhận; đọc lại khi nâng SDK.
 
 **Nâng SDK là quyết định của cả team**, không phải việc dọn dẹp tiện tay. Khi làm: đọc release notes, `npx expo install --fix`, `npx expo-doctor`, và chạy thử trên máy thật trước khi merge.
 

@@ -1,0 +1,47 @@
+# Git worktrees cục bộ
+/.worktrees/
+/worktrees/
+
+# Biến môi trường và credential
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+**/google-services.json
+**/GoogleService-Info.plist
+**/*service-account*.json
+**/*.jks
+**/*.keystore
+**/*.p8
+**/*.p12
+**/*.pem
+**/*.key
+
+# Java / Maven
+**/target/
+**/hs_err_pid*
+**/replay_pid*
+
+# Node / Expo
+**/node_modules/
+**/.expo/
+**/dist/
+**/web-build/
+**/coverage/
+**/*.tsbuildinfo
+nooka-mobile/ios/
+nooka-mobile/android/
+
+# Log và file tạm
+**/*.log
+**/*.tmp
+**/*.swp
+**/*.swo
+
+# IDE và hệ điều hành
+/.idea/
+/.vscode/
+*.iml
+**/.DS_Store
+**/Thumbs.db
+**/Desktop.ini

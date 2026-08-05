@@ -1,12 +1,20 @@
 import type { Colors } from '@/constants/theme';
 
+import { distanceMeters, type Coordinate } from './geo.ts';
+
 /**
  * Dữ liệu giả cho prototype. Không có API contract nên tất cả sống ở đây —
  * xem luật "API" trong `AGENTS.md`. Chuỗi hiển thị nằm ở `locales/`, file này
- * chỉ giữ id, số và token màu.
+ * chỉ giữ id, số, toạ độ và token màu.
  */
 
 export type PhotoTint = 'photoWarm' | 'photoSand' | 'photoSage' | 'photoClay';
+
+/**
+ * Tint mà `Photo` nhận. Rộng hơn `PhotoTint` một token: ảnh đại diện dùng
+ * `avatarDefault`, nhưng địa điểm thì không — nên `Spot.photoTint` vẫn hẹp.
+ */
+export type Tint = PhotoTint | 'avatarDefault';
 export type ColorToken = keyof (typeof Colors)['light'];
 
 export const TAG_IDS = [
@@ -45,10 +53,22 @@ export const INTENT_TAGS: Record<IntentId, TagId[]> = {
   visitor: ['niceView', 'outdoor'],
 };
 
+/**
+ * Vị trí giả định của người dùng — Bình Thạnh, khớp với `home.location`.
+ *
+ * §13 của spec: **không có real-time location tracking**. Toạ độ này là hằng
+ * số của prototype, không phải kết quả đọc GPS. Khi nối vào vị trí thật, chỉ
+ * đọc một lần lúc người dùng chủ động mở tab Tìm và không gửi lên server.
+ */
+export const USER_LOCATION: Coordinate = { latitude: 10.8014, longitude: 106.7109 };
+
 export type Spot = {
   id: SpotId;
   photoTint: PhotoTint;
+  coordinate: Coordinate;
+  /** Tính từ `coordinate` và `USER_LOCATION`, không viết tay — xem `SPOTS`. */
   distanceM: number;
+  /** Số người đã check-in tại đây. Hiện trên ghim bản đồ và hàng kết quả. */
   checkins: number;
   reviews: number;
   friends: number;
@@ -66,11 +86,11 @@ export type Spot = {
 export const SPOT_IDS = ['workshop', 'bloom', 'sansau', 'muoi43'] as const;
 export type SpotId = (typeof SPOT_IDS)[number];
 
-export const SPOTS: Record<SpotId, Spot> = {
+const SPOT_SEED: Record<SpotId, Omit<Spot, 'distanceM'>> = {
   workshop: {
     id: 'workshop',
     photoTint: 'photoWarm',
-    distanceM: 400,
+    coordinate: { latitude: 10.77256, longitude: 106.70428 },
     checkins: 118,
     reviews: 12,
     friends: 6,
@@ -86,7 +106,7 @@ export const SPOTS: Record<SpotId, Spot> = {
   bloom: {
     id: 'bloom',
     photoTint: 'photoSand',
-    distanceM: 1200,
+    coordinate: { latitude: 10.7789, longitude: 106.6896 },
     checkins: 64,
     reviews: 9,
     friends: 3,
@@ -101,7 +121,7 @@ export const SPOTS: Record<SpotId, Spot> = {
   sansau: {
     id: 'sansau',
     photoTint: 'photoSage',
-    distanceM: 250,
+    coordinate: { latitude: 10.8021, longitude: 106.7162 },
     checkins: 1,
     reviews: 0,
     friends: 0,
@@ -116,7 +136,7 @@ export const SPOTS: Record<SpotId, Spot> = {
   muoi43: {
     id: 'muoi43',
     photoTint: 'photoClay',
-    distanceM: 120,
+    coordinate: { latitude: 10.8032, longitude: 106.7093 },
     checkins: 9,
     reviews: 3,
     friends: 1,
@@ -130,6 +150,18 @@ export const SPOTS: Record<SpotId, Spot> = {
     fit: { openLate: 4, fast: 3, takeaway: 3, goodPrice: 2 },
   },
 };
+
+/**
+ * Khoảng cách tính từ toạ độ, không viết tay. Trước đây `distanceM` là số cố
+ * định và không liên quan gì tới chỗ ghim rơi trên bản đồ — giờ bản đồ là thật
+ * nên hai con số đó phải là một.
+ */
+export const SPOTS: Record<SpotId, Spot> = Object.fromEntries(
+  SPOT_IDS.map((id) => [
+    id,
+    { ...SPOT_SEED[id], distanceM: Math.round(distanceMeters(USER_LOCATION, SPOT_SEED[id].coordinate)) },
+  ]),
+) as Record<SpotId, Spot>;
 
 export type FriendId = 'linh' | 'nam' | 'trang' | 'huy';
 
@@ -183,9 +215,17 @@ export const REVIEW_QUESTIONS = [
 
 export type ReviewQuestionId = (typeof REVIEW_QUESTIONS)[number]['id'];
 
-/** Ghim trên bản đồ — toạ độ là phần trăm của khung, không phải toạ độ thật. */
-export const MAP_PINS: { spot: SpotId; left: string; top: string }[] = [
-  { spot: 'muoi43', left: '12%', top: '58%' },
-  { spot: 'bloom', left: '56%', top: '22%' },
-  { spot: 'workshop', left: '30%', top: '74%' },
-];
+/** Địa điểm xếp theo khoảng cách — thứ tự mặc định của danh sách trong tab Tìm. */
+export const SPOTS_BY_DISTANCE: SpotId[] = [...SPOT_IDS].sort(
+  (a, b) => SPOTS[a].distanceM - SPOTS[b].distanceM,
+);
+
+/** Địa điểm xếp theo số người đã check-in, nhiều nhất trước. */
+export const SPOTS_BY_CHECKINS: SpotId[] = [...SPOT_IDS].sort(
+  (a, b) => SPOTS[b].checkins - SPOTS[a].checkins,
+);
+
+/** Địa điểm có bạn bè đã tới, nhiều bạn nhất trước. */
+export const SPOTS_BY_FRIENDS: SpotId[] = [...SPOT_IDS].sort(
+  (a, b) => SPOTS[b].friends - SPOTS[a].friends,
+);

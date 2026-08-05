@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } fro
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { NookaMascot } from '@/components/nooka/nooka-mascot';
-import type { PhotoTint } from '@/features/nooka/spots';
+import type { PhotoTint, Tint } from '@/features/nooka/spots';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
 import { useNookaDemo } from '@/providers/nooka-demo-provider';
@@ -82,7 +82,7 @@ export function AskNookaBar({ onPress, hint }: { onPress: () => void; hint?: str
 }
 
 /** Nền giả cho ảnh chưa tải. Mỗi địa điểm ghim một tint ở `spots.ts`. */
-export function Photo({ tint, style, children }: PropsWithChildren<{ tint: PhotoTint; style?: StyleProp<ViewStyle> }>) {
+export function Photo({ tint, style, children }: PropsWithChildren<{ tint: Tint; style?: StyleProp<ViewStyle> }>) {
   const { colors } = useNookaTheme();
   return <View style={[{ backgroundColor: colors[tint], overflow: 'hidden' }, style]}>{children}</View>;
 }
@@ -127,22 +127,37 @@ export function Button({ label, onPress, tone = 'primary', style, accessibilityL
   );
 }
 
-/** Pill bật/tắt: chọn rồi thì đảo nền, chưa chọn thì viền mảnh. */
+/**
+ * Pill bật/tắt: chọn rồi thì đảo nền, chưa chọn thì viền mảnh.
+ *
+ * `floating` là biến thể dùng khi chip nằm **trên bản đồ**: nền trong suốt sẽ
+ * lẫn vào đường và ô nhà, nên chip nổi phải có nền đặc và đổ bóng.
+ */
 export function Chip({
   label,
   selected = false,
   onPress,
   count,
+  floating = false,
+  trailing,
 }: {
   label: string;
   selected?: boolean;
   onPress?: () => void;
   count?: number;
+  floating?: boolean;
+  trailing?: string;
 }) {
   const { colors } = useNookaTheme();
   const interactive = Boolean(onPress);
-  const background = selected ? colors.inverseSurface : interactive ? 'transparent' : colors.surfaceMuted;
-  const border = selected || !interactive ? background : colors.border;
+  const background = selected
+    ? colors.inverseSurface
+    : floating
+      ? colors.surface
+      : interactive
+        ? 'transparent'
+        : colors.surfaceMuted;
+  const border = selected ? background : floating ? colors.borderSubtle : interactive ? colors.border : background;
 
   return (
     <Pressable
@@ -153,12 +168,79 @@ export function Chip({
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
+        floating && !selected ? [styles.floatingChip, { shadowColor: colors.shadow }] : null,
         { backgroundColor: background, borderColor: border, opacity: pressed ? 0.75 : 1 },
       ]}>
       <Text style={[styles.chipLabel, { color: selected ? colors.onInverse : colors.text }]}>{label}</Text>
       {count === undefined ? null : (
         <Text style={[styles.chipCount, { color: selected ? colors.onInverse : colors.accentInk }]}>{String(count)}</Text>
       )}
+      {trailing === undefined ? null : (
+        <Text style={[styles.chipCount, { color: selected ? colors.accent : colors.textSubtle }]}>{trailing}</Text>
+      )}
+    </Pressable>
+  );
+}
+
+/**
+ * Hàng kết quả dùng chung cho danh sách trong tab Tìm và kết quả của Hỏi Nooka.
+ *
+ * §5 của spec: **một loại card duy nhất** cho cả hai chế độ. Hai bề mặt trông
+ * khác nhau sẽ làm người dùng thấy như đang dùng hai app, nên hai chỗ đó phải
+ * gọi đúng component này chứ không tự dựng lại hàng riêng.
+ */
+export function ResultRow({
+  tint,
+  title,
+  reason,
+  tags,
+  distance,
+  badge,
+  rank,
+  onPress,
+}: {
+  tint: PhotoTint;
+  title: string;
+  reason: string;
+  tags: string;
+  distance: string;
+  badge?: string;
+  rank?: number;
+  onPress?: () => void;
+}) {
+  const { colors } = useNookaTheme();
+
+  return (
+    <Pressable
+      accessibilityLabel={title}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.resultRow, { opacity: pressed ? 0.7 : 1 }]}>
+      <View>
+        <Photo style={styles.resultPhoto} tint={tint} />
+        {rank === undefined ? null : (
+          <View
+            style={[
+              styles.resultRank,
+              { backgroundColor: rank === 1 ? colors.accent : colors.surfaceMuted },
+            ]}>
+            <Text style={[styles.resultRankText, { color: colors.text }]}>{String(rank)}</Text>
+          </View>
+        )}
+        {badge === undefined ? null : (
+          <View style={[styles.resultBadge, { backgroundColor: colors.accent }]}>
+            <Text style={[styles.resultBadgeText, { color: colors.onAccent }]}>{badge}</Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.resultCopy}>
+        <View style={styles.resultTitleRow}>
+          <Text numberOfLines={1} style={[styles.resultName, { color: colors.text }]}>{title}</Text>
+          <Text style={[styles.resultDistance, { color: colors.textMuted }]}>{distance}</Text>
+        </View>
+        <Text numberOfLines={2} style={[styles.resultReason, { color: colors.textMuted }]}>{reason}</Text>
+        <Text numberOfLines={1} style={[styles.resultTags, { color: colors.accentInk }]}>{tags}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -281,6 +363,33 @@ export const styles = StyleSheet.create({
   },
   chipLabel: { fontSize: 12.5, lineHeight: 17, fontWeight: '600' },
   chipCount: { fontSize: 12.5, lineHeight: 17, fontWeight: '700' },
+  floatingChip: {
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  resultRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 9 },
+  resultPhoto: { width: 60, height: 60, borderRadius: 16 },
+  resultRank: {
+    position: 'absolute',
+    left: -7,
+    top: -7,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resultRankText: { fontSize: 13, lineHeight: 18, fontWeight: '800' },
+  resultBadge: { position: 'absolute', left: -4, top: -4, borderRadius: 7, paddingHorizontal: 7, paddingVertical: 3 },
+  resultBadgeText: { fontSize: 9.5, lineHeight: 13, fontWeight: '700', letterSpacing: 0.3 },
+  resultCopy: { flex: 1, minWidth: 0, gap: 3 },
+  resultTitleRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
+  resultName: { flex: 1, fontSize: 15.5, lineHeight: 21, fontWeight: '700', letterSpacing: -0.4 },
+  resultDistance: { fontSize: 12.5, lineHeight: 17, fontWeight: '500' },
+  resultReason: { fontSize: 13, lineHeight: 18, fontWeight: '500' },
+  resultTags: { fontSize: 12.5, lineHeight: 17, fontWeight: '600' },
   circleButton: { alignItems: 'center', justifyContent: 'center' },
   spotRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 7 },
   spotRowCopy: { flex: 1, minWidth: 0, gap: 3 },

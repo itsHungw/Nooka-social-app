@@ -25,13 +25,13 @@ export function ThemeOption({ value, label, description, icon }: ThemeOptionProp
       style={({ pressed }) => [
         styles.option,
         {
-          backgroundColor: selected ? colors.mint : colors.surface,
-          borderColor: selected ? colors.mintStrong : colors.border,
+          backgroundColor: selected ? colors.accentSoft : colors.surface,
+          borderColor: selected ? colors.accentStrong : colors.border,
           opacity: pressed ? 0.75 : 1,
         },
       ]}>
       <View style={[styles.iconBox, { backgroundColor: selected ? colors.surface : colors.surfaceMuted }]}> 
-        <Ionicons color={selected ? colors.mintStrong : colors.icon} name={icon} size={21} />
+        <Ionicons color={selected ? colors.accentStrong : colors.icon} name={icon} size={21} />
       </View>
       <View style={styles.copy}>
         <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
@@ -40,9 +40,9 @@ export function ThemeOption({ value, label, description, icon }: ThemeOptionProp
       <View
         style={[
           styles.radio,
-          { borderColor: selected ? colors.mintStrong : colors.borderStrong, backgroundColor: colors.surface },
+          { borderColor: selected ? colors.accentStrong : colors.border, backgroundColor: colors.surface },
         ]}>
-        {selected ? <View style={[styles.radioDot, { backgroundColor: colors.mintStrong }]} /> : null}
+        {selected ? <View style={[styles.radioDot, { backgroundColor: colors.accentStrong }]} /> : null}
       </View>
     </Pressable>
   );

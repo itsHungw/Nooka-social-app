@@ -3,95 +3,280 @@
     "name": "Nooka"
   },
   "common": {
-    "back": "Quay lại"
+    "back": "Quay lại",
+    "cancel": "Hủy",
+    "done": "Xong",
+    "next": "Tiếp",
+    "later": "Để sau",
+    "optional": "Không bắt buộc",
+    "close": "Đóng"
   },
   "navigation": {
     "home": "Trang chủ",
-    "search": "Tìm kiếm",
-    "create": "Tạo",
+    "map": "Bản đồ",
+    "create": "Check-in",
     "saved": "Đã lưu",
-    "profile": "Hồ sơ"
+    "profile": "Cá nhân",
+    "settings": "Cài đặt"
+  },
+  "unit": {
+    "meters": "{{value}} m",
+    "kilometers": "{{value}} km"
+  },
+  "time": {
+    "justNow": "vừa xong",
+    "twoHours": "2 giờ",
+    "yesterday": "hôm qua",
+    "twoDaysAgo": "2 ngày trước",
+    "threeDaysAgo": "3 ngày trước"
+  },
+  "tags": {
+    "quiet": "Yên tĩnh",
+    "workFriendly": "Thân thiện làm việc",
+    "outdoor": "Ngoài trời",
+    "goodPrice": "Giá ok",
+    "noisyWeekend": "Hơi ồn cuối tuần",
+    "openLate": "Đóng muộn",
+    "niceView": "View đẹp",
+    "quietMusic": "Nhạc nhỏ",
+    "fast": "Nhanh",
+    "takeaway": "Mang đi"
   },
   "home": {
     "location": "Bình Thạnh",
-    "workshopName": "The Workshop Coffee",
-    "author": {
-      "name": "Linh",
-      "postedAt": "Hôm qua"
-    },
-    "caption": "Một góc yên tĩnh cho buổi chiều làm việc.",
-    "locationDetail": "Quận 1, TP. Hồ Chí Minh",
-    "like": "Thích",
-    "wantToGo": "Muốn đi",
-    "ask": "Hỏi",
-    "been": "Đã đi",
-    "friendsVisited": "3 người bạn đã từng ở đây",
-    "categories": {
-      "quiet": "Yên tĩnh",
-      "work": "Làm việc",
-      "outdoor": "Ngoài trời"
-    },
-    "hashtags": "#caphequan1 #goclamviec #khonggianyentinh"
+    "askNooka": "Hỏi Nooka: tối nay đi đâu?",
+    "checkin": "Check-in",
+    "journalOpen": "Nhật ký ▴",
+    "journalClosed": "Nhật ký ▾",
+    "postedBy": "check-in · {{time}}",
+    "photoBadge": "ảnh · quán",
+    "emptyTitle": "Hôm nay chưa có bạn nào check-in.",
+    "emptyBody": "Bạn check-in trước, hoặc để Nooka gợi ý từ những gì người khác đã review.",
+    "emptyCta": "Hỏi Nooka",
+    "avatarLabel": "Trang cá nhân"
   },
-  "create": {
-    "title": "Thêm địa điểm",
-    "stepCount": "4 bước",
-    "steps": {
-      "photo": "Ảnh",
-      "place": "Địa điểm",
-      "details": "Chi tiết",
-      "share": "Chia sẻ"
+  "feed": {
+    "you": "Bạn",
+    "myCaption": "Đang ở {{spot}}",
+    "linh": {
+      "caption": "Một góc yên tĩnh cho buổi chiều làm việc.",
+      "hashtags": "#caféquận1 #góclàmviệc #yên"
     },
-    "addPhoto": "Thêm ảnh",
-    "tapUpload": "Chạm để tải lên",
-    "photoAdded": "Đã thêm ảnh",
-    "pickPlace": "Chọn địa điểm",
-    "search": "Tìm kiếm",
-    "needToKnow": "Điều cần biết",
-    "optional": "Tùy chọn",
-    "visibility": {
-      "followers": "Người theo dõi",
-      "followersDesc": "Mặc định",
-      "closeFriends": "Bạn bè thân",
-      "closeFriendsDesc": "Danh sách riêng",
-      "public": "Công khai",
-      "publicDesc": "Mọi người khám phá",
-      "private": "Riêng tư",
-      "privateDesc": "Chỉ mình tôi"
-    },
-    "hideTime": "Ẩn thời gian",
-    "publish": "Đăng"
+    "nam": {
+      "caption": "Sau 20h thì vắng, bàn góc trái yên nhất.",
+      "hashtags": "#rooftopq3 #hẹnlầnđầu"
+    }
+  },
+  "friends": {
+    "linh": "Linh",
+    "nam": "Nam",
+    "trang": "Trang",
+    "huy": "Huy"
+  },
+  "story": {
+    "linh": "Một góc yên tĩnh cho buổi chiều làm việc.",
+    "nam": "Sau 20h thì vắng, bàn góc trái yên nhất.",
+    "trang": "Mua mang đi, nhanh.",
+    "huy": "Chỗ mới, chưa ai review.",
+    "openSpot": "Xem {{spot}}",
+    "next": "Tiếp"
+  },
+  "actions": {
+    "want": "Muốn đi",
+    "saved": "Đã lưu",
+    "been": "Đã đi",
+    "beenDone": "Đã đi ✓",
+    "ask": "Hỏi"
+  },
+  "toast": {
+    "saved": "Đã lưu vào Muốn đi",
+    "unsaved": "Đã bỏ khỏi Muốn đi",
+    "been": "Đánh dấu đã đi {{spot}}",
+    "asked": "Đã gửi câu hỏi cho {{name}}",
+    "route": "Mở chỉ đường tới {{spot}}",
+    "tagsAdded": "Tag của bạn đã vào trang địa điểm",
+    "reviewSent": "Đã gửi review · dữ liệu vào trang địa điểm",
+    "needPhoto": "Chụp một ảnh trước",
+    "noLocation": "Không có vị trí — chọn chỗ bằng bản đồ",
+    "fontChanged": "Đổi kiểu chữ của caption"
+  },
+  "map": {
+    "title": "Bản đồ",
+    "askHint": "Gõ hoặc chọn",
+    "busyNearby": "Đang đông gần bạn",
+    "youAreHere": "Vị trí của bạn",
+    "pinLabel": "{{count}} ở {{spot}}"
   },
   "search": {
-    "title": "Tìm kiếm",
-    "askNooka": "Hỏi Nooka",
-    "placeholder": "Tìm địa điểm, món ăn, không gian...",
-    "filters": {
-      "district": "D1–D3",
-      "quiet": "Yên tĩnh",
-      "under500": "Dưới 500K",
-      "indoor": "Trong nhà"
+    "title": "Hỏi Nooka",
+    "prompt": "Tối nay bạn cần chỗ như thế nào?",
+    "placeholder": "first date, yên tĩnh, gần Q1…",
+    "cta": "Tìm chỗ",
+    "noAnswer": "Nooka đọc tag và review mà người dùng đã để lại, không xếp hạng theo quảng cáo. Gõ một câu hoặc chọn một ý ở trên.",
+    "answerLine": {
+      "one": "{{count}} chỗ khớp nhất, lọc từ tag và review của người dùng trong 3 km.",
+      "other": "{{count}} chỗ khớp nhất, lọc từ tag và review của người dùng trong 3 km."
     },
-    "summary": "Kết quả: yên tĩnh, dưới 500K, 2 bạn bè đã đi",
-    "friendBeen": {
-      "one": "{{count}} bạn đã đi",
-      "other": "{{count}} bạn đã đi"
+    "reasonNew": "Mới trên Nooka, chưa ai review — bạn có thể là người đầu tiên",
+    "reason": "{{count}} người nói {{tag}}",
+    "reasonWithFriends": "{{count}} người nói {{tag}} · {{friends}} bạn đã tới",
+    "intents": {
+      "firstDate": "First date",
+      "work": "Ngồi làm việc",
+      "lateNight": "Ăn khuya",
+      "visitor": "Bạn từ xa tới"
+    },
+    "synonyms": {
+      "quiet": "yên,tĩnh,first date,hẹn",
+      "workFriendly": "làm việc,laptop,học bài,ổ điện",
+      "outdoor": "ngoài trời,sân vườn",
+      "goodPrice": "rẻ,giá,bình dân",
+      "noisyWeekend": "ồn",
+      "openLate": "khuya,đóng muộn,mở muộn",
+      "niceView": "view,đẹp,rooftop,sân thượng",
+      "quietMusic": "nhạc",
+      "fast": "nhanh",
+      "takeaway": "mang đi,mang về"
     }
+  },
+  "spots": {
+    "workshop": {
+      "name": "The Workshop Coffee",
+      "shortName": "Workshop",
+      "district": "Quận 1",
+      "open": "Đang mở · đến 22h",
+      "busy": "9 người đang ở đây",
+      "review": {
+        "who": "Nam",
+        "when": "2 ngày trước",
+        "text": "Bàn trong góc trái yên nhất, sau 20h thì vắng. Ở được 3 tiếng không ai nhắc."
+      }
+    },
+    "bloom": {
+      "name": "Bloom Rooftop",
+      "shortName": "Bloom",
+      "district": "Quận 3",
+      "open": "Đang mở · đến 24h",
+      "busy": "14 check-in trong 2 giờ",
+      "review": {
+        "who": "Linh",
+        "when": "hôm qua",
+        "text": "Lên sớm trước 19h còn bàn sát rìa, nhìn ra cầu."
+      }
+    },
+    "sansau": {
+      "name": "Cà phê Sân Sau",
+      "shortName": "Sân Sau",
+      "district": "Bình Thạnh",
+      "open": "7h–22h",
+      "busy": "Mới trên Nooka",
+      "review": { "who": "", "when": "", "text": "" }
+    },
+    "muoi43": {
+      "name": "Cà phê Muối 43",
+      "shortName": "Muối 43",
+      "district": "Bình Thạnh",
+      "open": "Đang mở · đến 23h",
+      "busy": "9 check-in trong 2 giờ",
+      "review": {
+        "who": "Huy",
+        "when": "3 ngày trước",
+        "text": "Mua mang đi nhanh, chỗ ngồi ít nhưng mở khuya."
+      }
+    }
+  },
+  "spot": {
+    "meta": "{{open}} · cách bạn {{distance}}",
+    "checkinPhotos": "{{count}} ảnh check-in",
+    "newOnNooka": "Mới trên Nooka",
+    "whatPeopleSay": "Mọi người nói gì",
+    "moreReviews": "Xem {{count}} review khác",
+    "noReview": "Chưa có review nào. Một câu của bạn lúc này có giá trị hơn mười câu lúc quán đông khách.",
+    "writeOne": "Viết một câu",
+    "directions": "Chỉ đường",
+    "friendsBeen": {
+      "one": "{{count}} bạn bè đã tới",
+      "other": "{{count}} bạn bè đã tới"
+    },
+    "noFriends": "Chưa có bạn nào tới đây"
   },
   "saved": {
     "title": "Đã lưu",
-    "locationCount": "18 địa điểm",
-    "wantToGo": "Muốn đi",
-    "been": "Đã đi"
+    "empty": "Chưa lưu chỗ nào. Bấm “Muốn đi” ở một bài hoặc một trang địa điểm, nó sẽ nằm ở đây."
   },
   "profile": {
-    "displayName": "Mai Anh",
-    "username": "@maianh.nooka",
-    "bio": "Những góc yên tĩnh, cà phê ngon và nơi đáng để quay lại.",
-    "menu": "Mở menu",
-    "posts": "Bài đăng",
-    "followers": "Người theo dõi",
-    "following": "Đang theo dõi"
+    "title": "Bạn",
+    "meta": "Bình Thạnh · 12 bạn",
+    "stats": {
+      "checkins": "check-in",
+      "been": "chỗ đã đi",
+      "saved": "muốn đi"
+    },
+    "yourCheckins": "Check-in của bạn",
+    "noCheckins": "Chưa có check-in nào. Bấm + để thử luồng đăng bài.",
+    "beenPlaces": "Chỗ đã đi",
+    "noBeen": "Chưa đánh dấu chỗ nào là “đã đi”."
+  },
+  "camera": {
+    "title": "Check-in",
+    "shotCount": "{{count}} / 5",
+    "change": "Đổi",
+    "autoLocated": "Định vị tự động · {{distance}}",
+    "viewfinder": "khung ngắm",
+    "library": "Thư viện",
+    "shootFirst": "Chụp một ảnh để tiếp tục",
+    "shutter": "Chụp ảnh"
+  },
+  "pin": {
+    "hint": "Kéo bản đồ để đặt đúng chỗ",
+    "yourPin": "Vị trí bạn đặt",
+    "nearPin": "Quán gần pin",
+    "onNooka": "{{distance}} · {{count}} check-in trên Nooka",
+    "fromMaps": "Từ Google Maps · chưa có ai check-in",
+    "new": "Mới",
+    "notListed": "Không thấy chỗ này — tạo địa điểm mới",
+    "confirm": "Xác nhận · quay lại camera"
+  },
+  "caption": {
+    "title": "Đăng vào…",
+    "placeholder": "Thêm một câu",
+    "mapDestination": "Bản đồ",
+    "toggleFont": "Đổi kiểu chữ",
+    "fontLabel": "Aa",
+    "post": "Đăng"
+  },
+  "sheet": {
+    "title": "Đã lên feed",
+    "body": "Chỗ này thế nào? Chọn tag để người sau biết. Bỏ qua cũng được.",
+    "writeReview": "Viết review"
+  },
+  "review": {
+    "title": "Review",
+    "notRequired": "Không bắt buộc",
+    "notifTitle": "Nooka · 18:40",
+    "notifBody": "Bạn vừa rời {{spot}}. Chỗ đó thế nào?",
+    "hereFor": "Bạn ở đây 2 giờ, chiều thứ Ba",
+    "threeQuestions": "Ba câu người sau hay hỏi",
+    "questions": {
+      "power": "Có ổ điện không?",
+      "stay": "Ngồi lâu có bị nhắc?",
+      "price": "Mức giá"
+    },
+    "answers": {
+      "yes": "Có",
+      "no": "Không",
+      "cheap": "Rẻ",
+      "fair": "Vừa",
+      "high": "Cao"
+    },
+    "placeholder": "Một câu cho người sau…",
+    "submit": "Gửi review"
+  },
+  "permission": {
+    "title": "Nooka muốn dùng vị trí của bạn",
+    "body": "Để tự nhận quán bạn đang ngồi. Sai chỗ thì bạn kéo pin trên bản đồ.",
+    "deny": "Không cho",
+    "allow": "Khi dùng app"
   },
   "settings": {
     "title": "Cài đặt",
@@ -100,41 +285,8 @@
     "system": "Theo hệ thống",
     "systemDescription": "Theo cài đặt của thiết bị",
     "light": "Sáng",
-    "lightDescription": "Luôn sử dụng giao diện sáng",
+    "lightDescription": "Luôn dùng giao diện sáng",
     "dark": "Tối",
-    "darkDescription": "Luôn sử dụng giao diện tối"
-  },
-  "post": {
-    "title": "Bài đăng",
-    "notFound": "Bài đăng này không còn khả dụng.",
-    "today": "Hôm nay",
-    "threeDaysAgo": "3 ngày trước",
-    "oneWeekAgo": "1 tuần trước",
-    "twoWeeksAgo": "2 tuần trước",
-    "threeWeeksAgo": "3 tuần trước",
-    "oneMonthAgo": "1 tháng trước",
-    "twoMonthsAgo": "2 tháng trước"
-  },
-  "places": {
-    "blank": {
-      "name": "Blank Lounge",
-      "meta": "Quận 3 · Dễ trò chuyện",
-      "social": "Băng cùng từ ảnh của Anh · 2 tuần trước"
-    },
-    "littleHanoi": {
-      "name": "Little Hanoi Cafe",
-      "meta": "Quận 1 · Đồ uống ngon",
-      "social": "Được Nam theo dõi · 3 ngày trước"
-    },
-    "saigon": {
-      "name": "Saigon Coffee Roastery",
-      "meta": "Quận 2 · Không gian rộng",
-      "social": "Được Linh theo dõi · 1 tuần trước"
-    },
-    "workshop": {
-      "name": "The Workshop Coffee",
-      "meta": "Quận 1 · Thân thiện làm việc",
-      "social": "Đã đi"
-    }
+    "darkDescription": "Luôn dùng giao diện tối"
   }
 }

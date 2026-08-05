@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
+import { NookaDemoProvider } from '@/providers/nooka-demo-provider';
 import { NookaThemeProvider } from '@/providers/nooka-theme-provider';
 
 export const unstable_settings = {
@@ -21,7 +22,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <NookaThemeProvider>
-        <RootNavigator />
+        <NookaDemoProvider>
+          <RootNavigator />
+        </NookaDemoProvider>
       </NookaThemeProvider>
     </SafeAreaProvider>
   );
@@ -47,9 +50,14 @@ function RootNavigator() {
     <ThemeProvider value={navigationTheme}>
       <Stack screenOptions={{ contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="search" options={{ animation: 'slide_from_bottom', headerShown: false }} />
+        <Stack.Screen name="spot/[id]" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="story/[index]" options={{ animation: 'fade', headerShown: false }} />
         <Stack.Screen name="create" options={{ animation: 'slide_from_bottom', headerShown: false }} />
+        <Stack.Screen name="pin" options={{ animation: 'slide_from_bottom', headerShown: false }} />
+        <Stack.Screen name="caption" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="review" options={{ animation: 'slide_from_bottom', headerShown: false }} />
         <Stack.Screen name="settings" options={{ animation: 'slide_from_right', headerShown: false }} />
-        <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right', headerShown: false }} />
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>

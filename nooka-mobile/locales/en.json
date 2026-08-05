@@ -3,95 +3,280 @@
     "name": "Nooka"
   },
   "common": {
-    "back": "Back"
+    "back": "Back",
+    "cancel": "Cancel",
+    "done": "Done",
+    "next": "Next",
+    "later": "Later",
+    "optional": "Optional",
+    "close": "Close"
   },
   "navigation": {
     "home": "Home",
-    "search": "Search",
-    "create": "Create",
+    "map": "Map",
+    "create": "Check in",
     "saved": "Saved",
-    "profile": "Profile"
+    "profile": "You",
+    "settings": "Settings"
+  },
+  "unit": {
+    "meters": "{{value}} m",
+    "kilometers": "{{value}} km"
+  },
+  "time": {
+    "justNow": "just now",
+    "twoHours": "2h",
+    "yesterday": "yesterday",
+    "twoDaysAgo": "2 days ago",
+    "threeDaysAgo": "3 days ago"
+  },
+  "tags": {
+    "quiet": "Quiet",
+    "workFriendly": "Work friendly",
+    "outdoor": "Outdoor",
+    "goodPrice": "Fair price",
+    "noisyWeekend": "Loud on weekends",
+    "openLate": "Open late",
+    "niceView": "Great view",
+    "quietMusic": "Music kept low",
+    "fast": "Fast",
+    "takeaway": "Takeaway"
   },
   "home": {
     "location": "Binh Thanh",
-    "workshopName": "The Workshop Coffee",
-    "author": {
-      "name": "Linh",
-      "postedAt": "Yesterday"
-    },
-    "caption": "A quiet corner for an afternoon of work.",
-    "locationDetail": "District 1, Ho Chi Minh City",
-    "like": "Like",
-    "wantToGo": "Want to go",
-    "ask": "Ask",
-    "been": "Been",
-    "friendsVisited": "3 friends have visited",
-    "categories": {
-      "quiet": "Quiet",
-      "work": "Work friendly",
-      "outdoor": "Outdoor"
-    },
-    "hashtags": "#coffeeDistrict1 #workcorner #quietspace"
+    "askNooka": "Ask Nooka: where tonight?",
+    "checkin": "Check in",
+    "journalOpen": "Journal ▴",
+    "journalClosed": "Journal ▾",
+    "postedBy": "checked in · {{time}}",
+    "photoBadge": "photo · spot",
+    "emptyTitle": "No friends have checked in today.",
+    "emptyBody": "Check in first, or let Nooka suggest something from what others already reviewed.",
+    "emptyCta": "Ask Nooka",
+    "avatarLabel": "Your profile"
   },
-  "create": {
-    "title": "Add a place",
-    "stepCount": "4 steps",
-    "steps": {
-      "photo": "Photo",
-      "place": "Place",
-      "details": "Details",
-      "share": "Share"
+  "feed": {
+    "you": "You",
+    "myCaption": "At {{spot}}",
+    "linh": {
+      "caption": "A quiet corner for an afternoon of work.",
+      "hashtags": "#coffeeDistrict1 #workcorner #quiet"
     },
-    "addPhoto": "Add photo",
-    "tapUpload": "Tap to upload",
-    "photoAdded": "Photo added",
-    "pickPlace": "Choose a place",
-    "search": "Search",
-    "needToKnow": "Good to know",
-    "optional": "Optional",
-    "visibility": {
-      "followers": "Followers",
-      "followersDesc": "Default",
-      "closeFriends": "Close friends",
-      "closeFriendsDesc": "Separate list",
-      "public": "Public",
-      "publicDesc": "Anyone can discover",
-      "private": "Private",
-      "privateDesc": "Only me"
-    },
-    "hideTime": "Hide time",
-    "publish": "Publish"
+    "nam": {
+      "caption": "After 8pm it empties out — the left corner table is quietest.",
+      "hashtags": "#rooftopD3 #firstdate"
+    }
+  },
+  "friends": {
+    "linh": "Linh",
+    "nam": "Nam",
+    "trang": "Trang",
+    "huy": "Huy"
+  },
+  "story": {
+    "linh": "A quiet corner for an afternoon of work.",
+    "nam": "After 8pm it empties out — the left corner table is quietest.",
+    "trang": "Grabbed it to go, fast.",
+    "huy": "New spot, nobody has reviewed it yet.",
+    "openSpot": "See {{spot}}",
+    "next": "Next"
+  },
+  "actions": {
+    "want": "Want to go",
+    "saved": "Saved",
+    "been": "Been",
+    "beenDone": "Been ✓",
+    "ask": "Ask"
+  },
+  "toast": {
+    "saved": "Saved to Want to go",
+    "unsaved": "Removed from Want to go",
+    "been": "Marked {{spot}} as visited",
+    "asked": "Question sent to {{name}}",
+    "route": "Opening directions to {{spot}}",
+    "tagsAdded": "Your tags are on the spot page now",
+    "reviewSent": "Review sent · it feeds the spot page",
+    "needPhoto": "Take a photo first",
+    "noLocation": "No location — pick the spot on the map",
+    "fontChanged": "Caption font changed"
+  },
+  "map": {
+    "title": "Map",
+    "askHint": "Type or pick",
+    "busyNearby": "Busy near you",
+    "youAreHere": "Your location",
+    "pinLabel": "{{count}} at {{spot}}"
   },
   "search": {
-    "title": "Search",
-    "askNooka": "Ask Nooka",
-    "placeholder": "Places, food, or atmosphere...",
-    "filters": {
-      "district": "D1–D3",
-      "quiet": "Quiet",
-      "under500": "Under 500K",
-      "indoor": "Indoor"
+    "title": "Ask Nooka",
+    "prompt": "What kind of place do you need tonight?",
+    "placeholder": "first date, quiet, near D1…",
+    "cta": "Find a spot",
+    "noAnswer": "Nooka reads the tags and reviews people left behind — it does not rank by ads. Type a sentence or pick an idea above.",
+    "answerLine": {
+      "one": "{{count}} closest match, filtered from user tags and reviews within 3 km.",
+      "other": "{{count}} closest matches, filtered from user tags and reviews within 3 km."
     },
-    "summary": "Results: quiet, under 500K, 2 friends have been",
-    "friendBeen": {
+    "reasonNew": "New on Nooka, no reviews yet — you could be the first",
+    "reason": "{{count}} people say {{tag}}",
+    "reasonWithFriends": "{{count}} people say {{tag}} · {{friends}} friends have been",
+    "intents": {
+      "firstDate": "First date",
+      "work": "Sit and work",
+      "lateNight": "Late night food",
+      "visitor": "Friend visiting"
+    },
+    "synonyms": {
+      "quiet": "quiet,calm,peaceful,first date",
+      "workFriendly": "work,laptop,study,power outlet,outlet",
+      "outdoor": "outdoor,outside,garden",
+      "goodPrice": "cheap,price,budget,affordable",
+      "noisyWeekend": "noisy,loud",
+      "openLate": "late,late night,open late",
+      "niceView": "view,scenic,rooftop,pretty",
+      "quietMusic": "music",
+      "fast": "fast,quick",
+      "takeaway": "takeaway,to go,takeout"
+    }
+  },
+  "spots": {
+    "workshop": {
+      "name": "The Workshop Coffee",
+      "shortName": "Workshop",
+      "district": "District 1",
+      "open": "Open · until 10pm",
+      "busy": "9 people here now",
+      "review": {
+        "who": "Nam",
+        "when": "2 days ago",
+        "text": "The left corner table is the quietest, and after 8pm it clears out. Sat three hours, nobody asked."
+      }
+    },
+    "bloom": {
+      "name": "Bloom Rooftop",
+      "shortName": "Bloom",
+      "district": "District 3",
+      "open": "Open · until midnight",
+      "busy": "14 check-ins in 2 hours",
+      "review": {
+        "who": "Linh",
+        "when": "yesterday",
+        "text": "Get there before 7pm and you still get an edge table looking at the bridge."
+      }
+    },
+    "sansau": {
+      "name": "Ca phe San Sau",
+      "shortName": "San Sau",
+      "district": "Binh Thanh",
+      "open": "7am–10pm",
+      "busy": "New on Nooka",
+      "review": { "who": "", "when": "", "text": "" }
+    },
+    "muoi43": {
+      "name": "Ca phe Muoi 43",
+      "shortName": "Muoi 43",
+      "district": "Binh Thanh",
+      "open": "Open · until 11pm",
+      "busy": "9 check-ins in 2 hours",
+      "review": {
+        "who": "Huy",
+        "when": "3 days ago",
+        "text": "Quick for takeaway, few seats, but it stays open late."
+      }
+    }
+  },
+  "spot": {
+    "meta": "{{open}} · {{distance}} away",
+    "checkinPhotos": "{{count}} check-in photos",
+    "newOnNooka": "New on Nooka",
+    "whatPeopleSay": "What people say",
+    "moreReviews": "See {{count}} more reviews",
+    "noReview": "No reviews yet. One sentence from you right now is worth more than ten once the place is packed.",
+    "writeOne": "Write one line",
+    "directions": "Directions",
+    "friendsBeen": {
       "one": "{{count}} friend has been",
       "other": "{{count}} friends have been"
-    }
+    },
+    "noFriends": "No friends have been here yet"
   },
   "saved": {
     "title": "Saved",
-    "locationCount": "18 places",
-    "wantToGo": "Want to go",
-    "been": "Been"
+    "empty": "Nothing saved yet. Tap “Want to go” on a post or a spot page and it lands here."
   },
   "profile": {
-    "displayName": "Mai Anh",
-    "username": "@maianh.nooka",
-    "bio": "Quiet corners, strong coffee, and places worth returning to.",
-    "menu": "Open menu",
-    "posts": "Posts",
-    "followers": "Followers",
-    "following": "Following"
+    "title": "You",
+    "meta": "Binh Thanh · 12 friends",
+    "stats": {
+      "checkins": "check-ins",
+      "been": "places visited",
+      "saved": "want to go"
+    },
+    "yourCheckins": "Your check-ins",
+    "noCheckins": "No check-ins yet. Tap + to try the posting flow.",
+    "beenPlaces": "Places you have been",
+    "noBeen": "Nothing marked as visited yet."
+  },
+  "camera": {
+    "title": "Check in",
+    "shotCount": "{{count}} / 5",
+    "change": "Change",
+    "autoLocated": "Auto-located · {{distance}}",
+    "viewfinder": "viewfinder",
+    "library": "Library",
+    "shootFirst": "Take a photo to continue",
+    "shutter": "Take photo"
+  },
+  "pin": {
+    "hint": "Drag the map to the right spot",
+    "yourPin": "Where you dropped it",
+    "nearPin": "Spots near the pin",
+    "onNooka": "{{distance}} · {{count}} check-ins on Nooka",
+    "fromMaps": "From Google Maps · nobody has checked in",
+    "new": "New",
+    "notListed": "Not here — create a new spot",
+    "confirm": "Confirm · back to camera"
+  },
+  "caption": {
+    "title": "Post to…",
+    "placeholder": "Add a line",
+    "mapDestination": "Map",
+    "toggleFont": "Change caption font",
+    "fontLabel": "Aa",
+    "post": "Post"
+  },
+  "sheet": {
+    "title": "It is on the feed",
+    "body": "How was this place? Pick tags so the next person knows. Skipping is fine.",
+    "writeReview": "Write a review"
+  },
+  "review": {
+    "title": "Review",
+    "notRequired": "Optional",
+    "notifTitle": "Nooka · 18:40",
+    "notifBody": "You just left {{spot}}. How was it?",
+    "hereFor": "You were here 2 hours, Tuesday afternoon",
+    "threeQuestions": "Three things the next person asks",
+    "questions": {
+      "power": "Are there power outlets?",
+      "stay": "Do they nudge you to leave?",
+      "price": "Price"
+    },
+    "answers": {
+      "yes": "Yes",
+      "no": "No",
+      "cheap": "Cheap",
+      "fair": "Fair",
+      "high": "High"
+    },
+    "placeholder": "One line for the next person…",
+    "submit": "Send review"
+  },
+  "permission": {
+    "title": "Nooka wants to use your location",
+    "body": "So it can recognise the spot you are sitting in. If it guesses wrong, drag the pin on the map.",
+    "deny": "Don't allow",
+    "allow": "While using the app"
   },
   "settings": {
     "title": "Settings",
@@ -103,38 +288,5 @@
     "lightDescription": "Always use the light appearance",
     "dark": "Dark",
     "darkDescription": "Always use the dark appearance"
-  },
-  "post": {
-    "title": "Post",
-    "notFound": "This post is no longer available.",
-    "today": "Today",
-    "threeDaysAgo": "3 days ago",
-    "oneWeekAgo": "1 week ago",
-    "twoWeeksAgo": "2 weeks ago",
-    "threeWeeksAgo": "3 weeks ago",
-    "oneMonthAgo": "1 month ago",
-    "twoMonthsAgo": "2 months ago"
-  },
-  "places": {
-    "blank": {
-      "name": "Blank Lounge",
-      "meta": "District 3 · Good for conversation",
-      "social": "From Anh's photo set · 2 weeks ago"
-    },
-    "littleHanoi": {
-      "name": "Little Hanoi Cafe",
-      "meta": "District 1 · Good drinks",
-      "social": "Followed by Nam · 3 days ago"
-    },
-    "saigon": {
-      "name": "Saigon Coffee Roastery",
-      "meta": "District 2 · Spacious",
-      "social": "Followed by Linh · 1 week ago"
-    },
-    "workshop": {
-      "name": "The Workshop Coffee",
-      "meta": "District 1 · Work friendly",
-      "social": "Been"
-    }
   }
 }

@@ -91,9 +91,23 @@ npx expo-doctor
 
 `app/` là route — expo-router dùng file-based routing, mỗi file là một màn hình. `components/`, `hooks/`, `constants/` cho phần dùng lại.
 
-Màn hình theo §10 của spec: Home (feed), Create, Search, Saved, Profile, Place detail.
+UI hiện tại dựng từ prototype `Nooka - prototype.dc.html` (Claude Design). Bốn tab và nút + ở giữa:
 
-Code trong scaffold (`explore.tsx`, `hello-wave`, `parallax-scroll-view`, `modal.tsx`...) là **demo của template**, không phải kiến trúc đã chốt. Xoá khi thay bằng màn hình thật; `npm run reset-project` dọn một lượt.
+| Route | Là gì |
+|---|---|
+| `app/(tabs)/index.tsx` | Feed check-in, dải bạn bè, sheet chọn tag sau khi đăng |
+| `app/(tabs)/map.tsx` | Bản đồ + danh sách "đang đông gần bạn" |
+| `app/(tabs)/saved.tsx`, `profile.tsx` | Muốn đi, và trang cá nhân |
+| `app/search.tsx` | Hỏi Nooka — câu hỏi tự do hoặc intent, ra kết quả xếp hạng |
+| `app/spot/[id].tsx` | Trang địa điểm |
+| `app/create.tsx` → `app/pin.tsx` → `app/caption.tsx` | Luồng check-in: camera → sửa địa điểm → caption → đăng |
+| `app/review.tsx`, `app/story/[index].tsx` | Ba câu review, và xem check-in của bạn bè |
+
+Trạng thái dùng chung nằm ở `providers/nooka-demo-provider.tsx`, không phải ở từng màn hình. Xếp hạng của "Hỏi Nooka" nằm ở `features/nooka/ranking.ts` — hàm thuần, có test chạy bằng `node --test features/nooka/ranking.test.ts`.
+
+**Khớp từ khoá đi qua locale, không hardcode tiếng Việt trong logic.** `search.synonyms.<tagId>` ở `locales/` là danh sách từ đồng nghĩa; `ranking.ts` chỉ nhận danh sách đó chứ không biết mình đang khớp ngôn ngữ nào.
+
+Code trong scaffold (`hello-wave`, `parallax-scroll-view`...) là **demo của template**, không phải kiến trúc đã chốt. Xoá khi thay bằng màn hình thật; `npm run reset-project` dọn một lượt.
 
 ## Light/dark mode
 
@@ -110,7 +124,9 @@ useThemeColor({ light: ..., dark: ... }, 'text')   // hook, khi cần màu lẻ
 <ThemedText> / <ThemedView>                        // component, cho hầu hết trường hợp
 ```
 
-**Không viết màu cứng trong component.** Màu cứng chỉ đúng ở một trong hai chế độ, và không ai phát hiện ra cho tới khi có người mở chế độ còn lại. Luật này được eslint chặn (`no-restricted-syntax` bắt literal dạng `#rrggbb`); `constants/theme.ts` là nơi duy nhất được miễn trừ.
+**Không viết màu cứng trong component.** Màu cứng chỉ đúng ở một trong hai chế độ, và không ai phát hiện ra cho tới khi có người mở chế độ còn lại. Luật này được eslint chặn (`no-restricted-syntax` bắt literal dạng `#rrggbb`); `constants/theme.ts` là nơi duy nhất được miễn trừ. Danh sách miễn trừ cho màn hình demo của template đã được xoá — mọi file đều bị kiểm.
+
+Ba nhóm token cần biết trước khi thêm màu: `inverseSurface`/`onInverse` cho nút chính (light là mực trên kem, dark thì lật lại), `camera*` cho ba màn luôn tối bất kể theme (camera, caption, story), và `photo*` là tint nền giả cho ảnh chưa tải.
 
 **Cái bẫy đã cắn một lần:** React Native flatten mảng `style` từ trái sang phải, style sau đè style trước. Một `color` nằm trong `StyleSheet.create` đặt sau `{ color }` lấy từ theme sẽ nuốt luôn màu theme mà không báo gì. Đây đúng là lỗi từng có ở `components/themed-text.tsx` với `type="link"`. Khi trộn theme color và `StyleSheet`, kiểm thứ tự trong mảng.
 

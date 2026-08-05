@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ThemeOption } from '@/components/nooka/theme-option';
-import { IconButton, ScreenShell } from '@/components/nooka/ui';
+import { CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
 
@@ -13,7 +13,7 @@ export default function SettingsScreen() {
   return (
     <ScreenShell testID="settings-screen">
       <View style={styles.header}>
-        <IconButton accessibilityLabel={t('common.back')} icon="arrow-back" onPress={() => router.back()} />
+        <CircleButton accessibilityLabel={t('common.back')} icon="arrow-back" onPress={() => router.back()} />
         <Text style={[styles.title, { color: colors.text }]}>{t('settings.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>

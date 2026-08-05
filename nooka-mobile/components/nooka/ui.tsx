@@ -3,6 +3,7 @@ import type { PropsWithChildren, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
+import { NookaMascot } from '@/components/nooka/nooka-mascot';
 import type { PhotoTint } from '@/features/nooka/spots';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
@@ -73,8 +74,9 @@ export function AskNookaBar({ onPress, hint }: { onPress: () => void; hint?: str
         { backgroundColor: pressed ? colors.inverseSurfacePressed : colors.inverseSurface },
       ]}>
       <View style={[styles.askDot, { borderColor: colors.accent }]} />
-      <Text style={[styles.askText, { color: colors.onInverse }]}>{t('home.askNooka')}</Text>
+      <Text numberOfLines={1} style={[styles.askText, { color: colors.onInverse }]}>{t('home.askNooka')}</Text>
       {hint ? <Text style={[styles.askHint, { color: colors.textSubtle }]}>{hint}</Text> : null}
+      <NookaMascot />
     </Pressable>
   );
 }

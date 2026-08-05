@@ -9,7 +9,7 @@ import { t } from '@/lib/i18n';
 
 const tabs = [
   { route: 'index', labelKey: 'navigation.home', icon: 'home-outline', activeIcon: 'home' },
-  { route: 'map', labelKey: 'navigation.map', icon: 'map-outline', activeIcon: 'map' },
+  { route: 'search', labelKey: 'navigation.search', icon: 'search-outline', activeIcon: 'search' },
   { route: 'saved', labelKey: 'navigation.saved', icon: 'bookmark-outline', activeIcon: 'bookmark' },
   { route: 'profile', labelKey: 'navigation.profile', icon: 'person-outline', activeIcon: 'person' },
 ] as const;
@@ -50,7 +50,7 @@ export function NookaTabBar({ state, navigation }: BottomTabBarProps) {
         { paddingBottom: Math.max(insets.bottom, 12), backgroundColor: colors.surface, borderColor: colors.borderSubtle },
       ]}>
       {renderTab('index')}
-      {renderTab('map')}
+      {renderTab('search')}
       <Pressable
         accessibilityLabel={t('navigation.create')}
         accessibilityRole="button"

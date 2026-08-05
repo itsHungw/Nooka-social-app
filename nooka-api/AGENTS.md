@@ -1,4 +1,4 @@
-﻿# AGENTS.md
+# AGENTS.md
 
 ## Phạm vi
 
@@ -58,9 +58,10 @@ Không thay PostgreSQL bằng H2. SQL và hành vi dialect của dự án phải
 PowerShell/Windows:
 
 ```powershell
+.\run.ps1 -Check
+.\run.ps1
 .\mvnw.cmd test
-.\mvnw.cmd spring-boot:run
-docker compose -f infra/compose.yaml up -d
+docker compose --env-file .env -f infra/compose.yaml up -d
 ```
 
 Unix-like:
@@ -68,7 +69,7 @@ Unix-like:
 ```bash
 ./mvnw test
 ./mvnw spring-boot:run
-docker compose -f infra/compose.yaml up -d
+docker compose --env-file .env -f infra/compose.yaml up -d
 ```
 
 Kiểm tra health khi app đang chạy:
@@ -83,7 +84,7 @@ Bắt đầu bằng test nhỏ nhất liên quan trực tiếp tới thay đổi
 
 Tổ chức theo feature/package, không chia toàn bộ dự án thành các thư mục kỹ thuật toàn cục.
 
-- `common`: primitive dùng chung thật sự, hiện có `BaseEntity`.
+- `shared`: primitive dùng chung thật sự, hiện có `BaseEntity`, visibility value và HTTP error contract.
 - `user`: user và social graph.
 - `spot`: City, Area, Spot, Place và Experience.
 - `post`: Post, visibility policy và cổng truy cập Post.
@@ -108,8 +109,8 @@ Business rule phải nằm ở domain/service hoặc query policy có tên rõ r
 
 Đây là invariant bảo mật quan trọng nhất của backend:
 
-- `PostRepository` phải tiếp tục package-private.
-- Mọi đường đọc `Post` phải đi qua `PostAccess` hoặc một cổng thay thế duy nhất có cùng đảm bảo.
+- `post.repository.PostRepository` phải tiếp tục package-private.
+- Mọi đường đọc `Post` phải đi qua `post.api.PostAccess`; implementation nằm package-private trong `post.repository`.
 - Mỗi query Post phải bắt đầu bằng `PostVisibilityRules.visibleTo(viewerId)` rồi mới ghép điều kiện bổ sung.
 - Không tạo repository/query/controller khác có thể đọc Post mà bỏ qua visibility policy.
 - Bài soft-deleted không hiển thị với bất kỳ ai, kể cả tác giả.
@@ -149,7 +150,7 @@ Khi thêm endpoint:
 ## Security và privacy
 
 - Firebase Auth phát hành token; backend chỉ verify JWT. Không thêm cột password hoặc tự xây hệ thống mật khẩu.
-- Spring Security/resource server chưa được cấu hình. Khi triển khai, phải thiết kế tập trung thay vì bảo vệ endpoint rời rạc.
+- Spring Security + Firebase Admin token verification được cấu hình tập trung trong `platform.security`; mặc định fail-closed và chỉ tắt bằng cấu hình local/test tường minh.
 - Không tin `userId` do client gửi để xác định principal; ánh xạ từ token đã verify.
 - R1 của product spec là bắt buộc: media upload phải strip EXIF ở server trước khi lưu/phân phối. Không tin client đã xoá metadata.
 - Không thêm real-time location tracking.

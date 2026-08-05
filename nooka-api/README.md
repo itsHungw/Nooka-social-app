@@ -1,78 +1,195 @@
 # nooka-api
 
-Backend của Nooka. Spring Boot 4.1 trên Java 21, PostgreSQL, Flyway.
-
-Spec sản phẩm nằm ở repo `nooka-docs`.
+Backend của Nooka. Java 21, Spring Boot 4.1, PostgreSQL 17, Flyway, Spring Modulith và Spring Security.
 
 ## Yêu cầu
 
 - JDK 21
-- Docker (chạy Postgres cho dev, và chạy test qua Testcontainers)
+- Docker Desktop/Engine
+- Windows PowerShell 5.1+ để dùng `run.ps1`
 
-## Chạy local
+## Cấu hình local
 
-Bật database:
+Tạo file local từ template rồi tự điền giá trị cần thiết. `.env` bị Git và Docker build context bỏ qua; chỉ `.env.example` được commit.
 
-```bash
-docker compose -f infra/compose.yaml up -d
+```powershell
+Copy-Item .env.example .env
 ```
 
-Chạy ứng dụng:
+Các biến local dùng prefix `NOOKA_*` để không bị biến `DB_*`, `PORT` hoặc cấu hình dự án khác trên máy ghi đè. Không dùng các giá trị local này cho production.
 
-```bash
-./mvnw spring-boot:run
+## Chạy local bằng PowerShell
+
+Kiểm tra `.env` mà không chạy Docker hay Maven:
+
+```powershell
+.\run.ps1 -Check
 ```
 
-Kiểm tra:
+Chạy backend:
+
+```powershell
+.\run.ps1
+```
+
+Runner thực hiện theo thứ tự:
+
+1. Đọc `.env` và validate cấu hình mà không in password/token.
+2. Map `NOOKA_*` sang biến runtime của Spring Boot.
+3. Khởi động PostgreSQL bằng Compose và đợi container healthy.
+4. Chạy `mvnw.cmd spring-boot:run`.
+
+Các lựa chọn khác:
+
+```powershell
+.\run.ps1 -SkipDatabase
+.\run.ps1 -EnvFile .env.local
+```
+
+`-SkipDatabase` dùng khi PostgreSQL đã chạy. PostgreSQL mặc định tiếp tục chạy sau khi app dừng để giữ dữ liệu local.
+
+## Firebase Auth local
+
+### Không dùng auth
+
+Giữ cấu hình sau khi chưa có Firebase credentials:
+
+```dotenv
+NOOKA_AUTH_ENABLED=false
+NOOKA_FIREBASE_PROJECT_ID=
+NOOKA_FIREBASE_CREDENTIALS=
+```
+
+Firebase beans không được khởi tạo; local security permit request một cách tường minh.
+
+### Bật auth
+
+1. Tạo service-account JSON cho Firebase project.
+2. Lưu JSON **ngoài repository**.
+3. Điền `.env`:
+
+```dotenv
+NOOKA_AUTH_ENABLED=true
+NOOKA_FIREBASE_PROJECT_ID=your-firebase-project-id
+NOOKA_FIREBASE_CREDENTIALS="C:\path\outside\repo\firebase-service-account.json"
+```
+
+4. Kiểm tra rồi chạy:
+
+```powershell
+.\run.ps1 -Check
+.\run.ps1
+```
+
+`run.ps1` chỉ resolve đường dẫn và export thành `GOOGLE_APPLICATION_CREDENTIALS`; script không đọc hoặc in nội dung JSON. Nếu `NOOKA_FIREBASE_CREDENTIALS` để trống, Firebase Admin thử Application Default Credentials đã tồn tại trên máy và startup sẽ fail-closed nếu không tìm thấy.
+
+Luồng xác thực:
+
+1. Mobile đăng nhập Firebase và nhận Firebase ID token.
+2. Mobile gửi `Authorization: Bearer <id-token>`.
+3. Backend gọi Firebase Admin `verifyIdToken`.
+4. Firebase UID đã verify trở thành principal; backend không tin `userId` do client tự gửi.
+
+Compose foundation hiện không tự mount Firebase credential từ host. Muốn bật auth khi chạy container cần một Compose override/secret mount riêng; `run.ps1` hỗ trợ auth khi chạy Spring Boot trực tiếp trên host.
+
+## Chạy toàn bộ bằng Docker
 
 ```bash
+docker compose --env-file .env -f infra/compose.yaml up --build -d
 curl http://localhost:8080/actuator/health
 ```
 
-## Chạy test
+Compose chạy PostgreSQL và API. Local compose tắt authentication một cách **tường minh** bằng `NOOKA_AUTH_ENABLED=false` và bật OpenAPI; production không được dùng cấu hình này.
+
+Dừng services:
 
 ```bash
-./mvnw test
+docker compose --env-file .env -f infra/compose.yaml down
 ```
 
-Test tự khởi động một Postgres thật qua Testcontainers, nên **không cần** `compose up` trước. Chỉ cần Docker đang chạy.
+## Chạy Maven trực tiếp
 
-Không dùng H2: Flyway migration được viết cho Postgres, và khác biệt dialect sẽ khiến test xanh trong khi production đỏ.
+Lệnh Maven thô không tự đọc `.env`:
 
-## Cấu hình
+```powershell
+$env:AUTH_ENABLED='false'
+$env:OPENAPI_ENABLED='true'
+.\mvnw.cmd spring-boot:run
+```
 
-Datasource đọc từ biến môi trường, mặc định khớp với `infra/compose.yaml`:
+Khi chạy trực tiếp, Spring dùng các biến runtime `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `PORT`, `AUTH_ENABLED`, `FIREBASE_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS` và `OPENAPI_ENABLED`. Ưu tiên dùng `run.ps1` để mapping thống nhất.
 
-| Biến | Mặc định |
+Production/default là secure-by-default: `AUTH_ENABLED=true`. Khi đó bắt buộc cung cấp `FIREBASE_PROJECT_ID` và Application Default Credentials phù hợp.
+
+## Endpoint hạ tầng
+
+| Endpoint | Điều kiện |
 |---|---|
-| `DB_HOST` | `localhost` |
-| `DB_PORT` | `5432` |
-| `DB_NAME` | `nooka` |
-| `DB_USER` | `nooka` |
-| `DB_PASSWORD` | `nooka` |
-| `PORT` | `8080` |
+| `/actuator/health` | luôn expose |
+| `/actuator/info` | luôn expose |
+| `/v3/api-docs` | `OPENAPI_ENABLED=true` |
+| `/swagger-ui.html` | `OPENAPI_ENABLED=true` |
 
-## Quy ước
+Foundation hiện chưa có business endpoint.
 
-**Flyway sở hữu schema.** Hibernate đặt `ddl-auto: validate` nên không bao giờ tự sửa bảng. Mọi thay đổi schema là một file migration mới trong `src/main/resources/db/migration`, đặt tên `V<n>__<mô_tả>.sql`. Không sửa migration đã chạy.
+## Chạy test
 
-**Open Session In View tắt.** Lazy loading không được phép xảy ra ở tầng controller, nơi không kiểm soát được số query.
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-run.ps1
+.\mvnw.cmd test
+```
 
-## Ghi chú môi trường
+Test repository/Flyway dùng PostgreSQL thật qua Testcontainers nên Docker phải chạy. Các guard kiến trúc có thể chạy riêng không cần Docker:
 
-**Docker Engine 29 yêu cầu API tối thiểu 1.44**, còn docker-java bên trong Testcontainers 1.21.3 mặc định gọi phiên bản thấp hơn và nhận HTTP 400 — báo ra ngoài thành thông báo gây hiểu lầm là "Could not find a valid Docker environment".
+```powershell
+.\mvnw.cmd "-Dtest=ModularityTest,ArchitectureTest,ApiExceptionHandlerTest,SecurityConfigTest,BearerTokenAuthenticationFilterTest,FirebaseConfigTest,OpenApiEndpointTest" test
+```
 
-`pom.xml` ép `api.version=1.44` qua `maven-surefire-plugin`. Lưu ý: đặt giá trị này trong `~/.testcontainers.properties` **không có tác dụng** — docker-java chỉ đọc nó từ system property của JVM.
+## Biến `.env`
 
-Bỏ cấu hình đó khi Testcontainers ra bản tự thương lượng phiên bản API với Docker 29+.
+| Biến | Mẫu local | Ghi chú |
+|---|---|---|
+| `COMPOSE_PROJECT_NAME` | `nooka` | namespace network/volume của Compose |
+| `NOOKA_DB_NAME` | `nooka` | map vào `POSTGRES_DB` và `DB_NAME` |
+| `NOOKA_DB_USER` | `nooka` | local only |
+| `NOOKA_DB_PASSWORD` | `replace-me-local` | tự đổi; local only |
+| `NOOKA_DB_PORT` | `5432` | cổng PostgreSQL publish ra host |
+| `NOOKA_API_PORT` | `8080` | cổng API publish ra host |
+| `NOOKA_AUTH_ENABLED` | `false` | chỉ tắt auth cho local |
+| `NOOKA_FIREBASE_PROJECT_ID` | rỗng | bắt buộc khi bật auth |
+| `NOOKA_FIREBASE_CREDENTIALS` | rỗng | host path cho `run.ps1`; không commit JSON |
+| `NOOKA_OPENAPI_ENABLED` | `true` | chỉ bật docs cho local |
 
-## Chưa có
+Không commit credential Firebase, R2, database production hoặc token.
 
-- **Security.** Chưa thêm `spring-boot-starter-oauth2-resource-server`. Auth sẽ dùng Firebase Auth phát hành token, Spring verify JWT. Thêm khi có endpoint cần bảo vệ, cùng lớp phân quyền tập trung mô tả ở §20 của spec.
-- **OpenAPI.** Chưa thêm springdoc. Không còn bị chặn về công cụ — `springdoc-openapi` 3.0.3 nhắm Spring Boot 4. Lưu ý bản đó build trên `spring-boot-starter-parent` 4.0.5 còn dự án chạy 4.1.0, nên khi thêm phải smoke test `/v3/api-docs` chứ đừng giả định là chạy.
+## Kiến trúc package
 
-## Kiến trúc
+```text
+com.vinhung.nookaapi
+├── shared/      primitive và error contract dùng chung
+├── user/        account và relationship graph
+├── spot/        City, Area, Spot, Place, Experience
+├── post/        Post, visibility policy, PostAccess
+└── platform/    security và OpenAPI adapter
+```
 
-Quyết định kiến trúc nằm ở [`nooka-docs/architecture/2026-07-28-nooka-api-architecture.md`](../nooka-docs/architecture/2026-07-28-nooka-api-architecture.md): bản đồ module, quy ước package, ranh giới ép bằng Spring Modulith và ArchUnit, đường đọc/ghi Post, event xuyên module.
+- Module khác chỉ dùng named interface `api`, `query` hoặc `spi` được công bố.
+- Entity/repository là internal; controller không được import chúng.
+- `PostRepository` chỉ được dùng trong `post.repository`.
+- Mọi đọc Post đi qua `post.api.PostAccess`; visibility luôn nằm trong SQL.
+- Cross-module entity association đã được thay bằng UUID để tránh coupling persistence.
+- Package tương lai dùng `package-info.java`, không dùng `.gitkeep`.
+- Lombok dùng có chủ đích; không dùng `@Data` hoặc generated equality cho entity kế thừa `BaseEntity`.
 
-Code hiện tại **chưa theo cấu trúc đó** — nó được viết trước khi kiến trúc được chốt, và việc chuyển sang nằm trong implementation plan sắp tới.
+## Database
+
+Flyway sở hữu schema; Hibernate luôn dùng `ddl-auto: validate`.
+
+- `V1__baseline.sql`: schema vertical slice hiện có.
+- `V2__modulith_event_publication.sql`: event publication registry của Spring Modulith.
+
+Không sửa migration đã chạy trên database dùng chung. Thay đổi schema tiếp theo dùng forward migration mới.
+
+## Ghi chú Docker/Testcontainers
+
+Docker Engine 29 yêu cầu API tối thiểu 1.44. `pom.xml` truyền system property `api.version=1.44` cho test để tương thích Testcontainers 1.21.3. Chỉ bỏ workaround sau khi xác minh phiên bản Testcontainers mới tự thương lượng thành công.

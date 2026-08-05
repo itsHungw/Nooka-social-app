@@ -1,0 +1,12 @@
+.git
+.gitattributes
+.github
+target
+*.iml
+.idea
+.vscode
+.env
+.env.*
+.firebase
+*-firebase-adminsdk-*.json
+service-account*.json

@@ -1,20 +1,39 @@
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: nooka-postgres
     environment:
-      POSTGRES_DB: nooka
-      POSTGRES_USER: nooka
-      POSTGRES_PASSWORD: nooka
+      POSTGRES_DB: "${NOOKA_DB_NAME:-nooka}"
+      POSTGRES_USER: "${NOOKA_DB_USER:-nooka}"
+      POSTGRES_PASSWORD: "${NOOKA_DB_PASSWORD:-nooka}"
     ports:
-      - "5432:5432"
+      - "${NOOKA_DB_PORT:-5432}:5432"
     volumes:
       - nooka-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nooka -d nooka"]
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: "${NOOKA_DB_NAME:-nooka}"
+      DB_USER: "${NOOKA_DB_USER:-nooka}"
+      DB_PASSWORD: "${NOOKA_DB_PASSWORD:-nooka}"
+      PORT: "8080"
+      AUTH_ENABLED: "${NOOKA_AUTH_ENABLED:-false}"
+      FIREBASE_PROJECT_ID: "${NOOKA_FIREBASE_PROJECT_ID:-}"
+      OPENAPI_ENABLED: "${NOOKA_OPENAPI_ENABLED:-true}"
+    ports:
+      - "${NOOKA_API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   nooka-pgdata:

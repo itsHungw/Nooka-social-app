@@ -31,3 +31,13 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local environment ###
+.env
+.env.*
+!.env.example
+
+### Local credentials ###
+.firebase/
+*-firebase-adminsdk-*.json
+service-account*.json

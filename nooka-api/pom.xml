@@ -6,34 +6,33 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>4.1.0</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
+
     <groupId>com.vinhung</groupId>
     <artifactId>nooka-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>nooka-api</name>
-    <description>nooka-api</description>
-    <url/>
-    <licenses>
-        <license/>
-    </licenses>
-    <developers>
-        <developer/>
-    </developers>
-    <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
-    </scm>
+    <description>Nooka backend API</description>
+
     <properties>
         <java.version>21</java.version>
         <testcontainers.version>1.21.3</testcontainers.version>
+        <spring-modulith.version>2.1.0</spring-modulith.version>
+        <archunit.version>1.4.2</archunit.version>
+        <springdoc.version>3.0.3</springdoc.version>
+        <firebase-admin.version>9.10.0</firebase-admin.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Boot 4 parent không quản version cho Testcontainers, phải tự import BOM -->
+            <dependency>
+                <groupId>org.springframework.modulith</groupId>
+                <artifactId>spring-modulith-bom</artifactId>
+                <version>${spring-modulith.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers-bom</artifactId>
@@ -69,6 +68,24 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.modulith</groupId>
+            <artifactId>spring-modulith-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>${firebase-admin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -86,6 +103,7 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa-test</artifactId>
@@ -116,6 +134,17 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.modulith</groupId>
+            <artifactId>spring-modulith-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>${archunit.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -137,18 +166,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <systemPropertyVariables>
-                        <!--
-                          Docker Engine 29 từ chối API cũ hơn 1.44, còn docker-java
-                          bên trong Testcontainers 1.21.3 mặc định gọi phiên bản thấp
-                          hơn thế và nhận HTTP 400. Ép phiên bản API ở đây để test
-                          chạy được ngay sau khi clone, không cần cấu hình mức máy.
-
-                          Đặt trong ~/.testcontainers.properties KHÔNG có tác dụng —
-                          docker-java chỉ đọc giá trị này từ system property.
-
-                          Bỏ dòng này khi Testcontainers ra bản tự thương lượng
-                          phiên bản API với Docker 29+.
-                        -->
                         <api.version>1.44</api.version>
                     </systemPropertyVariables>
                 </configuration>
@@ -191,5 +208,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

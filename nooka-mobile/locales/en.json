@@ -13,7 +13,7 @@
   },
   "navigation": {
     "home": "Home",
-    "map": "Map",
+    "search": "Search",
     "create": "Check in",
     "saved": "Saved",
     "profile": "You",
@@ -101,16 +101,47 @@
     "fontChanged": "Caption font changed"
   },
   "map": {
-    "title": "Map",
-    "askHint": "Type or pick",
-    "busyNearby": "Busy near you",
     "youAreHere": "Your location",
-    "pinLabel": "{{count}} at {{spot}}"
+    "pinLabel": "{{count}} check-ins at {{spot}}",
+    "recenter": "Back to your location",
+    "layerVisited": "Places you've been",
+    "nearbyCount": {
+      "one": "{{count}} place near you",
+      "other": "{{count}} places near you"
+    },
+    "nearbySource": "from user tags",
+    "dragForMore": "Drag up to see all",
+    "sort": {
+      "busy": "Busiest",
+      "near": "Nearest",
+      "friends": "Friends have been"
+    }
   },
   "search": {
     "title": "Ask Nooka",
     "prompt": "What kind of place do you need tonight?",
     "placeholder": "first date, quiet, near D1…",
+    "universalPlaceholder": "Search places, people, posts…",
+    "askShort": "Ask Nooka",
+    "edit": "Edit",
+    "viewMap": "View map",
+    "nudge": "Looks like you're exploring. Build a selection with Ask Nooka?",
+    "aiBoundary": "Nooka only reorders what real people wrote — no AI-written reviews.",
+    "empty": "Nothing matches yet. Try another sentence, or drop a tag.",
+    "tabs": {
+      "top": "Top",
+      "places": "Places",
+      "people": "People",
+      "posts": "Posts",
+      "topics": "Topics"
+    },
+    "sections": {
+      "places": "Places",
+      "people": "People",
+      "posts": "Posts"
+    },
+    "personMeta": "@{{handle}} · {{count}} mutual follows",
+    "postMeta": "{{who}} · {{spot}} · {{time}}",
     "cta": "Find a spot",
     "noAnswer": "Nooka reads the tags and reviews people left behind — it does not rank by ads. Type a sentence or pick an idea above.",
     "answerLine": {
@@ -145,7 +176,7 @@
       "shortName": "Workshop",
       "district": "District 1",
       "open": "Open · until 10pm",
-      "busy": "9 people here now",
+      "busy": "18 check-ins in 2 hours",
       "review": {
         "who": "Nam",
         "when": "2 days ago",
@@ -170,7 +201,11 @@
       "district": "Binh Thanh",
       "open": "7am–10pm",
       "busy": "New on Nooka",
-      "review": { "who": "", "when": "", "text": "" }
+      "review": {
+        "who": "",
+        "when": "",
+        "text": ""
+      }
     },
     "muoi43": {
       "name": "Ca phe Muoi 43",
@@ -188,7 +223,13 @@
   "spot": {
     "meta": "{{open}} · {{distance}} away",
     "checkinPhotos": "{{count}} check-in photos",
+    "checkins": {
+      "one": "{{count}} person checked in",
+      "other": "{{count}} people checked in"
+    },
     "newOnNooka": "New on Nooka",
+    "newNoReview": "New on Nooka — nobody has checked in yet",
+    "viewSpot": "View this spot",
     "whatPeopleSay": "What people say",
     "moreReviews": "See {{count}} more reviews",
     "noReview": "No reviews yet. One sentence from you right now is worth more than ten once the place is packed.",

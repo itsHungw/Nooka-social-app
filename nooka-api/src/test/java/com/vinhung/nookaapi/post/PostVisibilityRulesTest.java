@@ -3,14 +3,18 @@ package com.vinhung.nookaapi.post;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.vinhung.nookaapi.TestcontainersConfiguration;
-import com.vinhung.nookaapi.spot.Area;
-import com.vinhung.nookaapi.spot.City;
-import com.vinhung.nookaapi.spot.Place;
-import com.vinhung.nookaapi.spot.Spot;
-import com.vinhung.nookaapi.user.Block;
-import com.vinhung.nookaapi.user.CloseFriend;
-import com.vinhung.nookaapi.user.Follow;
-import com.vinhung.nookaapi.user.User;
+import com.vinhung.nookaapi.post.api.PostAccess;
+import com.vinhung.nookaapi.post.api.PostCardView;
+import com.vinhung.nookaapi.post.entity.Post;
+import com.vinhung.nookaapi.shared.model.Visibility;
+import com.vinhung.nookaapi.spot.entity.Area;
+import com.vinhung.nookaapi.spot.entity.City;
+import com.vinhung.nookaapi.spot.entity.Place;
+import com.vinhung.nookaapi.spot.entity.Spot;
+import com.vinhung.nookaapi.user.entity.Block;
+import com.vinhung.nookaapi.user.entity.CloseFriend;
+import com.vinhung.nookaapi.user.entity.Follow;
+import com.vinhung.nookaapi.user.entity.User;
 import jakarta.persistence.EntityManager;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -57,7 +62,7 @@ class PostVisibilityRulesTest {
         em.persist(city);
         Area area = Area.builder().city(city).name("Binh Thanh").build();
         em.persist(area);
-        spot = Place.builder().name("Quan ca phe").area(area).createdBy(author).build();
+        spot = Place.builder().name("Quan ca phe").area(area).createdById(author.getId()).build();
         em.persist(spot);
 
         em.persist(Follow.builder()
@@ -217,7 +222,9 @@ class PostVisibilityRulesTest {
 
     private java.util.List<UUID> visibleTo(User viewer) {
         UUID viewerId = viewer == null ? null : viewer.getId();
-        return postAccess.findVisibleTo(viewerId).stream().map(Post::getId).toList();
+        return postAccess.feedFor(viewerId, PageRequest.of(0, 100)).getContent().stream()
+                .map(PostCardView::id)
+                .toList();
     }
 
     private User persistUser(String username) {
@@ -236,8 +243,8 @@ class PostVisibilityRulesTest {
 
     private Post persistPost(User postAuthor, Visibility visibility) {
         Post post = Post.builder()
-                .author(postAuthor)
-                .spot(spot)
+                .authorId(postAuthor.getId())
+                .spotId(spot.getId())
                 .visibility(visibility)
                 .caption("cà phê ngon")
                 .build();

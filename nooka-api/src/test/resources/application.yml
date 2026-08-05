@@ -1,0 +1,9 @@
+nooka:
+  security:
+    enabled: false
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: false

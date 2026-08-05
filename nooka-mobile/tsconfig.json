@@ -2,6 +2,10 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    // Test chạy bằng `node --test` với type stripping của Node, và Node bắt
+    // buộc import tương đối phải ghi rõ đuôi `.ts`. Metro cũng resolve được
+    // đuôi tường minh, nên bật cờ này để hai bên dùng chung một cách viết.
+    "allowImportingTsExtensions": true,
     "paths": {
       "@/*": [
         "./*"

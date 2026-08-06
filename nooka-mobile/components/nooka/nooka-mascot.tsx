@@ -13,6 +13,7 @@ import Animated, { useReducedMotion } from 'react-native-reanimated';
  * chuyển động lớn hơn trông giật chứ không mượt.
  */
 
+
 /** Tỉ lệ w/h của ảnh xuất từ clip. Đổi ảnh thì đổi luôn số này. */
 const ASPECT = 28 / 40;
 

@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -346,7 +347,7 @@ function NookaTurn({ children }: { children: React.ReactNode }) {
   return (
     <View style={styles.block}>
       <View style={styles.who}>
-        <View style={[styles.ring, { borderColor: colors.accentStrong }]} />
+        <Image source={require('@/assets/images/nooka-avatar.png')} style={styles.avatarMini} />
         <Text style={[styles.whoName, { color: colors.textMuted }]}>{t('brand.name')}</Text>
       </View>
       {children}
@@ -436,7 +437,7 @@ const styles = StyleSheet.create({
   thread: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 20, gap: 16 },
   block: { gap: 9 },
   who: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  ring: { width: 14, height: 14, borderRadius: 7, borderWidth: 2.5 },
+  avatarMini: { width: 20, height: 20, borderRadius: 10 },
   whoName: { fontSize: 10.5, lineHeight: 14, fontWeight: '800', letterSpacing: 1.2 },
   bubble: {
     alignSelf: 'flex-start',

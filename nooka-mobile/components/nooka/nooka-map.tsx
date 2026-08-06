@@ -10,9 +10,11 @@ import {
 } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 
+import { GooglePin } from '@/components/nooka/google-pin';
 import { regionAround, regionFor, type Coordinate } from '@/features/nooka/geo';
 import { spotName } from '@/features/nooka/labels';
 import { nookaMapStyle } from '@/features/nooka/map-style';
+import type { GooglePlace } from '@/features/nooka/places-source';
 import { SPOTS, SPOT_IDS, USER_LOCATION, type SpotId } from '@/features/nooka/spots';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
@@ -63,6 +65,12 @@ export type NookaMapHandle = {
 
 type Inset = { top?: number; right?: number; bottom?: number; left?: number };
 
+export type GooglePlacePin = {
+  placeId: string;
+  coordinate: Coordinate;
+  name: string;
+};
+
 type NookaMapProps = {
   spots?: readonly SpotId[];
   selectedSpot?: SpotId | null;
@@ -71,6 +79,7 @@ type NookaMapProps = {
   /** Chỗ bị thanh tìm kiếm và sheet che, dùng để canh tâm khi focus vào một ghim. */
   mapPadding?: Inset;
   style?: StyleProp<ViewStyle>;
+  pins?: GooglePlace[];
 };
 
 /**
@@ -91,7 +100,7 @@ const ALL_REGION =
   regionAround(USER_LOCATION);
 
 export const NookaMap = forwardRef<NookaMapHandle, NookaMapProps>(function NookaMap(
-  { spots = SPOT_IDS, selectedSpot = null, onSelectSpot, onPressMap, mapPadding, style },
+  { spots = SPOT_IDS, selectedSpot = null, onSelectSpot, onPressMap, mapPadding, style, pins = [] },
   ref,
 ) {
   const { colors, colorScheme } = useNookaTheme();
@@ -155,6 +164,11 @@ export const NookaMap = forwardRef<NookaMapHandle, NookaMapProps>(function Nooka
       const center = offsetCenter(SPOTS[id].coordinate, delta, bottomInset);
       mapRef.current?.animateToRegion(regionAround(center, delta), 350);
     },
+    focusPin(id: string) {
+      const pin = pins?.find((p) => p.placeId === id);
+      if (!pin) return;
+      mapRef.current?.animateToRegion(regionAround({ latitude: pin.lat, longitude: pin.lng }, 0.005), 350);
+    },
     recenter() {
       const delta = 0.012;
       mapRef.current?.animateToRegion(regionAround(offsetCenter(USER_LOCATION, delta), delta), 350);
@@ -209,6 +223,16 @@ export const NookaMap = forwardRef<NookaMapHandle, NookaMapProps>(function Nooka
         <View
           pointerEvents="box-none"
           style={[styles.overlay, { bottom: mapPadding?.bottom ?? 0 }]}>
+          {pins.length > 0 ? (
+            <GooglePin
+              count={pins.length}
+              onPress={() => {
+                const coords = pins.map((p) => ({ latitude: p.lat, longitude: p.lng }));
+                const region = regionFor(coords);
+                if (region) mapRef.current?.animateToRegion(region, 350);
+              }}
+            />
+          ) : null}
           <UserDot point={project(USER_LOCATION)} viewport={size} />
           {spots.map((id) => (
             <CheckinPin

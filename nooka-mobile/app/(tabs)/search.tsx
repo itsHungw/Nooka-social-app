@@ -21,9 +21,12 @@ import {
   SPOTS_BY_CHECKINS,
   SPOTS_BY_DISTANCE,
   SPOTS_BY_FRIENDS,
+  USER_LOCATION,
   type SpotId,
   type TagId,
 } from '@/features/nooka/spots';
+import { useNearbyPlaces } from '@/features/nooka/use-nearby-places';
+import { distanceMeters } from '@/features/nooka/geo';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
 import { useNookaDemo } from '@/providers/nooka-demo-provider';
@@ -58,6 +61,7 @@ export default function SearchTabScreen() {
   const { colors } = useNookaTheme();
   const insets = useSafeAreaInsets();
   const demo = useNookaDemo();
+  const nearby = useNearbyPlaces(USER_LOCATION, 2000);
   const mapRef = useRef<NookaMapHandle>(null);
 
   const [containerHeight, setContainerHeight] = useState(0);
@@ -114,6 +118,7 @@ export default function SearchTabScreen() {
           mapPadding={{ top: insets.top + 110, bottom: snapHeights[snapIndex] }}
           onPressMap={() => setSelected(null)}
           onSelectSpot={pickSpot}
+          pins={nearby.places}
           ref={mapRef}
           selectedSpot={selected}
           spots={results}
@@ -208,7 +213,29 @@ export default function SearchTabScreen() {
             />
           ) : (
             <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-              {results.length === 0 ? (
+              {nearby.loading ? (
+                <Text style={[styles.empty, { color: colors.textMuted }]}>{t('map.googleLoading')}</Text>
+              ) : nearby.error ? (
+                <Text style={[styles.empty, { color: colors.textMuted }]}>{t('map.googleError')}</Text>
+              ) : nearby.places.length > 0 ? (
+                <>
+                  {nearby.places.map((place) => (
+                    <ResultRow
+                      key={place.placeId}
+                      distance={formatDistance(
+                        Math.round(distanceMeters(USER_LOCATION, { latitude: place.lat, longitude: place.lng })),
+                      )}
+                      onPress={() => {
+                        // Future: focusPin via mapRef.current?.focusPin?.(place.placeId)
+                      }}
+                      reason={place.vicinity}
+                      tags={place.types.slice(0, 2).join(' · ')}
+                      tint="photoSand"
+                      title={place.name}
+                    />
+                  ))}
+                </>
+              ) : results.length === 0 ? (
                 <Text style={[styles.empty, { color: colors.textMuted }]}>{t('search.empty')}</Text>
               ) : (
                 results.map((id) => (
@@ -224,7 +251,7 @@ export default function SearchTabScreen() {
                   />
                 ))
               )}
-              {snapIndex === 0 && results.length > 2 ? (
+              {snapIndex === 0 && nearby.places.length + results.length > 2 ? (
                 <Text style={[styles.more, { color: colors.textSubtle }]}>{t('map.dragForMore')}</Text>
               ) : null}
             </ScrollView>

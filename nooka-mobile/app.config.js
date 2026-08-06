@@ -10,24 +10,36 @@
  *
  *   EAS:   eas secret:create --name GOOGLE_MAPS_ANDROID_KEY --value <key>
  *   Máy:   đặt trong `.env.local` (đã nằm trong .gitignore)
+ *
+ * `GOOGLE_PLACES_KEY` cũng đi qua file này: tiêm vào `extra` để
+ * `Constants.expoConfig.extra.GOOGLE_PLACES_KEY` trả về giá trị lúc
+ * runtime. Thiếu key → `createSource()` trả `EmptySource` (xem
+ * `features/nooka/places-source.ts`) và tab Tìm vẫn mở được.
  */
 module.exports = ({ config }) => {
   const androidKey = process.env.GOOGLE_MAPS_ANDROID_KEY;
   const iosKey = process.env.GOOGLE_MAPS_IOS_KEY;
+  const placesKey = process.env.GOOGLE_PLACES_KEY;
 
-  if (!androidKey && !iosKey) return config;
+  const plugins = config.plugins ?? [];
+  if (androidKey || iosKey) {
+    plugins.push([
+      'react-native-maps',
+      {
+        ...(androidKey ? { androidGoogleMapsApiKey: androidKey } : {}),
+        ...(iosKey ? { iosGoogleMapsApiKey: iosKey } : {}),
+      },
+    ]);
+  }
+
+  const extra = {
+    ...(config.extra ?? {}),
+    ...(placesKey ? { GOOGLE_PLACES_KEY: placesKey } : {}),
+  };
 
   return {
     ...config,
-    plugins: [
-      ...(config.plugins ?? []),
-      [
-        'react-native-maps',
-        {
-          ...(androidKey ? { androidGoogleMapsApiKey: androidKey } : {}),
-          ...(iosKey ? { iosGoogleMapsApiKey: iosKey } : {}),
-        },
-      ],
-    ],
+    plugins,
+    extra,
   };
 };

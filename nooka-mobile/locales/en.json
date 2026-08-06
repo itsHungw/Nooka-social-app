@@ -140,6 +140,23 @@
       "people": "People",
       "posts": "Posts"
     },
+    "opening": "What kind of place do you need tonight?",
+    "quickPick": "Or pick one",
+    "composer": "Message Nooka…",
+    "send": "Send",
+    "reading": "reading reviews…",
+    "readCount": {
+      "one": "Read {{count}} review within 3 km.",
+      "other": "Read {{count}} reviews within 3 km."
+    },
+    "leftCount": {
+      "one": "{{count}} place left.",
+      "other": "{{count}} places left."
+    },
+    "understood": "Nooka understood",
+    "nothingLeft": "Nothing matches now. Drop one of the tags above.",
+    "subtitle": "reads tags & reviews from real people",
+    "restart": "Start over",
     "personMeta": "@{{handle}} · {{count}} mutual follows",
     "postMeta": "{{who}} · {{spot}} · {{time}}",
     "cta": "Find a spot",
@@ -168,7 +185,8 @@
       "quietMusic": "music",
       "fast": "fast,quick",
       "takeaway": "takeaway,to go,takeout"
-    }
+    },
+    "noTags": "I didn't catch a tag in that. Here are the busiest places near you."
   },
   "spots": {
     "workshop": {
@@ -329,5 +347,11 @@
     "lightDescription": "Always use the light appearance",
     "dark": "Dark",
     "darkDescription": "Always use the dark appearance"
+  },
+  "mascot": {
+    "idle": "Nooka is waiting for your question",
+    "searching": "Nooka is searching",
+    "found": "Nooka found results",
+    "resting": "Nooka is resting"
   }
 }

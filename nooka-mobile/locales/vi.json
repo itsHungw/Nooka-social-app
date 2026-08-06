@@ -140,6 +140,23 @@
       "people": "Người",
       "posts": "Bài viết"
     },
+    "opening": "Tối nay bạn cần chỗ như thế nào?",
+    "quickPick": "Hoặc chọn nhanh",
+    "composer": "Nhắn cho Nooka…",
+    "send": "Gửi",
+    "reading": "đang đọc review…",
+    "readCount": {
+      "one": "Đọc {{count}} review trong bán kính 3 km.",
+      "other": "Đọc {{count}} review trong bán kính 3 km."
+    },
+    "leftCount": {
+      "one": "Còn {{count}} chỗ.",
+      "other": "Còn {{count}} chỗ."
+    },
+    "understood": "Nooka hiểu là",
+    "nothingLeft": "Không còn chỗ nào khớp. Bỏ bớt một tag ở trên nhé.",
+    "subtitle": "đọc tag & review của người thật",
+    "restart": "Hỏi lại từ đầu",
     "personMeta": "@{{handle}} · {{count}} người bạn cùng theo dõi",
     "postMeta": "{{who}} · {{spot}} · {{time}}",
     "cta": "Tìm chỗ",
@@ -168,7 +185,8 @@
       "quietMusic": "nhạc",
       "fast": "nhanh",
       "takeaway": "mang đi,mang về"
-    }
+    },
+    "noTags": "Chưa bắt được ý nào từ câu đó. Đây là những chỗ nhiều người check-in nhất quanh bạn."
   },
   "spots": {
     "workshop": {
@@ -329,5 +347,11 @@
     "lightDescription": "Luôn dùng giao diện sáng",
     "dark": "Tối",
     "darkDescription": "Luôn dùng giao diện tối"
+  },
+  "mascot": {
+    "idle": "Nooka đang chờ bạn hỏi",
+    "searching": "Nooka đang tìm",
+    "found": "Nooka đã tìm xong",
+    "resting": "Nooka đang nghỉ"
   }
 }

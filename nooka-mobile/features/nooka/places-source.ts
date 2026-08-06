@@ -108,3 +108,20 @@ function parsePlace(raw: RawPlace): GooglePlace | null {
     ...(raw.opening_hours?.open_now !== undefined ? { openNow: raw.opening_hours.open_now } : {}),
   };
 }
+
+export function createSource(): SpotSource {
+  const fromEnv = process.env.GOOGLE_PLACES_KEY;
+  if (fromEnv) return new GooglePlacesSource(fromEnv);
+  // Lazy require — expo-constants is React Native only and breaks
+  // node --test under strip-only TS. In RN runtime, this loads the real module.
+  try {
+    // Runtime-only import; strip-only TS in node --test would fail to parse
+    // a top-level `import Constants from 'expo-constants'`.
+    const Constants = require('expo-constants').default ?? require('expo-constants');
+    const key: string | undefined = Constants?.expoConfig?.extra?.GOOGLE_PLACES_KEY;
+    if (key) return new GooglePlacesSource(key);
+  } catch {
+    // expo-constants not available (web, node test) — fall through.
+  }
+  return new EmptySource();
+}

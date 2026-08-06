@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { EmptySource, GooglePlacesSource, type GooglePlace } from './places-source.ts';
+import { EmptySource, GooglePlacesSource, type GooglePlace, createSource } from './places-source.ts';
 
 test('EmptySource returns empty list', async () => {
   const source = new EmptySource();
@@ -121,5 +121,16 @@ test('GooglePlacesSource returns empty on ZERO_RESULTS', async () => {
     assert.deepEqual(result, { places: [], source: 'google' });
   } finally {
     globalThis.fetch = original;
+  }
+});
+
+test('createSource returns EmptySource when no key available', () => {
+  const original = process.env.GOOGLE_PLACES_KEY;
+  delete process.env.GOOGLE_PLACES_KEY;
+  try {
+    const source = createSource();
+    assert.ok(source instanceof EmptySource);
+  } finally {
+    if (original !== undefined) process.env.GOOGLE_PLACES_KEY = original;
   }
 });

@@ -132,6 +132,29 @@ Code trong scaffold (`hello-wave`, `parallax-scroll-view`...) là **demo của t
 
 Sheet ba điểm dừng ở `components/nooka/bottom-sheet.tsx` dùng gesture-handler + Reanimated, nên `GestureHandlerRootView` phải ở `app/_layout.tsx`. Bỏ nó ra thì cử chỉ im lặng không chạy, không có lỗi nào hiện.
 
+## Linh vật
+
+Có **hai** linh vật, làm hai việc khác nhau — đừng gộp:
+
+- `components/nooka/nooka-mascot.tsx` — ảnh xuất từ clip, đứng yên ở thanh "Hỏi Nooka" ngoài Home. Là nhãn thương hiệu.
+- `components/nooka/nooka-sprite.tsx` — Nooka pixel, chạy theo trạng thái ở thanh nhắn tin của `app/ask.tsx`. Báo **máy đang làm gì**: vẫy tay khi chờ, cầm kính lúp khi đọc review, reo khi có kết quả, rồi đứng im.
+
+**Khung hình sinh tự động.** `features/nooka/mascot-frames.ts` là file sinh ra, đừng sửa tay — lệch một cột là hỏng cả hình mà nhìn code không thấy. Sửa hình thì sửa `scripts/build-mascot-sprite.js` rồi chạy `node scripts/build-mascot-sprite.js`. Xem lại bằng mắt trước khi commit:
+
+```bash
+node scripts/build-mascot-sprite.js /tmp/f.json && node scripts/preview-mascot-sprite.js /tmp/f.json /tmp/f.png
+```
+
+**Vẽ bằng SVG, không phải View.** Một khung hình có ~150 dải pixel; vẽ bằng `View` là 150 view dựng lại ba lần mỗi giây cho một món trang trí. `spritePaths` gộp theo màu ra ~13 `Path`, cả con linh vật còn một view native. `react-native-svg` 15.12.1 có sẵn trong Expo Go nên không cần development build.
+
+**Reo mừng phải hữu hạn.** `MASCOT_ANIMATION.found` chạy 3 vòng rồi tự chuyển sang `resting`. Một linh vật nhảy không ngừng cạnh ô nhập là thứ người ta tắt app vì nó. Component cũng tôn trọng "giảm chuyển động" của hệ thống — bật lên là đứng khung đầu.
+
+## Hỏi Nooka là một đoạn chat
+
+`app/ask.tsx` giữ một mảng lượt nói, không phải một lần hỏi–đáp. Lý do là **trí nhớ**: tag của lượt trước còn hiệu lực nên hỏi tiếp là thu hẹp thêm, không phải hỏi lại từ đầu.
+
+**Lượt của Nooka chỉ được nói nó vừa làm gì** — đọc bao nhiêu review, hiểu ra tag nào, còn mấy chỗ. Mọi câu mô tả một quán phải nằm trong `ResultRow` hoặc ô trích dẫn, và phải thuộc về một người có tên. Thêm một câu kiểu "chỗ này hợp để làm việc" vào bong bóng là phá đúng thứ §6.2 khoá, dù nghe thân thiện hơn.
+
 ## Light/dark mode
 
 App khai `userInterfaceStyle: "automatic"` để chế độ **Theo hệ thống** có thể phản ứng với cài đặt của thiết bị. Người dùng có ba lựa chọn trong `Cài đặt > Giao diện`: `system`, `light`, và `dark`; mặc định lần đầu là `system`.

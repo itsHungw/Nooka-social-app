@@ -72,6 +72,7 @@ export const Colors = {
     cameraHatch: 'rgba(247,244,238,0.05)',
     cameraBorder: 'rgba(247,244,238,0.22)',
     cameraOverlay: 'rgba(20,18,15,0.60)',
+    online: '#22c55e',
   },
   dark: {
     text: '#f7f4ee',
@@ -132,6 +133,7 @@ export const Colors = {
     cameraHatch: 'rgba(247,244,238,0.05)',
     cameraBorder: 'rgba(247,244,238,0.22)',
     cameraOverlay: 'rgba(20,18,15,0.60)',
+    online: '#22c55e',
   },
 };
 

@@ -67,6 +67,7 @@ function RootNavigator() {
         <Stack.Screen name="edit-profile" options={{ animation: 'slide_from_right', headerShown: false }} />
         <Stack.Screen name="add-friends" options={{ animation: 'slide_from_bottom', headerShown: false }} />
         <Stack.Screen name="share-map" options={{ animation: 'slide_from_bottom', headerShown: false }} />
+        <Stack.Screen name="chat/[id]" options={{ animation: 'slide_from_right', headerShown: false }} />
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>

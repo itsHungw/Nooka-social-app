@@ -10,7 +10,7 @@ import { t } from '@/lib/i18n';
 const tabs = [
   { route: 'index', labelKey: 'navigation.home', icon: 'home-outline', activeIcon: 'home' },
   { route: 'search', labelKey: 'navigation.search', icon: 'search-outline', activeIcon: 'search' },
-  { route: 'saved', labelKey: 'navigation.saved', icon: 'bookmark-outline', activeIcon: 'bookmark' },
+  { route: 'messages', labelKey: 'navigation.messages', icon: 'chatbubble-outline', activeIcon: 'chatbubble' },
   { route: 'profile', labelKey: 'navigation.profile', icon: 'person-outline', activeIcon: 'person' },
 ] as const;
 
@@ -61,7 +61,7 @@ export function NookaTabBar({ state, navigation }: BottomTabBarProps) {
         ]}>
         <Ionicons color={colors.onInverse} name="add" size={26} />
       </Pressable>
-      {renderTab('saved')}
+      {renderTab('messages')}
       {renderTab('profile')}
     </View>
   );

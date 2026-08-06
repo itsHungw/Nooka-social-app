@@ -139,6 +139,16 @@ Có **hai** linh vật, làm hai việc khác nhau — đừng gộp:
 - `components/nooka/nooka-mascot.tsx` — ảnh xuất từ clip, đứng yên ở thanh "Hỏi Nooka" ngoài Home. Là nhãn thương hiệu.
 - `components/nooka/nooka-sprite.tsx` — Nooka pixel, chạy theo trạng thái ở thanh nhắn tin của `app/ask.tsx`. Báo **máy đang làm gì**: vẫy tay khi chờ, cầm kính lúp khi đọc review, reo khi có kết quả, rồi đứng im.
 
+**Chỗ ở của Nooka là bên trái ô nhập, không phải sau ô nhập.** Ở `app/ask.tsx` nó có hai chỗ đứng (`MascotSpot`): `beside` — đứng trọn con bên trái ô nhập, và `behind` — nấp sau ô nhập rồi thò lên theo tư thế bốc thăm (`PeekPose`). Vào màn là đứng bên trái vẫy tay; thỉnh thoảng nó ra sau ô nhập một lát rồi **về lại bên trái**. `HOME_DWELL` khoá điều đó: mỗi lượt nấp luôn ngắn hơn một lượt đứng nhà, có test giữ.
+
+Chỉ đi trốn **lúc đang chờ** (`isWaiting`). Người dùng hỏi một câu là `useMascotStage` đưa nó về bên trái, không đợi hết lượt — nấp sau ô nhập mà suy nghĩ hay reo mừng thì không ai thấy nó đang làm gì, mà đó mới là việc của con sprite này.
+
+**Lên xuống chỉ được diễn ở sau ô nhập.** Đường đi nằm ở `nextStage`, là hàm thuần và có test: từ nhà chỉ chui được sang bám mép ô nhập chứ không chìm thẳng, và đang chìm thì phải trồi lên tại chỗ rồi mới đi về. Ba đoạn `MASCOT_MOVE` (`walk` → `lift` → `dip`) chạy nối tiếp, không chồng nhau: đi ngang vào sau ô nhập rồi mới nhô lên, hạ xuống hết rồi mới đi về. Cho chạy song song thì Nooka đi chéo và cú lên xuống rơi ra ngay bên trái ô nhập — chỗ chẳng có gì che, thành ra nhân vật hiện ra từ hư không.
+
+**Ô nhập không đổi kích cỡ.** Chỗ của Nooka chừa cứng bằng `paddingLeft` trong `inputRow`. Nooka đi hay trốn thì ô nhập và nút gửi vẫn đứng yên — ô nhập co giãn theo bước chân của một món trang trí là thứ mắt bắt được ngay.
+
+Hai chỗ đó là **hai điểm neo của cùng một lớp phủ**, đi lại bằng phép dịch. Dựng hai nơi riêng thì lúc chuyển là một con biến mất và một con hiện ra — người xem không đọc ra đó là cùng một nhân vật.
+
 **Khung hình sinh tự động.** `features/nooka/mascot-frames.ts` là file sinh ra, đừng sửa tay — lệch một cột là hỏng cả hình mà nhìn code không thấy. Sửa hình thì sửa `scripts/build-mascot-sprite.js` rồi chạy `node scripts/build-mascot-sprite.js`. Xem lại bằng mắt trước khi commit:
 
 ```bash

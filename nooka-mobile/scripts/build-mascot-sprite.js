@@ -285,6 +285,12 @@ function build({ pose, dy = 0, lift = 0, mark = null, mouthKind = 'open' }) {
     limb(g, 11, 34, 8, 30); paw(g, 5, 27);
     limb(g, 22, 34, 25, 30); paw(g, 24, 27);
   }
+  if (pose === 'grip') {
+    // Hai bàn tay vắt lên mép thanh nhập, ngay dưới hai bên đầu. Phần thân dưới
+    // sẽ bị chính thanh nhập che nên không cần vẽ gì thêm ở dưới.
+    paw(g, 8, 32);
+    paw(g, 21, 32);
+  }
   if (pose === 'think') {
     // Tay phải buông; tay trái gập lên chống cằm, bàn tay dừng ngay dưới miệng.
     blob(g, 22, 33, 25, 38, 'c', 'o', 2); put(g, 23, 36, 'p');
@@ -301,8 +307,12 @@ function build({ pose, dy = 0, lift = 0, mark = null, mouthKind = 'open' }) {
 }
 
 const RESTING_BASE = build({ pose: 'down', mouthKind: 'closed' });
+const GRIP_BASE = build({ pose: 'grip', mouthKind: 'closed' });
 
 const frames = {
+  // Nấp sau thanh nhập, hai tay bám mép.
+  GRIP: GRIP_BASE,
+  GRIP_B: dipUpper(GRIP_BASE),
   // Hai khung thở: chân đứng im, thân trên nhún một hàng.
   RESTING: RESTING_BASE,
   RESTING_B: dipUpper(RESTING_BASE),

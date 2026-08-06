@@ -13,10 +13,11 @@
   },
   "navigation": {
     "home": "Trang chủ",
-    "search": "Tìm",
+    "search": "Tìm kiếm",
     "create": "Check-in",
+    "messages": "Tin nhắn",
     "saved": "Đã lưu",
-    "profile": "Cá nhân",
+    "profile": "Bạn",
     "settings": "Cài đặt"
   },
   "unit": {
@@ -25,6 +26,7 @@
   },
   "time": {
     "justNow": "vừa xong",
+    "now": "vừa xong",
     "twoHours": "2 giờ",
     "yesterday": "hôm qua",
     "twoDaysAgo": "2 ngày trước",
@@ -429,5 +431,40 @@
     "searching": "Nooka đang tìm",
     "found": "Nooka đã tìm xong",
     "resting": "Nooka đang nghỉ"
+  },
+  "messages": {
+    "title": "Tin nhắn",
+    "searchPlaceholder": "Tìm tin nhắn và địa điểm",
+    "filterAll": "Tất cả",
+    "filterInvites": "Lời mời",
+    "filterPosts": "Từ bài viết của bạn",
+    "assistantTitle": "Nooka TRỢ LÝ",
+    "assistantDesc": "3 quán yên tĩnh gần Bình Thạnh, lọc từ bài viết của mọi người",
+    "inviteBadge": "LỜI MỜI",
+    "requestsHeader": "YÊU CẦU TIN NHẮN {{count}}",
+    "requestsSubtext": "Hai bạn chưa theo dõi lại nhau.",
+    "privacyFootnote": "Chỉ những người theo dõi lại mới nhắn tin cho bạn. Những người khác sẽ nằm ở phần yêu cầu."
+  },
+  "chat": {
+    "mutualStatus": "Hoạt động 5m trước",
+    "onlineNow": "Đang hoạt động",
+    "activeAgo": "Hoạt động {{time}} trước",
+    "optionsTitle": "Tùy chọn cuộc trò chuyện",
+    "changeNickname": "Đổi biệt danh",
+    "changeWallpaper": "Đổi hình nền cuộc trò chuyện",
+    "muteNotifications": "Tắt thông báo",
+    "blockUser": "Chặn người dùng",
+    "blockedToast": "Đã chặn {{name}}",
+    "nicknameUpdated": "Đã đổi biệt danh cho {{name}}",
+    "pinnedSpotDesc": "Quận 1 · cả hai đã từng ghé",
+    "today": "Hôm nay",
+    "linhMsg1": "Ghé Workshop sau bài đăng của bạn. Bàn góc riêng tư thật sự.",
+    "myMsg1": "Đã bảo rồi mà. Có lấy được bàn bên trái cạnh cửa sổ không?",
+    "linhMsg2": "Có chứ. Ngồi liền 3 tiếng.",
+    "linhMsg3": "Thứ Sáu hợp lý đấy. Thêm vào lịch thôi.",
+    "seenStatus": "Đã xem {{time}}",
+    "inputPlaceholder": "Nhắn tin cho {{name}}…",
+    "spotPreviewDesc": "Quận 3 · View tuyệt đẹp",
+    "spotPreviewBadge": "Thứ Sáu nhé?"
   }
 }

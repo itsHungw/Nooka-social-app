@@ -257,6 +257,15 @@
     "noReview": "No reviews yet. One sentence from you right now is worth more than ten once the place is packed.",
     "writeOne": "Write one line",
     "directions": "Directions",
+    "routePreview": "Route preview",
+    "routeFromCurrent": "From your current location",
+    "routeLoading": "Finding the best route…",
+    "routeError": "Route preview is unavailable right now.",
+    "routeDistance": "distance",
+    "routeEta": "estimated time",
+    "drive": "Drive",
+    "walk": "Walk",
+    "openInMaps": "Open in Maps",
     "friendsBeen": {
       "one": "{{count}} friend has been",
       "other": "{{count}} friends have been"

@@ -1,10 +1,21 @@
+import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { DirectionPreview } from '@/components/nooka/direction-preview';
 import { Button, Chip, CircleButton, Photo, ScreenShell, SectionLabel } from '@/components/nooka/ui';
+import {
+  externalDirectionsUrl,
+  fetchRoutePreview,
+  type RoutePreview,
+  type TravelMode,
+} from '@/features/nooka/directions-api';
+import type { Coordinate } from '@/features/nooka/geo';
 import { formatDistance, spotDistrict, spotName, tagLabel } from '@/features/nooka/labels';
 import { spotTags } from '@/features/nooka/ranking';
 import { SPOTS, SPOT_IDS, type SpotId } from '@/features/nooka/spots';
+import { getForegroundLocation } from '@/features/nooka/use-user-location';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { useStartCheckin } from '@/hooks/use-start-checkin';
 import { t } from '@/lib/i18n';
@@ -21,6 +32,52 @@ export default function SpotScreen() {
   const spot = SPOTS[id];
   const tags = spotTags(id, demo.extraTags);
   const saved = demo.isSaved(id);
+  const [routeMode, setRouteMode] = useState<TravelMode>('DRIVE');
+  const [route, setRoute] = useState<RoutePreview | null>(null);
+  const [routeOrigin, setRouteOrigin] = useState<Coordinate | null>(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+  const [routeError, setRouteError] = useState<string | null>(null);
+  const [showRoute, setShowRoute] = useState(false);
+
+  useEffect(() => {
+    setRoute(null);
+    setRouteOrigin(null);
+    setRouteError(null);
+    setShowRoute(false);
+    setRouteMode('DRIVE');
+  }, [id]);
+
+  const loadRoute = useCallback(
+    async (mode: TravelMode) => {
+      setRouteLoading(true);
+      setRouteError(null);
+
+      try {
+        const origin = routeOrigin ?? (await getForegroundLocation());
+        const preview = await fetchRoutePreview({ origin, destination: spot.coordinate, mode });
+        setRouteOrigin(origin);
+        setRoute(preview);
+      } catch {
+        setRouteError(t('spot.routeError'));
+      } finally {
+        setRouteLoading(false);
+      }
+    },
+    [routeOrigin, spot.coordinate],
+  );
+
+  const openMaps = useCallback(async () => {
+    const platform = Platform.OS === 'ios' ? 'ios' : Platform.OS === 'web' ? 'web' : 'android';
+    await Linking.openURL(externalDirectionsUrl(spot.coordinate, routeMode, platform));
+  }, [routeMode, spot.coordinate]);
+
+  const changeRouteMode = useCallback(
+    (mode: TravelMode) => {
+      setRouteMode(mode);
+      if (showRoute) void loadRoute(mode);
+    },
+    [loadRoute, showRoute],
+  );
 
   return (
     <ScreenShell edges={['top', 'bottom']} testID="spot-screen">
@@ -53,12 +110,28 @@ export default function SpotScreen() {
           />
           <Button
             label={t('spot.directions')}
-            onPress={() => demo.flash(t('toast.route', { spot: spotName(id) }))}
+            onPress={() => {
+              setShowRoute(true);
+              void loadRoute(routeMode);
+            }}
             style={styles.action}
             tone="outline"
           />
           <Button label={t('home.checkin')} onPress={startCheckin} tone="outline" />
         </View>
+
+        {showRoute ? (
+          <DirectionPreview
+            destination={spot.coordinate}
+            error={routeError}
+            loading={routeLoading}
+            mode={routeMode}
+            onModeChange={changeRouteMode}
+            onOpenMaps={openMaps}
+            origin={routeOrigin}
+            route={route}
+          />
+        ) : null}
 
         <View style={styles.section}>
           <SectionLabel>{t('spot.whatPeopleSay')}</SectionLabel>

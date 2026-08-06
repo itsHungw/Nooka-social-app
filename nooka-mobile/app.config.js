@@ -32,6 +32,14 @@ module.exports = ({ config }) => {
     ]);
   }
 
+  plugins.push([
+    'expo-location',
+    {
+      locationWhenInUsePermission:
+        'Allow $(PRODUCT_NAME) to use your location while you explore nearby places.',
+    },
+  ]);
+
   const extra = {
     ...(config.extra ?? {}),
     ...(placesKey ? { GOOGLE_PLACES_KEY: placesKey } : {}),

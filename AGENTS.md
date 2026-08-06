@@ -52,3 +52,25 @@ Ngoài ra: không real-time location tracking. Nội dung `PRIVATE` không vào 
 - Không tạo commit, branch hay worktree nếu chưa được yêu cầu.
 - Không refactor ngoài phạm vi.
 - Cập nhật `AGENTS.md` tương ứng khi chốt thêm một quy ước, hoặc khi một luật ở đó không còn đúng.
+## Quy ước kiến trúc backend
+
+Khi thêm feature mới trong `nooka-api/`, tuân thủ cấu trúc theo feature và tách trách nhiệm rõ ràng:
+
+```text
+<feature>/
+├── controller/        # REST endpoints
+├── service/           # business logic và use case
+├── repository/        # Spring Data JPA repositories, chỉ khi feature có persistence
+├── model/
+│   ├── entity/        # JPA entities, chỉ khi feature có persistence
+│   ├── dto/           # request/response DTOs
+│   └── enums/         # feature enums xuất hiện trong contract
+├── mapper/            # entity <-> DTO mappers, chỉ khi mapping đủ phức tạp
+├── integration/       # external provider clients
+└── config/            # feature-specific configuration
+```
+
+Không tạo folder rỗng hoặc thêm MapStruct/JPA chỉ để khớp cây thư mục. Feature không có database không cần `repository/`, `model/entity/` hay `mapper/`. Controller chỉ nhận/validate request, service điều phối business logic, integration gọi provider, DTO là boundary của API và secret chỉ đọc từ environment/secret manager.
+## Quyết định location mới — August 6, 2026
+
+User đã chốt foreground GPS cho tab Search: khi Search đang mở và user đã cấp quyền, mobile được cập nhật chấm xanh theo chuyển động. Không dùng background location, không lưu lịch sử di chuyển, không gửi tọa độ định kỳ. Route preview chỉ gửi một tọa độ origin tại thời điểm user bấm `Directions`; backend không tracking location.

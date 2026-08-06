@@ -1,4 +1,12 @@
-import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -26,9 +34,9 @@ import { t } from '@/lib/i18n';
  * không cần API key lúc dev. Bản build độc lập thì cần key riêng — xem
  * `app.config.js` và mục "Bản đồ" trong `AGENTS.md`.
  *
- * §13 của spec: **không có real-time location tracking.** Chấm vị trí vẽ từ
- * hằng số `USER_LOCATION`, không phải từ GPS, và `showsUserLocation` cố tình để
- * tắt — bật nó lên là bắt đầu đọc vị trí liên tục.
+ * Vị trí người dùng đọc bằng GPS foreground khi tab Search đang mở. Không đăng ký
+ * background task, không gửi tọa độ lên server, và vẫn vẽ dot bằng lớp phủ RN riêng
+ * thay vì `showsUserLocation` để giữ style Nooka.
  *
  * ---
  *
@@ -80,6 +88,8 @@ type NookaMapProps = {
   mapPadding?: Inset;
   style?: StyleProp<ViewStyle>;
   pins?: GooglePlace[];
+  userLocation?: Coordinate;
+  userLocationIsLive?: boolean;
 };
 
 /**
@@ -100,7 +110,17 @@ const ALL_REGION =
   regionAround(USER_LOCATION);
 
 export const NookaMap = forwardRef<NookaMapHandle, NookaMapProps>(function NookaMap(
-  { spots = SPOT_IDS, selectedSpot = null, onSelectSpot, onPressMap, mapPadding, style, pins = [] },
+  {
+    spots = SPOT_IDS,
+    selectedSpot = null,
+    onSelectSpot,
+    onPressMap,
+    mapPadding,
+    style,
+    pins = [],
+    userLocation = USER_LOCATION,
+    userLocationIsLive = false,
+  },
   ref,
 ) {
   const { colors, colorScheme } = useNookaTheme();
@@ -109,6 +129,7 @@ export const NookaMap = forwardRef<NookaMapHandle, NookaMapProps>(function Nooka
 
   const [region, setRegion] = useState<Region>(INITIAL_REGION);
   const [size, setSize] = useState({ width: 0, height: 0 });
+  const centeredOnLiveLocation = useRef(false);
 
   /**
    * Bản sao của `region` để đọc lúc remount.
@@ -135,6 +156,16 @@ export const NookaMap = forwardRef<NookaMapHandle, NookaMapProps>(function Nooka
   const restoreCamera = useCallback(() => {
     mapRef.current?.animateToRegion(regionRef.current, 0);
   }, []);
+
+  useEffect(() => {
+    if (!userLocationIsLive || centeredOnLiveLocation.current) return;
+
+    const nextRegion = regionAround(userLocation, 0.022);
+    centeredOnLiveLocation.current = true;
+    regionRef.current = nextRegion;
+    setRegion(nextRegion);
+    mapRef.current?.animateToRegion(nextRegion, 500);
+  }, [userLocation, userLocationIsLive]);
 
   const onLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -171,7 +202,7 @@ export const NookaMap = forwardRef<NookaMapHandle, NookaMapProps>(function Nooka
     },
     recenter() {
       const delta = 0.012;
-      mapRef.current?.animateToRegion(regionAround(offsetCenter(USER_LOCATION, delta), delta), 350);
+      mapRef.current?.animateToRegion(regionAround(offsetCenter(userLocation, delta), delta), 350);
     },
     fitAll() {
       mapRef.current?.animateToRegion(ALL_REGION, 350);
@@ -233,7 +264,7 @@ export const NookaMap = forwardRef<NookaMapHandle, NookaMapProps>(function Nooka
               }}
             />
           ) : null}
-          <UserDot point={project(USER_LOCATION)} viewport={size} />
+          {userLocationIsLive ? <UserDot point={project(userLocation)} viewport={size} /> : null}
           {spots.map((id) => (
             <CheckinPin
               key={id}

@@ -257,6 +257,15 @@
     "noReview": "Chưa có review nào. Một câu của bạn lúc này có giá trị hơn mười câu lúc quán đông khách.",
     "writeOne": "Viết một câu",
     "directions": "Chỉ đường",
+    "routePreview": "Xem đường đi",
+    "routeFromCurrent": "Từ vị trí hiện tại của bạn",
+    "routeLoading": "Đang tìm đường phù hợp…",
+    "routeError": "Chưa xem được đường đi lúc này.",
+    "routeDistance": "khoảng cách",
+    "routeEta": "thời gian dự kiến",
+    "drive": "Đi xe",
+    "walk": "Đi bộ",
+    "openInMaps": "Mở trong bản đồ",
     "friendsBeen": {
       "one": "{{count}} bạn bè đã tới",
       "other": "{{count}} bạn bè đã tới"

@@ -54,11 +54,10 @@ export const INTENT_TAGS: Record<IntentId, TagId[]> = {
 };
 
 /**
- * Vị trí giả định của người dùng — Bình Thạnh, khớp với `home.location`.
+ * Vị trí fallback của prototype — Bình Thạnh, khớp với `home.location`.
  *
- * §13 của spec: **không có real-time location tracking**. Toạ độ này là hằng
- * số của prototype, không phải kết quả đọc GPS. Khi nối vào vị trí thật, chỉ
- * đọc một lần lúc người dùng chủ động mở tab Tìm và không gửi lên server.
+ * GPS thật được quản lý bởi `use-user-location.ts`. Fallback này chỉ dùng khi
+ * web không hỗ trợ native location hoặc user từ chối foreground permission.
  */
 export const USER_LOCATION: Coordinate = { latitude: 10.8014, longitude: 106.7109 };
 

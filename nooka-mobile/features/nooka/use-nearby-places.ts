@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { createSource, type GooglePlace, type Source } from './places-source.ts';
 import type { Coordinate } from './geo.ts';
@@ -41,6 +41,13 @@ export type NearbyState = {
 };
 
 export function useNearbyPlaces(center: Coordinate, radius: number): NearbyState {
+  const queryCenter = useMemo(
+    () => ({
+      latitude: Number(center.latitude.toFixed(3)),
+      longitude: Number(center.longitude.toFixed(3)),
+    }),
+    [center.latitude, center.longitude],
+  );
   const [state, setState] = useState<NearbyState>({
     places: [],
     loading: true,
@@ -51,7 +58,7 @@ export function useNearbyPlaces(center: Coordinate, radius: number): NearbyState
   useEffect(() => {
     let cancelled = false;
     setState((current) => ({ ...current, loading: true, error: null }));
-    fetchNearby(center, { radius })
+    fetchNearby(queryCenter, { radius })
       .then((data) => {
         if (!cancelled) setState({ places: data.places, loading: false, error: null, source: data.source });
       })
@@ -61,7 +68,7 @@ export function useNearbyPlaces(center: Coordinate, radius: number): NearbyState
     return () => {
       cancelled = true;
     };
-  }, [center.latitude, center.longitude, radius]);
+  }, [queryCenter, radius]);
 
   return state;
 }

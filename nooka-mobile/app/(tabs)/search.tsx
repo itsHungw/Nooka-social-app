@@ -21,12 +21,12 @@ import {
   SPOTS_BY_CHECKINS,
   SPOTS_BY_DISTANCE,
   SPOTS_BY_FRIENDS,
-  USER_LOCATION,
   type SpotId,
   type TagId,
 } from '@/features/nooka/spots';
 import { useNearbyPlaces } from '@/features/nooka/use-nearby-places';
 import { distanceMeters } from '@/features/nooka/geo';
+import { useUserLocation } from '@/features/nooka/use-user-location';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
 import { useNookaDemo } from '@/providers/nooka-demo-provider';
@@ -61,7 +61,8 @@ export default function SearchTabScreen() {
   const { colors } = useNookaTheme();
   const insets = useSafeAreaInsets();
   const demo = useNookaDemo();
-  const nearby = useNearbyPlaces(USER_LOCATION, 2000);
+  const location = useUserLocation();
+  const nearby = useNearbyPlaces(location.coordinate, 2000);
   const mapRef = useRef<NookaMapHandle>(null);
 
   const [containerHeight, setContainerHeight] = useState(0);
@@ -78,12 +79,19 @@ export default function SearchTabScreen() {
   }, [containerHeight]);
 
   const results = useMemo(() => {
-    const ordered = SORT_ORDER[sort];
+    const ordered = [...SORT_ORDER[sort]];
+    if (sort === 'near') {
+      ordered.sort(
+        (left, right) =>
+          distanceMeters(location.coordinate, SPOTS[left].coordinate) -
+          distanceMeters(location.coordinate, SPOTS[right].coordinate),
+      );
+    }
     return ordered.filter((id) => {
       if (visitedOnly && !demo.isBeen(id)) return false;
       return activeTags.every((tag) => SPOTS[id].tags.some((spotTag) => spotTag.id === tag));
     });
-  }, [sort, activeTags, visitedOnly, demo]);
+  }, [sort, activeTags, visitedOnly, demo, location.coordinate]);
 
   // Ghim đang chọn mà bị lọc mất thì bỏ chọn, nếu không sheet sẽ hiện preview
   // của một chỗ không còn trên bản đồ.
@@ -123,6 +131,8 @@ export default function SearchTabScreen() {
           selectedSpot={selected}
           spots={results}
           style={StyleSheet.absoluteFill}
+          userLocation={location.coordinate}
+          userLocationIsLive={location.isLive}
         />
 
         <View pointerEvents="box-none" style={[styles.top, { paddingTop: insets.top + 8 }]}>
@@ -132,7 +142,11 @@ export default function SearchTabScreen() {
             horizontal
             keyboardShouldPersistTaps="handled"
             showsHorizontalScrollIndicator={false}>
-            <Chip floating label={t('home.location')} trailing="▾" />
+            <Chip
+              floating
+              label={location.isLive ? t('map.youAreHere') : t('home.location')}
+              trailing="▾"
+            />
             {FILTER_TAGS.map((tag) => (
               <Chip
                 floating
@@ -223,7 +237,12 @@ export default function SearchTabScreen() {
                     <ResultRow
                       key={place.placeId}
                       distance={formatDistance(
-                        Math.round(distanceMeters(USER_LOCATION, { latitude: place.lat, longitude: place.lng })),
+                        Math.round(
+                          distanceMeters(location.coordinate, {
+                            latitude: place.lat,
+                            longitude: place.lng,
+                          }),
+                        ),
                       )}
                       onPress={() => {
                         // Future: focusPin via mapRef.current?.focusPin?.(place.placeId)
@@ -241,7 +260,9 @@ export default function SearchTabScreen() {
                 results.map((id) => (
                   <ResultRow
                     badge={SPOTS[id].isNew ? t('pin.new') : undefined}
-                    distance={formatDistance(SPOTS[id].distanceM)}
+                    distance={formatDistance(
+                      Math.round(distanceMeters(location.coordinate, SPOTS[id].coordinate)),
+                    )}
                     key={id}
                     onPress={() => pickSpot(id)}
                     reason={checkinLine(id)}

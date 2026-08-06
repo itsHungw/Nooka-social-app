@@ -15,6 +15,7 @@
     "home": "Home",
     "search": "Search",
     "create": "Check in",
+    "messages": "Messages",
     "saved": "Saved",
     "profile": "You",
     "settings": "Settings"
@@ -25,6 +26,7 @@
   },
   "time": {
     "justNow": "just now",
+    "now": "now",
     "twoHours": "2h",
     "yesterday": "yesterday",
     "twoDaysAgo": "2 days ago",
@@ -429,5 +431,40 @@
     "searching": "Nooka is searching",
     "found": "Nooka found results",
     "resting": "Nooka is resting"
+  },
+  "messages": {
+    "title": "Messages",
+    "searchPlaceholder": "Search messages and places",
+    "filterAll": "All",
+    "filterInvites": "Invites",
+    "filterPosts": "From your posts",
+    "assistantTitle": "Nooka ASSISTANT",
+    "assistantDesc": "3 quiet spots near Binh Thanh, filtered from what real people wrote",
+    "inviteBadge": "INVITE",
+    "requestsHeader": "MESSAGE REQUESTS {{count}}",
+    "requestsSubtext": "You do not follow each other yet.",
+    "privacyFootnote": "Only people you follow each other with can message you. Everything else lands in requests."
+  },
+  "chat": {
+    "mutualStatus": "Active 5m ago",
+    "onlineNow": "Active now",
+    "activeAgo": "Active {{time}} ago",
+    "optionsTitle": "Chat options",
+    "changeNickname": "Edit nickname",
+    "changeWallpaper": "Change chat wallpaper",
+    "muteNotifications": "Mute notifications",
+    "blockUser": "Block user",
+    "blockedToast": "Blocked {{name}}",
+    "nicknameUpdated": "Updated nickname for {{name}}",
+    "pinnedSpotDesc": "District 1 · you have both been",
+    "today": "Today",
+    "linhMsg1": "Went to Workshop after your post. The corner table is real.",
+    "myMsg1": "Told you. Did you get the left one by the window?",
+    "linhMsg2": "Yes. Sat three hours.",
+    "linhMsg3": "Friday works. Adding it.",
+    "seenStatus": "Seen {{time}}",
+    "inputPlaceholder": "Message {{name}}…",
+    "spotPreviewDesc": "District 3 · Great view",
+    "spotPreviewBadge": "Friday then?"
   }
 }

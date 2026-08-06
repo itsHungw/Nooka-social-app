@@ -3,11 +3,22 @@ import { test } from 'node:test';
 
 import { MASCOT_FRAMES } from './mascot-frames.ts';
 import {
+  HOME_DWELL,
+  HOME_STAGE,
   MASCOT_ANIMATION,
   MASCOT_H,
+  MASCOT_MOVE,
   MASCOT_PALETTE,
   MASCOT_PATHS,
   MASCOT_W,
+  PEEK_ANIMATION,
+  PEEK_DWELL,
+  PEEK_POSES,
+  isWaiting,
+  nextPeekPose,
+  nextStage,
+  peekDwell,
+  stageDwell,
   spritePaths,
 } from './mascot.ts';
 
@@ -101,6 +112,103 @@ test('đứng yên vẫn thở, và thở phải chậm hơn mọi hoạt cảnh
       MASCOT_ANIMATION[state].ms < resting.ms,
       `${state} phải nhanh hơn nhịp thở, nếu không đứng yên trông như đang bồn chồn`,
     );
+  }
+});
+
+test('tư thế nấp không bao giờ bốc trúng chính nó', () => {
+  for (const current of PEEK_POSES) {
+    for (const roll of [0, 0.25, 0.5, 0.75, 0.999999]) {
+      const next = nextPeekPose(current, roll);
+      assert.notEqual(next, current, `từ ${current} lại bốc ra ${current}`);
+      assert.ok(PEEK_POSES.includes(next), `bốc ra tư thế lạ: ${next}`);
+    }
+  }
+});
+
+test('nextPeekPose phủ hết các tư thế còn lại', () => {
+  const seen = new Set([nextPeekPose('hidden', 0), nextPeekPose('hidden', 0.99)]);
+  assert.deepEqual([...seen].sort(), ['grip', 'wave']);
+});
+
+test('thời gian giữ một tư thế nằm trong khoảng đã khai', () => {
+  for (const roll of [0, 0.5, 1]) {
+    const ms = peekDwell(roll);
+    assert.ok(ms >= PEEK_DWELL.min && ms <= PEEK_DWELL.max, `${ms} ngoài khoảng`);
+  }
+  assert.ok(PEEK_DWELL.max - PEEK_DWELL.min > 2000, 'khoảng quá hẹp thì nhịp đoán được ngay');
+});
+
+test('trạng thái có việc để kể thì không tính là chờ', () => {
+  for (const [state, anim] of Object.entries(MASCOT_ANIMATION)) {
+    if (!anim.loops && state !== 'searching') continue;
+    assert.equal(
+      isWaiting(state as keyof typeof MASCOT_ANIMATION),
+      false,
+      `${state} mà tính là chờ thì Nooka được phép đi trốn giữa lúc đang kể chuyện`,
+    );
+  }
+  assert.ok(isWaiting('idle') && isWaiting('resting'));
+});
+
+test('ở nhà thì không bao giờ là tư thế chìm', () => {
+  assert.equal(HOME_STAGE.spot, 'beside');
+  assert.notEqual(HOME_STAGE.pose, 'hidden', 'ở bên trái ô nhập mà chìm là biến mất giữa thanh');
+});
+
+test('từ nhà chỉ chui vào sau ô nhập rồi bám mép — không chìm thẳng', () => {
+  for (const roll of [0, 0.25, 0.5, 0.75, 0.999999]) {
+    assert.deepEqual(nextStage(HOME_STAGE, roll), { spot: 'behind', pose: 'grip' });
+  }
+});
+
+test('đang chìm thì phải trồi lên tại chỗ nấp, không nhảy thẳng về nhà', () => {
+  for (const roll of [0, 0.25, 0.5, 0.75, 0.999999]) {
+    const next = nextStage({ spot: 'behind', pose: 'hidden' }, roll);
+    assert.equal(next.spot, 'behind', 'về nhà từ dưới đáy là hiện ra ở bên trái từ hư không');
+    assert.notEqual(next.pose, 'hidden');
+  }
+});
+
+test('đang thò lên thì hoặc về nhà, hoặc đổi sang tư thế nấp khác', () => {
+  for (const pose of ['grip', 'wave'] as const) {
+    assert.deepEqual(nextStage({ spot: 'behind', pose }, 0), HOME_STAGE);
+    const stay = nextStage({ spot: 'behind', pose }, 0.999999);
+    assert.equal(stay.spot, 'behind');
+    assert.notEqual(stay.pose, pose, `từ ${pose} lại bốc ra ${pose}`);
+  }
+});
+
+test('mỗi lượt nấp luôn ngắn hơn một lượt đứng nhà', () => {
+  assert.ok(
+    HOME_DWELL.min > PEEK_DWELL.max,
+    'nấp lâu bằng đứng nhà thì sau ô nhập mới là chỗ ở, không phải bên trái',
+  );
+  assert.ok(HOME_DWELL.max - HOME_DWELL.min > 2000, 'khoảng quá hẹp thì nhịp đoán được ngay');
+});
+
+test('thời gian giữ một chặng lấy đúng khoảng của chỗ đang đứng', () => {
+  for (const roll of [0, 0.5, 1]) {
+    const home = stageDwell(HOME_STAGE, roll);
+    assert.ok(home >= HOME_DWELL.min && home <= HOME_DWELL.max, `${home} ngoài khoảng ở nhà`);
+    const peek = stageDwell({ spot: 'behind', pose: 'grip' }, roll);
+    assert.ok(peek >= PEEK_DWELL.min && peek <= PEEK_DWELL.max, `${peek} ngoài khoảng nấp`);
+  }
+});
+
+test('đi tới nơi rồi mới đổi tư thế — ba đoạn di chuyển không chồng lên nhịp nấp', () => {
+  assert.ok(
+    MASCOT_MOVE.walk + MASCOT_MOVE.lift < PEEK_DWELL.min,
+    'chưa tới sau ô nhập mà đã bốc tư thế mới thì cú chìm rơi ra giữa đường',
+  );
+  assert.ok(
+    MASCOT_MOVE.dip < PEEK_DWELL.min,
+    'chưa trồi lên xong đã sang chặng sau thì Nooka đi về trong lúc còn dưới đáy',
+  );
+});
+
+test('mọi tư thế nấp trỏ tới khung hình có thật', () => {
+  for (const [pose, anim] of Object.entries(PEEK_ANIMATION)) {
+    for (const id of anim.frames) assert.ok(MASCOT_FRAMES[id], `${pose} trỏ tới ${id} không tồn tại`);
   }
 });
 

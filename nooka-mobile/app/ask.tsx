@@ -11,13 +11,21 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NookaSprite } from '@/components/nooka/nooka-sprite';
 import { Chip, CircleButton, ResultRow, ScreenShell } from '@/components/nooka/ui';
 import { checkinLine, formatDistance, spotName, tagLabel, tagSynonyms } from '@/features/nooka/labels';
-import type { MascotState } from '@/features/nooka/mascot';
+import { MASCOT_MOVE, isWaiting, type MascotState } from '@/features/nooka/mascot';
 import { explainTags, matchTags, rankSpots, spotTags } from '@/features/nooka/ranking';
 import { INTENT_IDS, SPOTS, TAG_IDS, type IntentId, type SpotId, type TagId } from '@/features/nooka/spots';
+import { useMascotStage } from '@/hooks/use-mascot-stage';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
 import { useNookaDemo } from '@/providers/nooka-demo-provider';
@@ -40,9 +48,31 @@ type Turn =
   | { kind: 'ask'; id: number; text: string }
   | { kind: 'answer'; id: number; tags: TagId[]; spots: SpotId[]; read: number };
 
+/**
+ * Nooka ở thanh nhắn tin có **một** lớp phủ và hai điểm neo, không phải hai chỗ
+ * dựng riêng: chỗ ở là bên trái ô nhập, chỗ trốn là sau ô nhập. Đi từ chỗ này
+ * sang chỗ kia là một phép dịch trên chính lớp đó — dựng hai nơi thì lúc chuyển
+ * là một con biến mất và một con hiện ra, không ai đọc ra đó là cùng nhân vật.
+ *
+ * **Ô nhập không đổi kích cỡ.** Chỗ của Nooka được chừa cứng bằng `paddingLeft`
+ * trong `inputRow`; Nooka đi hay trốn thì ô nhập vẫn đúng bề ngang đó. Ô nhập
+ * co giãn theo bước chân của một món trang trí là thứ mắt bắt được ngay, và nó
+ * kéo theo cả nút gửi nhích qua nhích lại.
+ */
+const MASCOT_SIZE = 46;
+/** Bề ngang chừa cho Nooka bên trái ô nhập, tính cả khoảng thở. */
+const MASCOT_SLOT = MASCOT_SIZE + 10;
+/**
+ * Chỗ trốn lệch so với chỗ ở: đi ngang hẳn vào vùng ô nhập rồi mới nhô lên.
+ * `x` phải vượt qua `MASCOT_SLOT` — chưa qua khỏi mép trái ô nhập thì không có
+ * gì che, và cú nhô lên diễn ra giữa thanh trống.
+ */
+const BEHIND_OFFSET = { x: MASCOT_SLOT + 10, y: 30 };
+
 export default function AskNookaScreen() {
   const router = useRouter();
   const { colors } = useNookaTheme();
+  const insets = useSafeAreaInsets();
   const demo = useNookaDemo();
   const scroller = useRef<ScrollView>(null);
   const nextId = useRef(0);
@@ -55,6 +85,35 @@ export default function AskNookaScreen() {
 
   const synonyms = useMemo(() => tagSynonyms(TAG_IDS), []);
   const answered = turns.length > 0;
+  const padBottom = Math.max(insets.bottom, 6) + 16;
+
+  // Chờ thì Nooka được đi lang thang; đang đọc review hay vừa reo mừng thì
+  // `useMascotStage` giữ nó ở bên trái ô nhập để còn thấy nó đang làm gì.
+  const stage = useMascotStage(isWaiting(mascot));
+  const behind = stage.spot === 'behind';
+
+  // Hai đoạn, **không bao giờ chạy cùng lúc**: đi ngang vào sau ô nhập rồi mới
+  // nhô lên; và hạ xuống hết rồi mới đi ngang về. Chạy song song thì Nooka đi
+  // chéo và cú lên xuống lộ ra ngay bên trái ô nhập, chỗ chẳng có gì che.
+  const walked = useSharedValue(0);
+  const lifted = useSharedValue(0);
+  useEffect(() => {
+    const { walk: walkMs, lift: liftMs } = MASCOT_MOVE;
+    if (behind) {
+      walked.value = withTiming(1, { duration: walkMs });
+      lifted.value = withDelay(walkMs, withTiming(1, { duration: liftMs }));
+      return;
+    }
+    lifted.value = withTiming(0, { duration: liftMs });
+    walked.value = withDelay(liftMs, withTiming(0, { duration: walkMs }));
+  }, [behind, walked, lifted]);
+
+  const walk = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: walked.value * BEHIND_OFFSET.x },
+      { translateY: -lifted.value * BEHIND_OFFSET.y },
+    ],
+  }));
 
   useEffect(() => () => {
     if (pending.current) clearTimeout(pending.current);
@@ -216,44 +275,66 @@ export default function AskNookaScreen() {
           ) : null}
         </ScrollView>
 
-        <View style={[styles.composer, { borderTopColor: colors.borderSubtle }]}>
-          <NookaSprite onSettled={setMascot} size={32} state={mascot} />
-          <TextInput
-            accessibilityLabel={t('search.composer')}
-            onChangeText={setDraft}
-            onSubmitEditing={() => send(draft)}
-            placeholder={t('search.composer')}
-            placeholderTextColor={colors.textSubtle}
-            returnKeyType="send"
-            style={[
-              styles.field,
-              {
-                backgroundColor: colors.surface,
-                borderColor: draft.trim() ? colors.accentStrong : colors.borderSubtle,
-                color: colors.text,
-              },
-            ]}
-            value={draft}
-          />
-          <Pressable
-            accessibilityLabel={t('search.send')}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: !draft.trim() }}
-            disabled={!draft.trim()}
-            onPress={() => send(draft)}
-            style={({ pressed }) => [
-              styles.send,
-              {
-                backgroundColor: draft.trim() ? colors.inverseSurface : colors.surfaceMuted,
-                opacity: pressed ? 0.8 : 1,
-              },
-            ]}>
-            <Ionicons
-              color={draft.trim() ? colors.onInverse : colors.textSubtle}
-              name="arrow-up"
-              size={19}
+        {/* `ScreenShell` chỉ chừa lề an toàn phía trên, nên thanh nhắn tin phải
+            tự nâng khỏi vạch home. Cộng thêm 16 để nó không dính sát mép. */}
+        <View
+          style={[
+            styles.composer,
+            {
+              backgroundColor: colors.background,
+              borderTopColor: colors.borderSubtle,
+              paddingBottom: padBottom,
+            },
+          ]}>
+          {/* Nooka nằm **trước** hàng nhập trong cây JSX nên hàng nhập vẽ đè lên.
+              Đó là toàn bộ cơ chế "nấp": đi sang vùng ô nhập là bị chính ô nhập
+              che nửa dưới thân, rồi mới nhô lên hay chìm xuống. Đứng ở chỗ ở thì
+              lớp này nằm trong khoảng đã chừa nên không bị che gì. Không nhận
+              chạm để không cướp vùng bấm của ô nhập. */}
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.mascotLayer, { bottom: padBottom }, walk]}>
+            <NookaSprite onSettled={setMascot} size={MASCOT_SIZE} stage={stage} state={mascot} />
+          </Animated.View>
+
+          <View style={styles.inputRow}>
+            <TextInput
+              accessibilityLabel={t('search.composer')}
+              onChangeText={setDraft}
+              onSubmitEditing={() => send(draft)}
+              placeholder={t('search.composer')}
+              placeholderTextColor={colors.textSubtle}
+              returnKeyType="send"
+              style={[
+                styles.field,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: draft.trim() ? colors.accentStrong : colors.borderSubtle,
+                  color: colors.text,
+                },
+              ]}
+              value={draft}
             />
-          </Pressable>
+            <Pressable
+              accessibilityLabel={t('search.send')}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !draft.trim() }}
+              disabled={!draft.trim()}
+              onPress={() => send(draft)}
+              style={({ pressed }) => [
+                styles.send,
+                {
+                  backgroundColor: draft.trim() ? colors.inverseSurface : colors.surfaceMuted,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}>
+              <Ionicons
+                color={draft.trim() ? colors.onInverse : colors.textSubtle}
+                name="arrow-up"
+                size={19}
+              />
+            </Pressable>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </ScreenShell>
@@ -383,15 +464,12 @@ const styles = StyleSheet.create({
   readingBar: { width: 92, height: 4, borderRadius: 2, overflow: 'hidden' },
   readingFill: { width: '62%', height: '100%', borderRadius: 2 },
   reading: { fontSize: 12.5, lineHeight: 17, fontWeight: '600' },
-  composer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 12,
-    borderTopWidth: 1,
-  },
+  composer: { paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1 },
+  // `left` khớp `composer.paddingHorizontal`: chỗ ở là mép trái của hàng nhập.
+  mascotLayer: { position: 'absolute', left: 16 },
+  // `paddingLeft` là chỗ chừa cứng cho Nooka — cố định nên ô nhập và nút gửi
+  // đứng yên dù nhân vật đang đi, đang nấp hay đang chìm.
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: MASCOT_SLOT },
   field: {
     flex: 1,
     minWidth: 0,

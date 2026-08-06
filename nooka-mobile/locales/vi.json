@@ -111,6 +111,10 @@
     },
     "nearbySource": "lọc từ tag người dùng",
     "dragForMore": "Kéo lên để xem tất cả",
+    "googlePinLabel": "{{count}} quán từ Google",
+    "googleError": "Không tải được Google Places",
+    "googleLoading": "Đang tìm quán quanh đây",
+    "googleEmpty": "Không có quán nào",
     "sort": {
       "busy": "Đang đông",
       "near": "Gần bạn",

@@ -111,6 +111,10 @@
     },
     "nearbySource": "from user tags",
     "dragForMore": "Drag up to see all",
+    "googlePinLabel": "{{count}} places from Google",
+    "googleError": "Google Places unavailable",
+    "googleLoading": "Finding places nearby",
+    "googleEmpty": "No places found",
     "sort": {
       "busy": "Busiest",
       "near": "Nearest",

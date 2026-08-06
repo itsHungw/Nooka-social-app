@@ -38,7 +38,7 @@ export default function HomeScreen() {
         />
       </View>
 
-      <AskNookaBar onPress={() => router.push('/search')} />
+      <AskNookaBar onPress={() => router.push('/ask')} />
 
       {stripVisible ? (
         <View style={[styles.strip, { borderColor: colors.borderSubtle }]}>
@@ -86,7 +86,7 @@ export default function HomeScreen() {
           <View style={styles.empty}>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('home.emptyTitle')}</Text>
             <Text style={[styles.emptyBody, { color: colors.textMuted }]}>{t('home.emptyBody')}</Text>
-            <Button label={t('home.emptyCta')} onPress={() => router.push('/search')} style={styles.emptyCta} />
+            <Button label={t('home.emptyCta')} onPress={() => router.push('/ask')} style={styles.emptyCta} />
           </View>
         ) : (
           <FlatList

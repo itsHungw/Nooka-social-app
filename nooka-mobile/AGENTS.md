@@ -96,18 +96,64 @@ UI hiện tại dựng từ prototype `Nooka - prototype.dc.html` (Claude Design
 | Route | Là gì |
 |---|---|
 | `app/(tabs)/index.tsx` | Feed check-in, dải bạn bè, sheet chọn tag sau khi đăng |
-| `app/(tabs)/map.tsx` | Bản đồ + danh sách "đang đông gần bạn" |
+| `app/(tabs)/search.tsx` | Tab **Tìm**: bản đồ thật + sheet ba điểm dừng + universal search |
 | `app/(tabs)/saved.tsx`, `profile.tsx` | Muốn đi, và trang cá nhân |
-| `app/search.tsx` | Hỏi Nooka — câu hỏi tự do hoặc intent, ra kết quả xếp hạng |
+| `app/ask.tsx` | Hỏi Nooka — câu hỏi tự do hoặc intent, ra kết quả xếp hạng |
 | `app/spot/[id].tsx` | Trang địa điểm |
 | `app/create.tsx` → `app/pin.tsx` → `app/caption.tsx` | Luồng check-in: camera → sửa địa điểm → caption → đăng |
 | `app/review.tsx`, `app/story/[index].tsx` | Ba câu review, và xem check-in của bạn bè |
 
-Trạng thái dùng chung nằm ở `providers/nooka-demo-provider.tsx`, không phải ở từng màn hình. Xếp hạng của "Hỏi Nooka" nằm ở `features/nooka/ranking.ts` — hàm thuần, có test chạy bằng `node --test features/nooka/ranking.test.ts`.
+**Tên route `ask` không đổi tuỳ tiện được.** `(tabs)` là group nên `app/(tabs)/search.tsx` đã chiếm `/search`; đặt màn Hỏi Nooka ở `app/search.tsx` là hai file cùng trỏ một đường dẫn. Đó là lý do nó tên `ask.tsx`.
+
+Trạng thái dùng chung nằm ở `providers/nooka-demo-provider.tsx`, không phải ở từng màn hình. Xếp hạng của "Hỏi Nooka" nằm ở `features/nooka/ranking.ts`, phần địa lý ở `features/nooka/geo.ts` — đều là hàm thuần, test chạy bằng `node --test features/nooka/ranking.test.ts features/nooka/geo.test.ts`. (Truyền cả thư mục thay vì từng file thì Node trên Windows báo `Cannot find module` — kể tên file ra.)
+
+**Danh sách kết quả chỉ có một component.** `ResultRow` ở `components/nooka/ui.tsx` dùng chung cho sheet của tab Tìm và kết quả Hỏi Nooka. §5 của spec chốt một loại card cho cả hai chế độ — dựng thêm hàng riêng cho một bề mặt là phá luật đó.
 
 **Khớp từ khoá đi qua locale, không hardcode tiếng Việt trong logic.** `search.synonyms.<tagId>` ở `locales/` là danh sách từ đồng nghĩa; `ranking.ts` chỉ nhận danh sách đó chứ không biết mình đang khớp ngôn ngữ nào.
 
 Code trong scaffold (`hello-wave`, `parallax-scroll-view`...) là **demo của template**, không phải kiến trúc đã chốt. Xoá khi thay bằng màn hình thật; `npm run reset-project` dọn một lượt.
+
+## Bản đồ
+
+`react-native-maps` 1.20.1 — bản khớp SDK 54, có New Architecture, và **chạy được trong Expo Go** nên không ai phải dựng development build. Đừng đổi sang `expo-maps`: nó còn alpha và **không** chạy trong Expo Go, tức là đổi xong cả team mất khả năng mở app — đúng cái luật số một ở trên chặn.
+
+- `components/nooka/nooka-map.tsx` là chỗ duy nhất chạm `MapView`. Màn khác cần bản đồ thì dùng component này.
+- `components/nooka/fake-map.tsx` vẫn còn, nhưng **chỉ** cho màn đặt pin lúc check-in. Đó là bản đồ trang trí, không phải bản đồ thật.
+- Style bản đồ dựng từ token theme ở `features/nooka/map-style.ts`. Không có hex nào trong đó — bản đồ đổi theo light/dark như mọi bề mặt khác. `customMapStyle` chỉ ăn với `PROVIDER_GOOGLE`.
+- **Không dùng `<Marker>` có view con.** Trên Android + New Architecture, nội dung ghim bị xén theo một khổ cố định: mất nửa phải của tên và mất luôn mép bo. Đây là lỗi thư viện — [issue #5877](https://github.com/react-native-maps/react-native-maps/issues/5877), đúng tổ hợp Expo SDK 54 / RN 0.81 / Fabric, đã bị đóng "not planned". Cách duy nhất issue đó nêu là tắt New Architecture, mà Expo Go bản SDK 54 chỉ chạy New Architecture. Đã thử và **không** ăn thua: giữ `tracksViewChanges={true}` mãi, và đóng cứng width/height đo được — cả hai đều vẫn bị xén, vì đây là lỗi đo chứ không phải lỗi thời điểm chụp. iOS không dính nên đừng tin vào việc "máy mình nhìn ổn".
+- Nên ghim là **view thường trong lớp phủ trên bản đồ**, chiếu toạ độ sang pixel theo `region`. Đánh đổi: ghim bám `onRegionChange` nên vuốt rất nhanh có thể trễ một nhịp. Vài ghim thì không thấy; hàng trăm ghim thì phải làm lại chỗ này.
+- **Prop chỉ đọc lúc mount không đáng tin.** `initialRegion` bị bỏ qua khi `MapView` remount (đổi theme làm remount vì Android không áp lại `customMapStyle`), do Fabric tái dùng view trong pool — bản đồ hiện ra ở camera thừa kế của view cũ. Khôi phục bằng `onMapReady`, đừng tin `initialRegion`.
+- Vùng khởi tạo là bán kính quanh người dùng, **không** phải `regionFor` ôm hết địa điểm: màn hình cao và hẹp nên Google nới bề dọc cho vừa bề ngang rồi làm tròn lên mức zoom kế tiếp, kết quả là lùi ra tận Long An và ghim dồn thành một cục.
+- Toạ độ địa điểm nằm ở `features/nooka/spots.ts`; `distanceM` **tính từ toạ độ**, không viết tay. Sửa toạ độ là khoảng cách tự đúng theo.
+
+**API key.** Expo Go không cần key. Build độc lập thì cần, và key **không được commit** — `app.config.js` đọc từ `GOOGLE_MAPS_ANDROID_KEY` / `GOOGLE_MAPS_IOS_KEY` và chỉ thêm plugin khi có. Đặt qua `eas secret:create` hoặc `.env.local`.
+
+**§13 vẫn giữ:** `showsUserLocation` để tắt. Chấm vị trí vẽ từ hằng số `USER_LOCATION`, không phải từ GPS. Bật prop đó lên là bắt đầu đọc vị trí liên tục — đúng thứ spec cấm.
+
+Sheet ba điểm dừng ở `components/nooka/bottom-sheet.tsx` dùng gesture-handler + Reanimated, nên `GestureHandlerRootView` phải ở `app/_layout.tsx`. Bỏ nó ra thì cử chỉ im lặng không chạy, không có lỗi nào hiện.
+
+## Linh vật
+
+Có **hai** linh vật, làm hai việc khác nhau — đừng gộp:
+
+- `components/nooka/nooka-mascot.tsx` — ảnh xuất từ clip, đứng yên ở thanh "Hỏi Nooka" ngoài Home. Là nhãn thương hiệu.
+- `components/nooka/nooka-sprite.tsx` — Nooka pixel, chạy theo trạng thái ở thanh nhắn tin của `app/ask.tsx`. Báo **máy đang làm gì**: vẫy tay khi chờ, cầm kính lúp khi đọc review, reo khi có kết quả, rồi đứng im.
+
+**Khung hình sinh tự động.** `features/nooka/mascot-frames.ts` là file sinh ra, đừng sửa tay — lệch một cột là hỏng cả hình mà nhìn code không thấy. Sửa hình thì sửa `scripts/build-mascot-sprite.js` rồi chạy `node scripts/build-mascot-sprite.js`. Xem lại bằng mắt trước khi commit:
+
+```bash
+node scripts/build-mascot-sprite.js /tmp/f.json && node scripts/preview-mascot-sprite.js /tmp/f.json /tmp/f.png
+```
+
+**Vẽ bằng SVG, không phải View.** Một khung hình có ~150 dải pixel; vẽ bằng `View` là 150 view dựng lại ba lần mỗi giây cho một món trang trí. `spritePaths` gộp theo màu ra ~13 `Path`, cả con linh vật còn một view native. `react-native-svg` 15.12.1 có sẵn trong Expo Go nên không cần development build.
+
+**Reo mừng phải hữu hạn.** `MASCOT_ANIMATION.found` chạy 3 vòng rồi tự chuyển sang `resting`. Một linh vật nhảy không ngừng cạnh ô nhập là thứ người ta tắt app vì nó. Component cũng tôn trọng "giảm chuyển động" của hệ thống — bật lên là đứng khung đầu.
+
+## Hỏi Nooka là một đoạn chat
+
+`app/ask.tsx` giữ một mảng lượt nói, không phải một lần hỏi–đáp. Lý do là **trí nhớ**: tag của lượt trước còn hiệu lực nên hỏi tiếp là thu hẹp thêm, không phải hỏi lại từ đầu.
+
+**Lượt của Nooka chỉ được nói nó vừa làm gì** — đọc bao nhiêu review, hiểu ra tag nào, còn mấy chỗ. Mọi câu mô tả một quán phải nằm trong `ResultRow` hoặc ô trích dẫn, và phải thuộc về một người có tên. Thêm một câu kiểu "chỗ này hợp để làm việc" vào bong bóng là phá đúng thứ §6.2 khoá, dù nghe thân thiện hơn.
 
 ## Light/dark mode
 

@@ -190,6 +190,8 @@ function useDemoValue() {
       pickIntent: (intent: IntentId) =>
         setState((prev) => ({ ...prev, intent: prev.intent === intent ? null : intent, answered: true })),
       ask: () => setState((prev) => ({ ...prev, answered: true })),
+      /** Mở lại ô hỏi để sửa câu — nút "Sửa" trên thanh câu hỏi đã thu gọn. */
+      reopen: () => setState((prev) => ({ ...prev, answered: false })),
     }),
     [flash],
   );

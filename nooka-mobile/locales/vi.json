@@ -13,7 +13,7 @@
   },
   "navigation": {
     "home": "Trang chủ",
-    "map": "Bản đồ",
+    "search": "Tìm",
     "create": "Check-in",
     "saved": "Đã lưu",
     "profile": "Cá nhân",
@@ -101,16 +101,64 @@
     "fontChanged": "Đổi kiểu chữ của caption"
   },
   "map": {
-    "title": "Bản đồ",
-    "askHint": "Gõ hoặc chọn",
-    "busyNearby": "Đang đông gần bạn",
     "youAreHere": "Vị trí của bạn",
-    "pinLabel": "{{count}} ở {{spot}}"
+    "pinLabel": "{{count}} check-in tại {{spot}}",
+    "recenter": "Về vị trí của bạn",
+    "layerVisited": "Chỗ đã đi",
+    "nearbyCount": {
+      "one": "{{count}} chỗ quanh bạn",
+      "other": "{{count}} chỗ quanh bạn"
+    },
+    "nearbySource": "lọc từ tag người dùng",
+    "dragForMore": "Kéo lên để xem tất cả",
+    "sort": {
+      "busy": "Đang đông",
+      "near": "Gần bạn",
+      "friends": "Bạn bè đã tới"
+    }
   },
   "search": {
     "title": "Hỏi Nooka",
     "prompt": "Tối nay bạn cần chỗ như thế nào?",
     "placeholder": "first date, yên tĩnh, gần Q1…",
+    "universalPlaceholder": "Tìm quán, người, bài viết…",
+    "askShort": "Hỏi Nooka",
+    "edit": "Sửa",
+    "viewMap": "Xem bản đồ",
+    "nudge": "Có vẻ bạn đang tìm ý tưởng. Để Nooka dựng một danh sách?",
+    "aiBoundary": "Nooka chỉ sắp xếp lại điều người thật đã viết — không có review do AI tạo.",
+    "empty": "Chưa có kết quả nào khớp. Thử một câu khác hoặc bỏ bớt một tag.",
+    "tabs": {
+      "top": "Top",
+      "places": "Địa điểm",
+      "people": "Người",
+      "posts": "Bài viết",
+      "topics": "Chủ đề"
+    },
+    "sections": {
+      "places": "Địa điểm",
+      "people": "Người",
+      "posts": "Bài viết"
+    },
+    "opening": "Tối nay bạn cần chỗ như thế nào?",
+    "quickPick": "Hoặc chọn nhanh",
+    "composer": "Nhắn cho Nooka…",
+    "send": "Gửi",
+    "reading": "đang đọc review…",
+    "readCount": {
+      "one": "Đọc {{count}} review trong bán kính 3 km.",
+      "other": "Đọc {{count}} review trong bán kính 3 km."
+    },
+    "leftCount": {
+      "one": "Còn {{count}} chỗ.",
+      "other": "Còn {{count}} chỗ."
+    },
+    "understood": "Nooka hiểu là",
+    "nothingLeft": "Không còn chỗ nào khớp. Bỏ bớt một tag ở trên nhé.",
+    "subtitle": "đọc tag & review của người thật",
+    "restart": "Hỏi lại từ đầu",
+    "personMeta": "@{{handle}} · {{count}} người bạn cùng theo dõi",
+    "postMeta": "{{who}} · {{spot}} · {{time}}",
     "cta": "Tìm chỗ",
     "noAnswer": "Nooka đọc tag và review mà người dùng đã để lại, không xếp hạng theo quảng cáo. Gõ một câu hoặc chọn một ý ở trên.",
     "answerLine": {
@@ -137,7 +185,8 @@
       "quietMusic": "nhạc",
       "fast": "nhanh",
       "takeaway": "mang đi,mang về"
-    }
+    },
+    "noTags": "Chưa bắt được ý nào từ câu đó. Đây là những chỗ nhiều người check-in nhất quanh bạn."
   },
   "spots": {
     "workshop": {
@@ -145,7 +194,7 @@
       "shortName": "Workshop",
       "district": "Quận 1",
       "open": "Đang mở · đến 22h",
-      "busy": "9 người đang ở đây",
+      "busy": "18 check-in trong 2 giờ",
       "review": {
         "who": "Nam",
         "when": "2 ngày trước",
@@ -170,7 +219,11 @@
       "district": "Bình Thạnh",
       "open": "7h–22h",
       "busy": "Mới trên Nooka",
-      "review": { "who": "", "when": "", "text": "" }
+      "review": {
+        "who": "",
+        "when": "",
+        "text": ""
+      }
     },
     "muoi43": {
       "name": "Cà phê Muối 43",
@@ -188,7 +241,13 @@
   "spot": {
     "meta": "{{open}} · cách bạn {{distance}}",
     "checkinPhotos": "{{count}} ảnh check-in",
+    "checkins": {
+      "one": "{{count}} người đã check-in",
+      "other": "{{count}} người đã check-in"
+    },
     "newOnNooka": "Mới trên Nooka",
+    "newNoReview": "Mới trên Nooka — chưa ai check-in",
+    "viewSpot": "Xem chỗ này",
     "whatPeopleSay": "Mọi người nói gì",
     "moreReviews": "Xem {{count}} review khác",
     "noReview": "Chưa có review nào. Một câu của bạn lúc này có giá trị hơn mười câu lúc quán đông khách.",
@@ -288,5 +347,11 @@
     "lightDescription": "Luôn dùng giao diện sáng",
     "dark": "Tối",
     "darkDescription": "Luôn dùng giao diện tối"
+  },
+  "mascot": {
+    "idle": "Nooka đang chờ bạn hỏi",
+    "searching": "Nooka đang tìm",
+    "found": "Nooka đã tìm xong",
+    "resting": "Nooka đang nghỉ"
   }
 }

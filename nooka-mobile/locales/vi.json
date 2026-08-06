@@ -264,17 +264,93 @@
     "empty": "Chưa lưu chỗ nào. Bấm “Muốn đi” ở một bài hoặc một trang địa điểm, nó sẽ nằm ở đây."
   },
   "profile": {
-    "title": "Bạn",
-    "meta": "Bình Thạnh · 12 bạn",
+    "title": "Cá nhân",
+    "handle": "@duchoang",
+    "name": "Đức Hoàng",
+    "meta": "Bình Thạnh · tham gia T3 2026",
+    "bio": "Ngồi ba tiếng, gọi một cà phê.\nNhững góc yên tĩnh ở Q1 và Bình Thạnh.",
     "stats": {
       "checkins": "check-in",
       "been": "chỗ đã đi",
       "saved": "muốn đi"
     },
+    "editProfile": "Sửa hồ sơ",
+    "shareMap": "Chia sẻ bản đồ",
+    "addFriend": "Thêm bạn",
+    "tabs": {
+      "map": "Bản đồ",
+      "checkins": "Check-in",
+      "wantToGo": "Muốn đi"
+    },
+    "mapOverlay": {
+      "summary": "{{places}} chỗ · {{districts}} quận",
+      "been": "Đã đi",
+      "wantToGo": "Muốn đi"
+    },
+    "placesYouHaveBeen": "CHỖ BẠN ĐÃ GHÉ",
+    "seeAll": "Xem tất cả",
+    "checkinsSubheader": "{{checkins}} check-in · {{places}} chỗ",
+    "newest": "Mới nhất",
+    "latest": "Mới nhất",
+    "filters": {
+      "all": "Tất cả {{count}}",
+      "nearby": "Gần bạn",
+      "openLate": "Đóng muộn",
+      "cheap": "Giá rẻ"
+    },
+    "assistantBanner": "3 chỗ đang mở cửa quanh bạn lúc này.\nHỏi Nooka để thu hẹp danh sách",
     "yourCheckins": "Check-in của bạn",
     "noCheckins": "Chưa có check-in nào. Bấm + để thử luồng đăng bài.",
     "beenPlaces": "Chỗ đã đi",
     "noBeen": "Chưa đánh dấu chỗ nào là “đã đi”."
+  },
+  "editProfile": {
+    "title": "Sửa hồ sơ",
+    "changePhoto": "Đổi ảnh",
+    "name": "Tên hiển thị",
+    "namePlaceholder": "Nhập tên của bạn",
+    "username": "Tên người dùng",
+    "usernamePlaceholder": "@username",
+    "location": "Khu vực",
+    "locationPlaceholder": "Quận hoặc thành phố",
+    "bio": "Mô tả",
+    "bioPlaceholder": "Viết một câu về bản thân…",
+    "save": "Lưu",
+    "savedToast": "Đã cập nhật hồ sơ"
+  },
+  "addFriends": {
+    "title": "Thêm bạn bè",
+    "searchPlaceholder": "Tìm theo tên hoặc @username…",
+    "suggestions": "Gợi ý cho bạn",
+    "yourFriends": "Bạn bè của bạn ({{count}})",
+    "inviteTitle": "Mời bạn bè tham gia Nooka",
+    "inviteDesc": "Chia sẻ trang cá nhân của bạn cho bạn bè",
+    "shareLink": "Chia sẻ link",
+    "syncContacts": "Đồng bộ danh bạ",
+    "syncDesc": "Tìm bạn bè đang dùng Nooka từ danh bạ",
+    "add": "Kết bạn",
+    "requested": "Đã gửi",
+    "message": "Nhắn tin",
+    "mutualFriends": "{{count}} bạn chung",
+    "copiedToast": "Đã sao chép link mời"
+  },
+  "shareMap": {
+    "title": "Chia sẻ bản đồ",
+    "mapCardTitle": "Bản đồ của Đức Hoàng",
+    "mapCardSubtitle": "{{places}} địa điểm đã ghé tại {{districts}} quận",
+    "privacySection": "Ai có thể xem bản đồ này?",
+    "privacyPublic": "Công khai",
+    "privacyPublicDesc": "Bất kỳ ai có liên kết đều xem được",
+    "privacyFriends": "Chỉ bạn bè",
+    "privacyFriendsDesc": "Chỉ những người bạn theo dõi lại mới xem được",
+    "privacyPrivate": "Riêng tư",
+    "privacyPrivateDesc": "Chỉ mình bạn xem được",
+    "copyLink": "Sao chép link bản đồ",
+    "sendInMessages": "Gửi qua tin nhắn",
+    "savePoster": "Lưu ảnh bản đồ",
+    "moreOptions": "Tùy chọn khác…",
+    "linkCopiedToast": "Đã sao chép link bản đồ",
+    "posterSavedToast": "Đã lưu ảnh bản đồ vào Thư viện"
   },
   "camera": {
     "title": "Check-in",

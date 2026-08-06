@@ -1,7 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  FlatList,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { AskNookaBar, Button, Chip, Photo, ScreenShell } from '@/components/nooka/ui';
 import { formatDistance, spotDistrict, spotName, tagLabel } from '@/features/nooka/labels';
@@ -20,7 +30,36 @@ export default function HomeScreen() {
   const [stripOpen, setStripOpen] = useState(false);
   const [cardHeight, setCardHeight] = useState(0);
 
+  const animHeight = useSharedValue(1);
+
   const stripVisible = scrolled ? stripOpen : true;
+
+  useEffect(() => {
+    animHeight.value = withTiming(stripVisible ? 1 : 0, { duration: 250 });
+  }, [stripVisible, animHeight]);
+
+  const animatedStripStyle = useAnimatedStyle(() => ({
+    maxHeight: animHeight.value * 95,
+    opacity: animHeight.value,
+    transform: [{ translateY: (1 - animHeight.value) * -12 }],
+    overflow: 'hidden',
+  }));
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const currentY = event.nativeEvent.contentOffset.y;
+
+    if (currentY <= 20) {
+      if (scrolled) {
+        setScrolled(false);
+        setStripOpen(false);
+      }
+    } else if (currentY > 40) {
+      if (!scrolled) {
+        setScrolled(true);
+        setStripOpen(false);
+      }
+    }
+  };
 
   return (
     <ScreenShell testID="home-screen">
@@ -40,73 +79,110 @@ export default function HomeScreen() {
 
       <AskNookaBar onPress={() => router.push('/ask')} />
 
-      {stripVisible ? (
-        <View style={[styles.strip, { borderColor: colors.borderSubtle }]}>
-          <Pressable accessibilityLabel={t('home.checkin')} accessibilityRole="button" onPress={startCheckin} style={styles.stripItem}>
-            <View style={[styles.stripCircle, styles.stripAdd, { backgroundColor: colors.inverseSurface }]}>
-              <Ionicons color={colors.onInverse} name="add" size={22} />
+      <View style={styles.feedWrapper}>
+        {!scrolled ? (
+          <Animated.View style={[animatedStripStyle, styles.inlineStripOverlay]}>
+            <View style={[styles.strip, { borderColor: colors.borderSubtle, backgroundColor: colors.background }]}>
+              <Pressable accessibilityLabel={t('home.checkin')} accessibilityRole="button" onPress={startCheckin} style={styles.stripItem}>
+                <View style={[styles.stripCircle, styles.stripAdd, { backgroundColor: colors.inverseSurface }]}>
+                  <Ionicons color={colors.onInverse} name="add" size={22} />
+                </View>
+                <Text numberOfLines={1} style={[styles.stripLabel, { color: colors.textMuted }]}>{t('home.checkin')}</Text>
+              </Pressable>
+              {FRIENDS.map((friend, index) => (
+                <Pressable
+                  accessibilityLabel={t(`friends.${friend.id}`)}
+                  accessibilityRole="button"
+                  key={friend.id}
+                  onPress={() => router.push({ pathname: '/story/[index]', params: { index: index } })}
+                  style={styles.stripItem}>
+                  <Photo
+                    style={[styles.stripCircle, { borderWidth: friend.live ? 2.5 : 0, borderColor: colors.accentStrong }]}
+                    tint={friend.tint}
+                  />
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.stripLabel,
+                      { color: friend.live ? colors.text : colors.textMuted, fontWeight: friend.live ? '700' : '600' },
+                    ]}>
+                    {t(`friends.${friend.id}`)}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
-            <Text numberOfLines={1} style={[styles.stripLabel, { color: colors.textMuted }]}>{t('home.checkin')}</Text>
-          </Pressable>
-          {FRIENDS.map((friend, index) => (
-            <Pressable
-              accessibilityLabel={t(`friends.${friend.id}`)}
-              accessibilityRole="button"
-              key={friend.id}
-              onPress={() => router.push({ pathname: '/story/[index]', params: { index: index } })}
-              style={styles.stripItem}>
-              <Photo
-                style={[styles.stripCircle, { borderWidth: friend.live ? 2.5 : 0, borderColor: colors.accentStrong }]}
-                tint={friend.tint}
+          </Animated.View>
+        ) : null}
+
+        {scrolled ? (
+          <View style={styles.stripOverlayContainer}>
+            <Animated.View
+              style={[
+                animatedStripStyle,
+                styles.stripOverlayCard,
+                { backgroundColor: colors.surface, borderColor: colors.borderSubtle, shadowColor: colors.text },
+              ]}>
+              <View style={styles.strip}>
+                <Pressable accessibilityLabel={t('home.checkin')} accessibilityRole="button" onPress={startCheckin} style={styles.stripItem}>
+                  <View style={[styles.stripCircle, styles.stripAdd, { backgroundColor: colors.inverseSurface }]}>
+                    <Ionicons color={colors.onInverse} name="add" size={22} />
+                  </View>
+                  <Text numberOfLines={1} style={[styles.stripLabel, { color: colors.textMuted }]}>{t('home.checkin')}</Text>
+                </Pressable>
+                {FRIENDS.map((friend, index) => (
+                  <Pressable
+                    accessibilityLabel={t(`friends.${friend.id}`)}
+                    accessibilityRole="button"
+                    key={friend.id}
+                    onPress={() => router.push({ pathname: '/story/[index]', params: { index: index } })}
+                    style={styles.stripItem}>
+                    <Photo
+                      style={[styles.stripCircle, { borderWidth: friend.live ? 2.5 : 0, borderColor: colors.accentStrong }]}
+                      tint={friend.tint}
+                    />
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.stripLabel,
+                        { color: friend.live ? colors.text : colors.textMuted, fontWeight: friend.live ? '700' : '600' },
+                      ]}>
+                      {t(`friends.${friend.id}`)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </Animated.View>
+
+            <View style={styles.stripToggleRow}>
+              <Chip
+                label={stripOpen ? t('home.journalOpen') : t('home.journalClosed')}
+                onPress={() => setStripOpen((open) => !open)}
               />
-              <Text
-                numberOfLines={1}
-                style={[
-                  styles.stripLabel,
-                  { color: friend.live ? colors.text : colors.textMuted, fontWeight: friend.live ? '700' : '600' },
-                ]}>
-                {t(`friends.${friend.id}`)}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
-
-      {scrolled ? (
-        <View style={styles.stripToggleRow}>
-          <Chip
-            label={stripOpen ? t('home.journalOpen') : t('home.journalClosed')}
-            onPress={() => setStripOpen((open) => !open)}
-          />
-        </View>
-      ) : null}
-
-      <View onLayout={(event) => setCardHeight(event.nativeEvent.layout.height)} style={styles.feedArea}>
-        {demo.feed.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('home.emptyTitle')}</Text>
-            <Text style={[styles.emptyBody, { color: colors.textMuted }]}>{t('home.emptyBody')}</Text>
-            <Button label={t('home.emptyCta')} onPress={() => router.push('/ask')} style={styles.emptyCta} />
+            </View>
           </View>
-        ) : (
-          <FlatList
-            data={demo.feed}
-            decelerationRate="fast"
-            keyExtractor={(post) => post.id}
-            onScroll={(event) => {
-              const next = event.nativeEvent.contentOffset.y > 30;
-              if (next !== scrolled) {
-                setScrolled(next);
-                setStripOpen(false);
-              }
-            }}
-            renderItem={({ item }) => <FeedCard height={cardHeight} post={item} />}
-            scrollEventThrottle={32}
-            showsVerticalScrollIndicator={false}
-            snapToAlignment="start"
-            snapToInterval={cardHeight || undefined}
-          />
-        )}
+        ) : null}
+
+        <View onLayout={(event) => setCardHeight(event.nativeEvent.layout.height)} style={styles.feedArea}>
+          {demo.feed.length === 0 ? (
+            <View style={styles.empty}>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('home.emptyTitle')}</Text>
+              <Text style={[styles.emptyBody, { color: colors.textMuted }]}>{t('home.emptyBody')}</Text>
+              <Button label={t('home.emptyCta')} onPress={() => router.push('/ask')} style={styles.emptyCta} />
+            </View>
+          ) : (
+            <FlatList
+              data={demo.feed}
+              decelerationRate="fast"
+              keyExtractor={(post) => post.id}
+              onScroll={handleScroll}
+              renderItem={({ item, index }) => <FeedCard height={cardHeight} isFirstPost={index === 0} post={item} />}
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={false}
+              snapToAlignment="start"
+              snapToInterval={cardHeight || undefined}
+            />
+          )}
+        </View>
       </View>
 
       <TagSheet />
@@ -114,7 +190,7 @@ export default function HomeScreen() {
   );
 }
 
-function FeedCard({ post, height }: { post: FeedPost; height: number }) {
+function FeedCard({ post, height, isFirstPost }: { post: FeedPost; height: number; isFirstPost?: boolean }) {
   const router = useRouter();
   const { colors } = useNookaTheme();
   const demo = useNookaDemo();
@@ -124,7 +200,7 @@ function FeedCard({ post, height }: { post: FeedPost; height: number }) {
   const openSpot = () => router.push({ pathname: '/spot/[id]', params: { id: post.spot } });
 
   return (
-    <View style={[styles.card, height ? { height } : null]}>
+    <View style={[styles.card, height ? { height } : null, isFirstPost ? styles.firstCardPadding : null]}>
       <View style={styles.cardAuthor}>
         <View style={[styles.cardAvatar, { backgroundColor: colors.avatarDefault }]} />
         <Text style={[styles.cardAuthorName, { color: colors.text }]}>{author}</Text>
@@ -243,7 +319,36 @@ const styles = StyleSheet.create({
   stripCircle: { width: 52, height: 52, borderRadius: 26 },
   stripAdd: { alignItems: 'center', justifyContent: 'center' },
   stripLabel: { fontSize: 11, lineHeight: 15, fontWeight: '600' },
-  stripToggleRow: { alignItems: 'center', paddingTop: 9, paddingBottom: 3 },
+  stripToggleRow: { alignItems: 'center', paddingVertical: 4, zIndex: 100 },
+  feedWrapper: { flex: 1, position: 'relative' },
+  inlineStripOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  firstCardPadding: {
+    paddingTop: 88,
+  },
+  stripOverlayContainer: {
+    position: 'absolute',
+    top: 6,
+    left: 20,
+    right: 20,
+    zIndex: 99,
+    alignItems: 'center',
+    gap: 6,
+  },
+  stripOverlayCard: {
+    width: '100%',
+    borderRadius: 20,
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+  },
   feedArea: { flex: 1, paddingHorizontal: 20 },
   empty: { paddingTop: 22 },
   emptyTitle: { fontSize: 19, lineHeight: 26, fontWeight: '800', letterSpacing: -0.4 },

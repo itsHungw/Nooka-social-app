@@ -85,7 +85,7 @@ export default function AskNookaScreen() {
 
   const synonyms = useMemo(() => tagSynonyms(TAG_IDS), []);
   const answered = turns.length > 0;
-  const padBottom = Math.max(insets.bottom, 6) + 16;
+  const padBottom = Math.max(insets.bottom, 6) + 4;
 
   // Chờ thì Nooka được đi lang thang; đang đọc review hay vừa reo mừng thì
   // `useMascotStage` giữ nó ở bên trái ô nhập để còn thấy nó đang làm gì.
@@ -224,7 +224,7 @@ export default function AskNookaScreen() {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={8}
+        keyboardVerticalOffset={0}
         style={styles.fill}>
         <ScrollView
           contentContainerStyle={styles.thread}
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
   readingBar: { width: 92, height: 4, borderRadius: 2, overflow: 'hidden' },
   readingFill: { width: '62%', height: '100%', borderRadius: 2 },
   reading: { fontSize: 12.5, lineHeight: 17, fontWeight: '600' },
-  composer: { paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1 },
+  composer: { paddingHorizontal: 16, paddingTop: 8, borderTopWidth: 1 },
   // `left` khớp `composer.paddingHorizontal`: chỗ ở là mép trái của hàng nhập.
   mascotLayer: { position: 'absolute', left: 16 },
   // `paddingLeft` là chỗ chừa cứng cho Nooka — cố định nên ô nhập và nút gửi

@@ -64,6 +64,9 @@ function RootNavigator() {
         <Stack.Screen name="caption" options={{ animation: 'slide_from_right', headerShown: false }} />
         <Stack.Screen name="review" options={{ animation: 'slide_from_bottom', headerShown: false }} />
         <Stack.Screen name="settings" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="edit-profile" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="add-friends" options={{ animation: 'slide_from_bottom', headerShown: false }} />
+        <Stack.Screen name="share-map" options={{ animation: 'slide_from_bottom', headerShown: false }} />
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>

@@ -2,7 +2,7 @@
 
 > Snapshot kỹ thuật lâu dài cho `nooka-api`. Product spec, migration và source hiện tại vẫn là nguồn sự thật cao hơn.
 
-**Cập nhật gần nhất:** 2026-08-04
+**Cập nhật gần nhất:** 2026-08-07
 
 ## Repository
 
@@ -20,6 +20,7 @@
 - Spring Security + Firebase Admin SDK cho Firebase JWT boundary.
 - springdoc-openapi 3.0.3, mặc định tắt bằng config.
 - Testcontainers 1.21.3 với PostgreSQL thật.
+- Spring Data Redis dùng Redis Docker cho cache route preview; chưa thêm Caffeine.
 
 ## Kiến trúc đã triển khai
 
@@ -39,6 +40,7 @@ Quy tắc đang được test:
 - Không tạo cross-module JPA association: Post giữ `authorId`/`spotId`; Spot giữ `createdById`.
 - `Visibility` nằm trong `shared.model` để tránh dependency cycle `user ↔ post`.
 - Package đầy đủ dùng `package-info.java`, không dùng `.gitkeep`.
+- `directions.cache` giữ `RoutePreviewCache` port và Redis adapter; `RoutePreviewService` không phụ thuộc trực tiếp vào Redis để sau này thêm Caffeine decorator.
 
 ## Post privacy
 

@@ -151,6 +151,7 @@ function Set-ProcessEnvironment {
     }
 
     [System.Environment]::SetEnvironmentVariable('DB_HOST', 'localhost', 'Process')
+    [System.Environment]::SetEnvironmentVariable('REDIS_HOST', 'localhost', 'Process')
 }
 
 function Resolve-FirebaseCredentials {
@@ -217,6 +218,44 @@ function Wait-PostgresHealthy {
     throw 'PostgreSQL did not become healthy within 120 seconds.'
 }
 
+function Wait-RedisHealthy {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$ComposeArguments
+    )
+
+    $containerId = ''
+    for ($attempt = 1; $attempt -le 10; $attempt++) {
+        $containerIds = @(& docker @ComposeArguments ps -q redis)
+        $composeExitCode = $LASTEXITCODE
+        if ($composeExitCode -eq 0 -and $containerIds.Count -gt 0 `
+                -and -not [string]::IsNullOrWhiteSpace([string]$containerIds[0])) {
+            $containerId = ([string]$containerIds[0]).Trim()
+            break
+        }
+        Start-Sleep -Seconds 1
+    }
+    if ([string]::IsNullOrWhiteSpace($containerId)) {
+        throw 'Could not resolve the Redis container after Compose startup.'
+    }
+
+    for ($attempt = 1; $attempt -le 60; $attempt++) {
+        $health = (& docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' $containerId 2>$null | Out-String).Trim()
+        if ($LASTEXITCODE -eq 0) {
+            if ($health -eq 'healthy' -or $health -eq 'running') {
+                return
+            }
+            if ($health -eq 'unhealthy' -or $health -eq 'exited' -or $health -eq 'dead') {
+                & docker @ComposeArguments logs --no-color --tail 100 redis
+                throw "Redis container entered state '$health'."
+            }
+        }
+        Start-Sleep -Seconds 2
+    }
+
+    & docker @ComposeArguments logs --no-color --tail 100 redis
+    throw 'Redis did not become healthy within 120 seconds.'
+}
 $envPath = Resolve-ProjectPath $EnvFile
 $values = Read-DotEnv $envPath
 
@@ -225,6 +264,11 @@ $dbUser = Get-RequiredValue $values 'NOOKA_DB_USER'
 $dbPassword = Get-RequiredValue $values 'NOOKA_DB_PASSWORD'
 $dbPort = ConvertTo-PortValue 'NOOKA_DB_PORT' (Get-RequiredValue $values 'NOOKA_DB_PORT')
 $apiPort = ConvertTo-PortValue 'NOOKA_API_PORT' (Get-RequiredValue $values 'NOOKA_API_PORT')
+$redisPortText = Get-OptionalValue $values 'NOOKA_REDIS_PORT'
+if ([string]::IsNullOrWhiteSpace($redisPortText)) {
+    $redisPortText = '6379'
+}
+$redisPort = ConvertTo-PortValue 'NOOKA_REDIS_PORT' $redisPortText
 $authEnabled = ConvertTo-BooleanValue 'NOOKA_AUTH_ENABLED' (Get-RequiredValue $values 'NOOKA_AUTH_ENABLED')
 $openApiEnabled = ConvertTo-BooleanValue 'NOOKA_OPENAPI_ENABLED' (Get-RequiredValue $values 'NOOKA_OPENAPI_ENABLED')
 $firebaseProjectId = Get-OptionalValue $values 'NOOKA_FIREBASE_PROJECT_ID'
@@ -236,6 +280,8 @@ $mapping = @{
     NOOKA_DB_PASSWORD = 'DB_PASSWORD'
     NOOKA_DB_PORT = 'DB_PORT'
     NOOKA_API_PORT = 'PORT'
+    NOOKA_REDIS_PORT = 'REDIS_PORT'
+    NOOKA_REDIS_PASSWORD = 'REDIS_PASSWORD'
     NOOKA_AUTH_ENABLED = 'AUTH_ENABLED'
     NOOKA_FIREBASE_PROJECT_ID = 'FIREBASE_PROJECT_ID'
     NOOKA_OPENAPI_ENABLED = 'OPENAPI_ENABLED'
@@ -252,6 +298,7 @@ if ($authEnabled -and $credentialSource -eq 'host ADC fallback') {
 
 Write-Output "Environment file: $envPath"
 Write-Output "Database: localhost:$dbPort/$dbName"
+Write-Output "Redis: localhost:$redisPort"
 Write-Output "API port: $apiPort"
 Write-Output "OpenAPI: $(if ($openApiEnabled) { 'enabled' } else { 'disabled' })"
 Write-Output "Authentication: $(if ($authEnabled) { 'enabled' } else { 'disabled' })"
@@ -268,12 +315,14 @@ if ($Check) {
 if (-not $SkipDatabase) {
     $composeFile = Join-Path $PSScriptRoot 'infra\compose.yaml'
     $composeArguments = @('compose', '--env-file', $envPath, '-f', $composeFile)
-    & docker @composeArguments up -d postgres
+    & docker @composeArguments up -d postgres redis
     if ($LASTEXITCODE -ne 0) {
-        throw "Docker Compose failed to start PostgreSQL with exit code $LASTEXITCODE."
+        throw "Docker Compose failed to start PostgreSQL and Redis with exit code $LASTEXITCODE."
     }
     Wait-PostgresHealthy $composeArguments
+    Wait-RedisHealthy $composeArguments
     Write-Output 'PostgreSQL: healthy'
+    Write-Output 'Redis: healthy'
 }
 
 $mavenWrapper = Join-Path $PSScriptRoot 'mvnw.cmd'

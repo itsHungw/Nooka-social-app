@@ -24,6 +24,9 @@ import {
   type SpotId,
   type TagId,
 } from '@/features/nooka/spots';
+import { useNearbyPlaces } from '@/features/nooka/use-nearby-places';
+import { distanceMeters } from '@/features/nooka/geo';
+import { useUserLocation } from '@/features/nooka/use-user-location';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
 import { useNookaDemo } from '@/providers/nooka-demo-provider';
@@ -58,6 +61,8 @@ export default function SearchTabScreen() {
   const { colors } = useNookaTheme();
   const insets = useSafeAreaInsets();
   const demo = useNookaDemo();
+  const location = useUserLocation();
+  const nearby = useNearbyPlaces(location.coordinate, 2000);
   const mapRef = useRef<NookaMapHandle>(null);
 
   const [containerHeight, setContainerHeight] = useState(0);
@@ -74,12 +79,19 @@ export default function SearchTabScreen() {
   }, [containerHeight]);
 
   const results = useMemo(() => {
-    const ordered = SORT_ORDER[sort];
+    const ordered = [...SORT_ORDER[sort]];
+    if (sort === 'near') {
+      ordered.sort(
+        (left, right) =>
+          distanceMeters(location.coordinate, SPOTS[left].coordinate) -
+          distanceMeters(location.coordinate, SPOTS[right].coordinate),
+      );
+    }
     return ordered.filter((id) => {
       if (visitedOnly && !demo.isBeen(id)) return false;
       return activeTags.every((tag) => SPOTS[id].tags.some((spotTag) => spotTag.id === tag));
     });
-  }, [sort, activeTags, visitedOnly, demo]);
+  }, [sort, activeTags, visitedOnly, demo, location.coordinate]);
 
   // Ghim đang chọn mà bị lọc mất thì bỏ chọn, nếu không sheet sẽ hiện preview
   // của một chỗ không còn trên bản đồ.
@@ -114,10 +126,13 @@ export default function SearchTabScreen() {
           mapPadding={{ top: insets.top + 110, bottom: snapHeights[snapIndex] }}
           onPressMap={() => setSelected(null)}
           onSelectSpot={pickSpot}
+          pins={nearby.places}
           ref={mapRef}
           selectedSpot={selected}
           spots={results}
           style={StyleSheet.absoluteFill}
+          userLocation={location.coordinate}
+          userLocationIsLive={location.isLive}
         />
 
         <View pointerEvents="box-none" style={[styles.top, { paddingTop: insets.top + 8 }]}>
@@ -127,7 +142,11 @@ export default function SearchTabScreen() {
             horizontal
             keyboardShouldPersistTaps="handled"
             showsHorizontalScrollIndicator={false}>
-            <Chip floating label={t('home.location')} trailing="▾" />
+            <Chip
+              floating
+              label={location.isLive ? t('map.youAreHere') : t('home.location')}
+              trailing="▾"
+            />
             {FILTER_TAGS.map((tag) => (
               <Chip
                 floating
@@ -143,7 +162,8 @@ export default function SearchTabScreen() {
 
         <View
           pointerEvents="box-none"
-          style={[styles.controls, { bottom: snapHeights[snapIndex] + 16 }]}>
+          style={[styles.controls, { bottom: snapHeights[snapIndex] + insets.bottom + 12 }]}
+        >
           <Chip
             floating
             label={t('map.layerVisited')}
@@ -208,13 +228,42 @@ export default function SearchTabScreen() {
             />
           ) : (
             <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-              {results.length === 0 ? (
+              {nearby.loading ? (
+                <Text style={[styles.empty, { color: colors.textMuted }]}>{t('map.googleLoading')}</Text>
+              ) : nearby.error ? (
+                <Text style={[styles.empty, { color: colors.textMuted }]}>{t('map.googleError')}</Text>
+              ) : nearby.places.length > 0 ? (
+                <>
+                  {nearby.places.map((place) => (
+                    <ResultRow
+                      key={place.placeId}
+                      distance={formatDistance(
+                        Math.round(
+                          distanceMeters(location.coordinate, {
+                            latitude: place.lat,
+                            longitude: place.lng,
+                          }),
+                        ),
+                      )}
+                      onPress={() => {
+                        // Future: focusPin via mapRef.current?.focusPin?.(place.placeId)
+                      }}
+                      reason={place.vicinity}
+                      tags={place.types.slice(0, 2).join(' · ')}
+                      tint="photoSand"
+                      title={place.name}
+                    />
+                  ))}
+                </>
+              ) : results.length === 0 ? (
                 <Text style={[styles.empty, { color: colors.textMuted }]}>{t('search.empty')}</Text>
               ) : (
                 results.map((id) => (
                   <ResultRow
                     badge={SPOTS[id].isNew ? t('pin.new') : undefined}
-                    distance={formatDistance(SPOTS[id].distanceM)}
+                    distance={formatDistance(
+                      Math.round(distanceMeters(location.coordinate, SPOTS[id].coordinate)),
+                    )}
                     key={id}
                     onPress={() => pickSpot(id)}
                     reason={checkinLine(id)}
@@ -224,7 +273,7 @@ export default function SearchTabScreen() {
                   />
                 ))
               )}
-              {snapIndex === 0 && results.length > 2 ? (
+              {snapIndex === 0 && nearby.places.length + results.length > 2 ? (
                 <Text style={[styles.more, { color: colors.textSubtle }]}>{t('map.dragForMore')}</Text>
               ) : null}
             </ScrollView>
@@ -251,23 +300,25 @@ function SearchBar({ onPress }: { onPress: () => void }) {
   const router = useRouter();
 
   return (
-    <Pressable
-      accessibilityLabel={t('search.universalPlaceholder')}
-      accessibilityRole="search"
-      onPress={onPress}
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.bar,
         {
           backgroundColor: colors.surface,
           borderColor: colors.borderSubtle,
           shadowColor: colors.shadow,
-          opacity: pressed ? 0.9 : 1,
         },
       ]}>
-      <Ionicons color={colors.textMuted} name="search" size={17} />
-      <Text numberOfLines={1} style={[styles.barText, { color: colors.textSubtle }]}>
-        {t('search.universalPlaceholder')}
-      </Text>
+      <Pressable
+        accessibilityLabel={t('search.universalPlaceholder')}
+        accessibilityRole="search"
+        onPress={onPress}
+        style={({ pressed }) => [styles.barSearch, { opacity: pressed ? 0.72 : 1 }]}>
+        <Ionicons color={colors.textMuted} name="search" size={17} />
+        <Text numberOfLines={1} style={[styles.barText, { color: colors.textSubtle }]}>
+          {t('search.universalPlaceholder')}
+        </Text>
+      </Pressable>
       <Pressable
         accessibilityLabel={t('search.askShort')}
         accessibilityRole="button"
@@ -279,7 +330,7 @@ function SearchBar({ onPress }: { onPress: () => void }) {
         <View style={[styles.askRing, { borderColor: colors.accent }]} />
         <Text style={[styles.askText, { color: colors.onInverse }]}>{t('search.askShort')}</Text>
       </Pressable>
-    </Pressable>
+    </View>
   );
 }
 
@@ -371,21 +422,21 @@ const styles = StyleSheet.create({
     paddingRight: 7,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.13,
     shadowRadius: 16,
     elevation: 6,
   },
+  barSearch: { alignItems: 'center', flex: 1, flexDirection: 'row', gap: 10, minHeight: 44, minWidth: 0 },
   barText: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 19, fontWeight: '600', letterSpacing: -0.2 },
   askPill: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
     borderRadius: 999,
     paddingLeft: 11,
     paddingRight: 13,
-    paddingVertical: 9,
   },
   askRing: { width: 13, height: 13, borderRadius: 7, borderWidth: 2 },
   askText: { fontSize: 13, lineHeight: 18, fontWeight: '700', letterSpacing: -0.2 },

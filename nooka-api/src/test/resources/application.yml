@@ -1,3 +1,9 @@
+spring:
+  data:
+    redis:
+      repositories:
+        enabled: false
+
 nooka:
   security:
     enabled: false

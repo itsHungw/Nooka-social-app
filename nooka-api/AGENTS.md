@@ -185,3 +185,26 @@ Khi thêm endpoint:
 - Không lưu secret, token, dữ liệu người dùng hoặc suy đoán chưa xác nhận.
 - Phân biệt rõ “đã triển khai”, “đã quyết định” và “chưa triển khai”.
 - Xoá hoặc sửa thông tin cũ khi trạng thái thay đổi; không chỉ nối thêm ghi chú mâu thuẫn.
+## Kiến trúc feature bắt buộc
+
+Feature mới trong backend phải tách folder theo trách nhiệm, đặt dưới package của feature:
+
+```text
+<feature>/
+├── controller/        # REST endpoints
+├── service/            # business logic và use case
+├── repository/        # Spring Data JPA repositories, chỉ khi feature có persistence
+├── model/
+│   ├── entity/        # JPA entities, chỉ khi feature có persistence
+│   ├── dto/           # request/response DTOs
+│   └── enums/         # feature enums xuất hiện trong contract
+├── mapper/            # entity <-> DTO mappers, chỉ khi mapping đủ phức tạp
+├── integration/       # external provider clients
+├── cache/             # cache ports/adapters, only when the feature caches external results
+└── config/            # feature-specific configuration
+```
+
+Không tạo folder rỗng hoặc dependency chỉ để khớp cây thư mục. Feature không có database không cần `repository/`, `model/entity/` hay `mapper/`. Controller chỉ parse/validate request và gọi service; service giữ use case; integration giữ HTTP/provider code; cache giữ port và adapter (Redis/Caffeine), không để business service phụ thuộc provider cache cụ thể; API chỉ expose DTO, không expose entity; secret chỉ đọc từ environment hoặc secret manager.
+## Quyết định location mới — August 6, 2026
+
+Mobile được phép dùng foreground GPS khi tab Search đang mở để cập nhật chấm xanh. Backend không nhận stream location, không lưu lịch sử di chuyển và không thực hiện background tracking. Endpoint route preview chỉ nhận một origin snapshot do user chủ động yêu cầu.

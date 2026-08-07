@@ -15,6 +15,25 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    environment:
+      REDIS_PASSWORD: "${NOOKA_REDIS_PASSWORD:-}"
+    command: >-
+      /bin/sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"; else exec redis-server --appendonly yes; fi'
+    ports:
+      - "${NOOKA_REDIS_PORT:-6379}:6379"
+    volumes:
+      - nooka-redisdata:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          if [ -n "$$REDIS_PASSWORD" ]; then redis-cli --no-auth-warning -a "$$REDIS_PASSWORD" ping | grep PONG; else redis-cli ping | grep PONG; fi
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   api:
     build:
       context: ..
@@ -25,15 +44,31 @@ services:
       DB_NAME: "${NOOKA_DB_NAME:-nooka}"
       DB_USER: "${NOOKA_DB_USER:-nooka}"
       DB_PASSWORD: "${NOOKA_DB_PASSWORD:-nooka}"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: "${NOOKA_REDIS_PASSWORD:-}"
+      DIRECTIONS_CACHE_ENABLED: "${DIRECTIONS_CACHE_ENABLED:-true}"
+      DIRECTIONS_CACHE_TTL: "${DIRECTIONS_CACHE_TTL:-PT15M}"
+      DIRECTIONS_CACHE_KEY_PREFIX: "${DIRECTIONS_CACHE_KEY_PREFIX:-nooka:directions:route:v1}"
+      DIRECTIONS_CACHE_ORIGIN_GRID_DECIMALS: "${DIRECTIONS_CACHE_ORIGIN_GRID_DECIMALS:-3}"
+      DIRECTIONS_CACHE_DESTINATION_GRID_DECIMALS: "${DIRECTIONS_CACHE_DESTINATION_GRID_DECIMALS:-5}"
       PORT: "8080"
       AUTH_ENABLED: "${NOOKA_AUTH_ENABLED:-false}"
       FIREBASE_PROJECT_ID: "${NOOKA_FIREBASE_PROJECT_ID:-}"
       OPENAPI_ENABLED: "${NOOKA_OPENAPI_ENABLED:-true}"
+      DIRECTIONS_PROVIDER: "${DIRECTIONS_PROVIDER:-mapbox}"
+      MAPBOX_ACCESS_TOKEN: "${MAPBOX_ACCESS_TOKEN:-}"
+      MAPBOX_DIRECTIONS_BASE_URL: "${MAPBOX_DIRECTIONS_BASE_URL:-https://api.mapbox.com}"
+      GOOGLE_ROUTES_API_KEY: "${GOOGLE_ROUTES_API_KEY:-}"
+      GOOGLE_ROUTES_BASE_URL: "${GOOGLE_ROUTES_BASE_URL:-https://routes.googleapis.com}"
     ports:
       - "${NOOKA_API_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   nooka-pgdata:
+  nooka-redisdata:

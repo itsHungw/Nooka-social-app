@@ -25,6 +25,37 @@ export function distanceMeters(from: Coordinate, to: Coordinate): number {
   return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 
+/** Decode Google's encoded polyline format into map coordinates. */
+export function decodePolyline(encoded: string): Coordinate[] {
+  const coordinates: Coordinate[] = [];
+  let index = 0;
+  let latitude = 0;
+  let longitude = 0;
+
+  while (index < encoded.length) {
+    const latitudeDelta = decodePolylineValue(encoded, () => encoded.charCodeAt(index++));
+    const longitudeDelta = decodePolylineValue(encoded, () => encoded.charCodeAt(index++));
+    latitude += latitudeDelta;
+    longitude += longitudeDelta;
+    coordinates.push({ latitude: latitude / 100_000, longitude: longitude / 100_000 });
+  }
+
+  return coordinates;
+}
+
+function decodePolylineValue(encoded: string, readCode: () => number): number {
+  let result = 0;
+  let shift = 0;
+  let code: number;
+
+  do {
+    code = readCode() - 63;
+    result |= (code & 0x1f) << shift;
+    shift += 5;
+  } while (code >= 0x20);
+
+  return (result & 1) === 1 ? ~(result >> 1) : result >> 1;
+}
 /**
  * Khung nhìn ôm trọn danh sách điểm.
  *

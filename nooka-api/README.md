@@ -36,7 +36,7 @@ Runner thực hiện theo thứ tự:
 
 1. Đọc `.env` và validate cấu hình mà không in password/token.
 2. Map `NOOKA_*` sang biến runtime của Spring Boot.
-3. Khởi động PostgreSQL bằng Compose và đợi container healthy.
+3. Khởi động PostgreSQL và Redis bằng Compose, rồi đợi cả hai container healthy.
 4. Chạy `mvnw.cmd spring-boot:run`.
 
 Các lựa chọn khác:
@@ -46,7 +46,7 @@ Các lựa chọn khác:
 .\run.ps1 -EnvFile .env.local
 ```
 
-`-SkipDatabase` dùng khi PostgreSQL đã chạy. PostgreSQL mặc định tiếp tục chạy sau khi app dừng để giữ dữ liệu local.
+`-SkipDatabase` dùng khi PostgreSQL và Redis đã chạy. PostgreSQL và Redis mặc định tiếp tục chạy sau khi app dừng để giữ dữ liệu local.
 
 ## Firebase Auth local
 
@@ -99,7 +99,7 @@ docker compose --env-file .env -f infra/compose.yaml up --build -d
 curl http://localhost:8080/actuator/health
 ```
 
-Compose chạy PostgreSQL và API. Local compose tắt authentication một cách **tường minh** bằng `NOOKA_AUTH_ENABLED=false` và bật OpenAPI; production không được dùng cấu hình này.
+Compose chạy PostgreSQL, Redis và API. Redis lưu route preview theo TTL; local compose tắt authentication một cách **tường minh** bằng `NOOKA_AUTH_ENABLED=false` và bật OpenAPI; production không được dùng cấu hình này.
 
 Dừng services:
 
@@ -155,10 +155,22 @@ Test repository/Flyway dùng PostgreSQL thật qua Testcontainers nên Docker ph
 | `NOOKA_DB_PASSWORD` | `replace-me-local` | tự đổi; local only |
 | `NOOKA_DB_PORT` | `5432` | cổng PostgreSQL publish ra host |
 | `NOOKA_API_PORT` | `8080` | cổng API publish ra host |
+| `NOOKA_REDIS_PORT` | `6379` | cổng Redis publish ra host |
+| `NOOKA_REDIS_PASSWORD` | rỗng | password Redis local; không commit secret |
 | `NOOKA_AUTH_ENABLED` | `false` | chỉ tắt auth cho local |
 | `NOOKA_FIREBASE_PROJECT_ID` | rỗng | bắt buộc khi bật auth |
 | `NOOKA_FIREBASE_CREDENTIALS` | rỗng | host path cho `run.ps1`; không commit JSON |
 | `NOOKA_OPENAPI_ENABLED` | `true` | chỉ bật docs cho local |
+| `DIRECTIONS_PROVIDER` | `mapbox` | `mapbox` (default) hoặc `google` |
+| `MAPBOX_ACCESS_TOKEN` | rỗng | bắt buộc khi dùng mapbox; không commit |
+| `MAPBOX_DIRECTIONS_BASE_URL` | `https://api.mapbox.com` | override nếu cần |
+| `DIRECTIONS_CACHE_ENABLED` | `true` | bật route preview cache |
+| `DIRECTIONS_CACHE_TTL` | `PT15M` | TTL Redis cho route preview |
+| `DIRECTIONS_CACHE_KEY_PREFIX` | `nooka:directions:route:v1` | namespace/version của cache |
+| `DIRECTIONS_CACHE_ORIGIN_GRID_DECIMALS` | `3` | gom origin khoảng 100m để tăng cache hit |
+| `DIRECTIONS_CACHE_DESTINATION_GRID_DECIMALS` | `5` | giữ destination chính xác hơn |
+| `GOOGLE_ROUTES_API_KEY` | rỗng | fallback; không commit |
+| `GOOGLE_ROUTES_BASE_URL` | `https://routes.googleapis.com` | override nếu cần |
 
 Không commit credential Firebase, R2, database production hoặc token.
 

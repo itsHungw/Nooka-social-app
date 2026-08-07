@@ -9,7 +9,8 @@
     "next": "Tiếp",
     "later": "Để sau",
     "optional": "Không bắt buộc",
-    "close": "Đóng"
+    "close": "Đóng",
+    "retry": "Thử lại"
   },
   "navigation": {
     "home": "Trang chủ",
@@ -113,6 +114,10 @@
     },
     "nearbySource": "lọc từ tag người dùng",
     "dragForMore": "Kéo lên để xem tất cả",
+    "googlePinLabel": "{{count}} quán từ Google",
+    "googleError": "Không tải được Google Places",
+    "googleLoading": "Đang tìm quán quanh đây",
+    "googleEmpty": "Không có quán nào",
     "sort": {
       "busy": "Đang đông",
       "near": "Gần bạn",
@@ -255,11 +260,22 @@
     "noReview": "Chưa có review nào. Một câu của bạn lúc này có giá trị hơn mười câu lúc quán đông khách.",
     "writeOne": "Viết một câu",
     "directions": "Chỉ đường",
+    "routePreview": "Xem đường đi",
+    "routeFromCurrent": "Từ vị trí hiện tại của bạn",
+    "routeLoading": "Đang tìm đường phù hợp…",
+    "routeError": "Chưa xem được đường đi lúc này.",
+    "routeDistance": "khoảng cách",
+    "routeEta": "thời gian dự kiến",
+    "drive": "Đi xe",
+    "walk": "Đi bộ",
+    "openInMaps": "Mở trong bản đồ",
+    "viewRouteDetails": "Xem chi tiết đường đi",
     "friendsBeen": {
       "one": "{{count}} bạn bè đã tới",
       "other": "{{count}} bạn bè đã tới"
     },
-    "noFriends": "Chưa có bạn nào tới đây"
+    "noFriends": "Chưa có bạn nào tới đây",
+    "normalConditions": "Điều kiện thường · không có giao thông thực"
   },
   "saved": {
     "title": "Đã lưu",

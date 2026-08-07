@@ -9,7 +9,8 @@
     "next": "Next",
     "later": "Later",
     "optional": "Optional",
-    "close": "Close"
+    "close": "Close",
+    "retry": "Retry"
   },
   "navigation": {
     "home": "Home",
@@ -113,6 +114,10 @@
     },
     "nearbySource": "from user tags",
     "dragForMore": "Drag up to see all",
+    "googlePinLabel": "{{count}} places from Google",
+    "googleError": "Google Places unavailable",
+    "googleLoading": "Finding places nearby",
+    "googleEmpty": "No places found",
     "sort": {
       "busy": "Busiest",
       "near": "Nearest",
@@ -255,11 +260,22 @@
     "noReview": "No reviews yet. One sentence from you right now is worth more than ten once the place is packed.",
     "writeOne": "Write one line",
     "directions": "Directions",
+    "routePreview": "Route preview",
+    "routeFromCurrent": "From your current location",
+    "routeLoading": "Finding the best route…",
+    "routeError": "Route preview is unavailable right now.",
+    "routeDistance": "distance",
+    "routeEta": "estimated time",
+    "drive": "Drive",
+    "walk": "Walk",
+    "openInMaps": "Open in Maps",
+    "viewRouteDetails": "View route details",
     "friendsBeen": {
       "one": "{{count}} friend has been",
       "other": "{{count}} friends have been"
     },
-    "noFriends": "No friends have been here yet"
+    "noFriends": "No friends have been here yet",
+    "normalConditions": "Normal conditions · no live traffic"
   },
   "saved": {
     "title": "Saved",

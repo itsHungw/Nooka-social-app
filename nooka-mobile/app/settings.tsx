@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ThemeOption } from '@/components/nooka/theme-option';
-import { CircleButton, ScreenShell } from '@/components/nooka/ui';
+import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
 
@@ -45,6 +45,15 @@ export default function SettingsScreen() {
             label={t('settings.dark')}
             value="dark"
           />
+        </View>
+
+        <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('settings.preview')}</Text>
+        </View>
+
+        <View style={styles.options}>
+          <Button label={t('settings.welcomeScreen')} onPress={() => router.push('/welcome')} tone="outline" />
+          <Button label={t('settings.loginScreen')} onPress={() => router.push('/login')} tone="outline" />
         </View>
       </ScrollView>
     </ScreenShell>

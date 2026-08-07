@@ -1,10 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -26,39 +27,81 @@ export default function HomeScreen() {
   const { colors } = useNookaTheme();
   const demo = useNookaDemo();
   const startCheckin = useStartCheckin();
+
   const [scrolled, setScrolled] = useState(false);
+  const [journalVisible, setJournalVisible] = useState(true);
   const [stripOpen, setStripOpen] = useState(false);
   const [cardHeight, setCardHeight] = useState(0);
 
+  const flatListRef = useRef<FlatList>(null);
+  const lastY = useRef(0);
+  const isScrollingDown = useRef(false);
+
   const animHeight = useSharedValue(1);
 
-  const stripVisible = scrolled ? stripOpen : true;
+  const isStripShowing = scrolled ? stripOpen : journalVisible;
 
   useEffect(() => {
-    animHeight.value = withTiming(stripVisible ? 1 : 0, { duration: 250 });
-  }, [stripVisible, animHeight]);
+    animHeight.value = withTiming(isStripShowing ? 1 : 0, { duration: 250 });
+  }, [isStripShowing, animHeight]);
 
   const animatedStripStyle = useAnimatedStyle(() => ({
     maxHeight: animHeight.value * 95,
     opacity: animHeight.value,
-    transform: [{ translateY: (1 - animHeight.value) * -12 }],
+    transform: [{ translateY: (1 - animHeight.value) * -30 }],
     overflow: 'hidden',
   }));
 
+  const animatedFeedAreaStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: animHeight.value * 88 }],
+  }));
+
+  const handleScrollBeginDrag = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const currentY = event.nativeEvent.contentOffset.y;
+    if (isStripShowing && cardHeight > 0) {
+      setJournalVisible(false);
+      setStripOpen(false);
+      const currentPageIndex = Math.round(currentY / cardHeight);
+      flatListRef.current?.scrollToOffset({ offset: currentPageIndex * cardHeight, animated: false });
+    }
+  };
+
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const currentY = event.nativeEvent.contentOffset.y;
+    const dy = currentY - lastY.current;
 
-    if (currentY <= 20) {
-      if (scrolled) {
-        setScrolled(false);
-        setStripOpen(false);
-      }
-    } else if (currentY > 40) {
+    if (dy > 5) {
+      isScrollingDown.current = true;
+    } else if (dy < -5) {
+      isScrollingDown.current = false;
+    }
+
+    // TikTok Rule: If Journal is open (either page 1 or overlay page 2+) and user swipes UP to scroll down
+    if (isStripShowing && dy > 8 && cardHeight > 0) {
+      setJournalVisible(false);
+      setStripOpen(false);
+      const currentPageIndex = Math.round(currentY / cardHeight);
+      flatListRef.current?.scrollToOffset({ offset: currentPageIndex * cardHeight, animated: false });
+      lastY.current = currentY;
+      return;
+    }
+
+    // TikTok Rule 2 & 3: When scrolling down past page 1, close journal strip and keep it hidden on scroll up between pages 2, 3...
+    if (currentY > 40 && isScrollingDown.current) {
       if (!scrolled) {
         setScrolled(true);
-        setStripOpen(false);
       }
+      setJournalVisible(false);
+      setStripOpen(false);
     }
+
+    // TikTok Rule 4: Pull down at top of page 1 to re-open/show journal strip
+    if (currentY <= 0 && dy < -5) {
+      setScrolled(false);
+      setJournalVisible(true);
+    }
+
+    lastY.current = currentY;
   };
 
   return (
@@ -77,80 +120,27 @@ export default function HomeScreen() {
         />
       </View>
 
-      <AskNookaBar onPress={() => router.push('/ask')} />
+      <View style={[styles.searchBarWrapper, { backgroundColor: colors.background }]}>
+        <AskNookaBar onPress={() => router.push('/ask')} />
+      </View>
 
       <View style={styles.feedWrapper}>
         {!scrolled ? (
           <Animated.View style={[animatedStripStyle, styles.inlineStripOverlay]}>
-            <View style={[styles.strip, { borderColor: colors.borderSubtle, backgroundColor: colors.background }]}>
-              <Pressable accessibilityLabel={t('home.checkin')} accessibilityRole="button" onPress={startCheckin} style={styles.stripItem}>
-                <View style={[styles.stripCircle, styles.stripAdd, { backgroundColor: colors.inverseSurface }]}>
-                  <Ionicons color={colors.onInverse} name="add" size={22} />
-                </View>
-                <Text numberOfLines={1} style={[styles.stripLabel, { color: colors.textMuted }]}>{t('home.checkin')}</Text>
-              </Pressable>
-              {FRIENDS.map((friend, index) => (
-                <Pressable
-                  accessibilityLabel={t(`friends.${friend.id}`)}
-                  accessibilityRole="button"
-                  key={friend.id}
-                  onPress={() => router.push({ pathname: '/story/[index]', params: { index: index } })}
-                  style={styles.stripItem}>
-                  <Photo
-                    style={[styles.stripCircle, { borderWidth: friend.live ? 2.5 : 0, borderColor: colors.accentStrong }]}
-                    tint={friend.tint}
-                  />
-                  <Text
-                    numberOfLines={1}
-                    style={[
-                      styles.stripLabel,
-                      { color: friend.live ? colors.text : colors.textMuted, fontWeight: friend.live ? '700' : '600' },
-                    ]}>
-                    {t(`friends.${friend.id}`)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            <JournalList
+              onCheckin={startCheckin}
+              onStory={(index) => router.push({ pathname: '/story/[index]', params: { index } })}
+            />
           </Animated.View>
         ) : null}
 
         {scrolled ? (
           <View style={styles.stripOverlayContainer}>
-            <Animated.View
-              style={[
-                animatedStripStyle,
-                styles.stripOverlayCard,
-                { backgroundColor: colors.surface, borderColor: colors.borderSubtle, shadowColor: colors.text },
-              ]}>
-              <View style={styles.strip}>
-                <Pressable accessibilityLabel={t('home.checkin')} accessibilityRole="button" onPress={startCheckin} style={styles.stripItem}>
-                  <View style={[styles.stripCircle, styles.stripAdd, { backgroundColor: colors.inverseSurface }]}>
-                    <Ionicons color={colors.onInverse} name="add" size={22} />
-                  </View>
-                  <Text numberOfLines={1} style={[styles.stripLabel, { color: colors.textMuted }]}>{t('home.checkin')}</Text>
-                </Pressable>
-                {FRIENDS.map((friend, index) => (
-                  <Pressable
-                    accessibilityLabel={t(`friends.${friend.id}`)}
-                    accessibilityRole="button"
-                    key={friend.id}
-                    onPress={() => router.push({ pathname: '/story/[index]', params: { index: index } })}
-                    style={styles.stripItem}>
-                    <Photo
-                      style={[styles.stripCircle, { borderWidth: friend.live ? 2.5 : 0, borderColor: colors.accentStrong }]}
-                      tint={friend.tint}
-                    />
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.stripLabel,
-                        { color: friend.live ? colors.text : colors.textMuted, fontWeight: friend.live ? '700' : '600' },
-                      ]}>
-                      {t(`friends.${friend.id}`)}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+            <Animated.View style={[animatedStripStyle, styles.stripOverlayCard]}>
+              <JournalList
+                onCheckin={startCheckin}
+                onStory={(index) => router.push({ pathname: '/story/[index]', params: { index } })}
+              />
             </Animated.View>
 
             <View style={styles.stripToggleRow}>
@@ -162,7 +152,7 @@ export default function HomeScreen() {
           </View>
         ) : null}
 
-        <View onLayout={(event) => setCardHeight(event.nativeEvent.layout.height)} style={styles.feedArea}>
+        <Animated.View onLayout={(event) => setCardHeight(event.nativeEvent.layout.height)} style={[styles.feedArea, animatedFeedAreaStyle]}>
           {demo.feed.length === 0 ? (
             <View style={styles.empty}>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('home.emptyTitle')}</Text>
@@ -175,14 +165,16 @@ export default function HomeScreen() {
               decelerationRate="fast"
               keyExtractor={(post) => post.id}
               onScroll={handleScroll}
-              renderItem={({ item, index }) => <FeedCard height={cardHeight} isFirstPost={index === 0} post={item} />}
+              onScrollBeginDrag={handleScrollBeginDrag}
+              ref={flatListRef}
+              renderItem={({ item }) => <FeedCard height={cardHeight} post={item} />}
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={false}
               snapToAlignment="start"
               snapToInterval={cardHeight || undefined}
             />
           )}
-        </View>
+        </Animated.View>
       </View>
 
       <TagSheet />
@@ -190,7 +182,7 @@ export default function HomeScreen() {
   );
 }
 
-function FeedCard({ post, height, isFirstPost }: { post: FeedPost; height: number; isFirstPost?: boolean }) {
+function FeedCard({ post, height }: { post: FeedPost; height: number }) {
   const router = useRouter();
   const { colors } = useNookaTheme();
   const demo = useNookaDemo();
@@ -200,7 +192,7 @@ function FeedCard({ post, height, isFirstPost }: { post: FeedPost; height: numbe
   const openSpot = () => router.push({ pathname: '/spot/[id]', params: { id: post.spot } });
 
   return (
-    <View style={[styles.card, height ? { height } : null, isFirstPost ? styles.firstCardPadding : null]}>
+    <View style={[styles.card, height ? { height } : null]}>
       <View style={styles.cardAuthor}>
         <View style={[styles.cardAvatar, { backgroundColor: colors.avatarDefault }]} />
         <Text style={[styles.cardAuthorName, { color: colors.text }]}>{author}</Text>
@@ -307,6 +299,46 @@ function TagSheet() {
   );
 }
 
+/** Danh sách Nhật ký cuộn ngang, không ô viền bao quanh */
+function JournalList({ onCheckin, onStory }: { onCheckin: () => void; onStory: (index: number) => void }) {
+  const { colors } = useNookaTheme();
+
+  return (
+    <ScrollView
+      contentContainerStyle={styles.stripScroll}
+      horizontal
+      showsHorizontalScrollIndicator={false}>
+      <Pressable accessibilityLabel={t('home.checkin')} accessibilityRole="button" onPress={onCheckin} style={styles.stripItem}>
+        <View style={[styles.stripCircle, styles.stripAdd, { backgroundColor: colors.inverseSurface }]}>
+          <Ionicons color={colors.onInverse} name="add" size={22} />
+        </View>
+        <Text numberOfLines={1} style={[styles.stripLabel, { color: colors.textMuted }]}>{t('home.checkin')}</Text>
+      </Pressable>
+      {FRIENDS.map((friend, index) => (
+        <Pressable
+          accessibilityLabel={t(`friends.${friend.id}`)}
+          accessibilityRole="button"
+          key={friend.id}
+          onPress={() => onStory(index)}
+          style={styles.stripItem}>
+          <Photo
+            style={[styles.stripCircle, { borderWidth: friend.live ? 2.5 : 0, borderColor: colors.accentStrong }]}
+            tint={friend.tint}
+          />
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.stripLabel,
+              { color: friend.live ? colors.text : colors.textMuted, fontWeight: friend.live ? '700' : '600' },
+            ]}>
+            {t(`friends.${friend.id}`)}
+          </Text>
+        </Pressable>
+      ))}
+    </ScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
   header: { minHeight: 44, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', gap: 10 },
   brand: { flex: 1, fontSize: 25, lineHeight: 32, fontWeight: '800', letterSpacing: -0.7 },
@@ -314,40 +346,33 @@ const styles = StyleSheet.create({
   locationDot: { width: 6, height: 6, borderRadius: 3 },
   locationText: { fontSize: 13, lineHeight: 18, fontWeight: '600' },
   headerAvatar: { width: 30, height: 30, borderRadius: 15 },
-  strip: { flexDirection: 'row', gap: 13, paddingHorizontal: 20, paddingTop: 13, paddingBottom: 12, borderBottomWidth: 1 },
+  stripScroll: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
   stripItem: { width: 56, alignItems: 'center', gap: 5 },
   stripCircle: { width: 52, height: 52, borderRadius: 26 },
   stripAdd: { alignItems: 'center', justifyContent: 'center' },
   stripLabel: { fontSize: 11, lineHeight: 15, fontWeight: '600' },
-  stripToggleRow: { alignItems: 'center', paddingVertical: 4, zIndex: 100 },
-  feedWrapper: { flex: 1, position: 'relative' },
+  stripToggleRow: { alignItems: 'center', paddingVertical: 4, zIndex: 25 },
+  searchBarWrapper: { zIndex: 100 },
+  feedWrapper: { flex: 1, position: 'relative', overflow: 'hidden', zIndex: 1 },
   inlineStripOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     zIndex: 10,
-  },
-  firstCardPadding: {
-    paddingTop: 88,
+    overflow: 'hidden',
   },
   stripOverlayContainer: {
     position: 'absolute',
     top: 6,
-    left: 20,
-    right: 20,
-    zIndex: 99,
+    left: 0,
+    right: 0,
+    zIndex: 20,
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   stripOverlayCard: {
     width: '100%',
-    borderRadius: 20,
-    borderWidth: 1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
   },
   feedArea: { flex: 1, paddingHorizontal: 20 },
   empty: { paddingTop: 22 },

@@ -301,6 +301,7 @@ export default function AskNookaScreen() {
           <View style={styles.inputRow}>
             <TextInput
               accessibilityLabel={t('search.composer')}
+              multiline
               onChangeText={setDraft}
               onSubmitEditing={() => send(draft)}
               placeholder={t('search.composer')}
@@ -470,14 +471,17 @@ const styles = StyleSheet.create({
   mascotLayer: { position: 'absolute', left: 16 },
   // `paddingLeft` là chỗ chừa cứng cho Nooka — cố định nên ô nhập và nút gửi
   // đứng yên dù nhân vật đang đi, đang nấp hay đang chìm.
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: MASCOT_SLOT },
+  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingLeft: MASCOT_SLOT },
   field: {
     flex: 1,
     minWidth: 0,
     minHeight: 44,
-    borderRadius: 999,
+    maxHeight: 120,
+    borderRadius: 22,
     borderWidth: 1.4,
     paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'ios' ? 11 : 9,
+    paddingBottom: Platform.OS === 'ios' ? 11 : 9,
     fontSize: 14,
     fontWeight: '600',
   },

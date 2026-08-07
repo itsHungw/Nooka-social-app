@@ -440,7 +440,10 @@
     "light": "Sáng",
     "lightDescription": "Luôn dùng giao diện sáng",
     "dark": "Tối",
-    "darkDescription": "Luôn dùng giao diện tối"
+    "darkDescription": "Luôn dùng giao diện tối",
+    "preview": "Màn hình Bắt đầu & Đăng nhập",
+    "welcomeScreen": "Xem trang Bắt đầu",
+    "loginScreen": "Xem trang Đăng nhập"
   },
   "mascot": {
     "idle": "Nooka đang chờ bạn hỏi",
@@ -490,5 +493,81 @@
     "inputPlaceholder": "Nhắn tin cho {{name}}…",
     "spotPreviewDesc": "Quận 3 · View tuyệt đẹp",
     "spotPreviewBadge": "Thứ Sáu nhé?"
+  },
+  "welcome": {
+    "title": "Nooka",
+    "headline": "Đi đâu hôm nay? Hỏi người đã đi rồi.",
+    "subtitle": "Ảnh thật từ những nơi người ta thật sự đã đến, ngay trong thành phố bạn sống.",
+    "features": {
+      "preview": {
+        "title": "Xem trước khi đi",
+        "desc": "Ảnh và review từ người thật đã đến"
+      },
+      "friends": {
+        "title": "Bạn bè vừa đi đâu",
+        "desc": "Feed từ người bạn theo dõi, không phải quảng cáo"
+      },
+      "saved": {
+        "title": "Lưu lại hết",
+        "desc": "Đánh dấu Muốn đi hoặc Đã đến"
+      }
+    },
+    "cta": "Bắt đầu",
+    "footer": "Đang mở tại TP.HCM, thêm dần từng vài quận"
+  },
+  "auth": {
+    "loginTitle": "Chào mừng tới Nooka",
+    "loginSubtitle": "Một chạm là vào. Nooka không lưu mật khẩu — đăng nhập qua tài khoản bạn đã có.",
+    "loginSubtitleOptions": "Chọn cách bạn muốn vào. Đổi cách khác lúc nào cũng được.",
+    "continueGoogle": "Tiếp tục với Google",
+    "retryGoogle": "Thử lại với Google",
+    "connectingGoogle": "Đang kết nối Google...",
+    "openingGoogle": "Đang mở cửa sổ Google...",
+    "continueApple": "Apple",
+    "continueFacebook": "Facebook",
+    "continueEmail": "Tiếp tục với email",
+    "or": "HOẶC",
+    "lastUsedGoogle": "LẦN TRƯỚC BẠN DÙNG GOOGLE",
+    "errorTitle": "Chưa đăng nhập được",
+    "errorDesc": "Google đã đóng cửa sổ trước khi xong. Kiểm tra mạng rồi thử lại nhé.",
+    "termsNoticePrefix": "Tiếp tục nghĩa là bạn đồng ý với ",
+    "termsNoticeAnd": " và ",
+    "termsNoticeSuffix": ". Bài đăng mới mặc định chỉ hiện với người theo dõi.",
+    "terms": "Điều khoản",
+    "privacy": "Chính sách riêng tư",
+    "stillErrorPrefix": "Vẫn lỗi? ",
+    "reportError": "Báo cho Nooka",
+    "toastLoggedIn": "Chào mừng bạn quay lại!",
+    "toastReported": "Cảm ơn bạn, Nooka đã ghi nhận lỗi",
+    "noAccountPrefix": "Chưa có tài khoản? ",
+    "createAccount": "Tạo tài khoản",
+    "alreadyHaveAccountPrefix": "Đã có tài khoản? ",
+    "signIn": "Đăng nhập",
+    "whatIsYourEmail": "Email của bạn là gì?",
+    "emailSubtext": "Nooka gửi mã xác nhận tới email này. Không hiện email của bạn cho người khác.",
+    "termsNoticeEmailPrefix": "Chạm Tiếp tục nghĩa là bạn đồng ý với ",
+    "termsOfService": "Điều khoản dịch vụ",
+    "privacyPolicy": "Chính sách quyền riêng tư",
+    "continueArrow": "Tiếp tục →",
+    "emailPlaceholder": "ban@gmail.com",
+    "choosePassword": "Chọn một mật khẩu",
+    "passwordPlaceholder": "Mật khẩu",
+    "show": "Hiện",
+    "hide": "Ẩn",
+    "passwordMinLengthPrefix": "Mật khẩu phải dài tối thiểu ",
+    "passwordMinLengthNumber": "8 ký tự",
+    "whatIsYourName": "Tên bạn là gì?",
+    "firstNamePlaceholder": "Tên",
+    "lastNamePlaceholder": "Họ",
+    "nameSubtext": "Tên này hiện trên bài đăng của bạn.",
+    "chooseUsername": "Chọn một tên người dùng",
+    "usernamePlaceholder": "@minh.saigon",
+    "usernameAvailable": "Còn trống",
+    "usernameSubtext": "Bạn bè tìm bạn trên Nooka bằng tên này.",
+    "later": "Để sau",
+    "logInWithEmail": "Đăng nhập bằng email",
+    "emailLoginError": "Email hoặc mật khẩu chưa đúng. Còn 4 lần thử trước khi tài khoản tạm khoá 15 phút.",
+    "forgotPassword": "Quên mật khẩu?",
+    "logInArrow": "Đăng nhập →"
   }
 }

@@ -13,7 +13,7 @@ import { NookaDemoProvider } from '@/providers/nooka-demo-provider';
 import { NookaThemeProvider } from '@/providers/nooka-theme-provider';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  initialRouteName: 'welcome',
 };
 
 export default function RootLayout() {
@@ -56,6 +56,14 @@ function RootNavigator() {
     <ThemeProvider value={navigationTheme}>
       <Stack screenOptions={{ contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="welcome" options={{ animation: 'fade', headerShown: false }} />
+        <Stack.Screen name="login" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/email" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/password" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/name" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/username" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/email-login" options={{ animation: 'slide_from_right', headerShown: false }} />
         <Stack.Screen name="ask" options={{ animation: 'slide_from_bottom', headerShown: false }} />
         <Stack.Screen name="spot/[id]" options={{ animation: 'slide_from_right', headerShown: false }} />
         <Stack.Screen name="story/[index]" options={{ animation: 'fade', headerShown: false }} />

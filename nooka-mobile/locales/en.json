@@ -415,7 +415,7 @@
     "deny": "Don't allow",
     "allow": "While using the app"
   },
-  "settings": {
+    "settings": {
     "title": "Settings",
     "appearance": "Appearance",
     "appearanceDescription": "Choose how Nooka looks on this device.",
@@ -424,7 +424,10 @@
     "light": "Light",
     "lightDescription": "Always use the light appearance",
     "dark": "Dark",
-    "darkDescription": "Always use the dark appearance"
+    "darkDescription": "Always use the dark appearance",
+    "preview": "Onboarding & Auth Screens",
+    "welcomeScreen": "View Start Screen",
+    "loginScreen": "View Login Screen"
   },
   "mascot": {
     "idle": "Nooka is waiting for your question",
@@ -474,5 +477,81 @@
     "inputPlaceholder": "Message {{name}}…",
     "spotPreviewDesc": "District 3 · Great view",
     "spotPreviewBadge": "Friday then?"
+  },
+  "welcome": {
+    "title": "Nooka",
+    "headline": "Going out today? Ask someone who's been.",
+    "subtitle": "Real photos from places people actually visited, right in your city.",
+    "features": {
+      "preview": {
+        "title": "Preview before going",
+        "desc": "Photos & reviews from real visitors"
+      },
+      "friends": {
+        "title": "Where friends just went",
+        "desc": "Feed from people you follow, not ads"
+      },
+      "saved": {
+        "title": "Save everything",
+        "desc": "Mark Want to go or Visited"
+      }
+    },
+    "cta": "Get started",
+    "footer": "Now open in HCMC, expanding district by district"
+  },
+  "auth": {
+    "loginTitle": "Welcome to Nooka",
+    "loginSubtitle": "One tap in. Nooka doesn't store passwords — log in with your existing account.",
+    "loginSubtitleOptions": "Choose how you want to sign in. Change anytime.",
+    "continueGoogle": "Continue with Google",
+    "retryGoogle": "Retry with Google",
+    "connectingGoogle": "Connecting Google...",
+    "openingGoogle": "Opening Google window...",
+    "continueApple": "Apple",
+    "continueFacebook": "Facebook",
+    "continueEmail": "Continue with email",
+    "or": "OR",
+    "lastUsedGoogle": "LAST TIME YOU USED GOOGLE",
+    "errorTitle": "Couldn't log in",
+    "errorDesc": "Google closed the window before finishing. Check your network and try again.",
+    "termsNoticePrefix": "Continuing means you agree to ",
+    "termsNoticeAnd": " and ",
+    "termsNoticeSuffix": ". New posts default to followers only.",
+    "terms": "Terms",
+    "privacy": "Privacy Policy",
+    "stillErrorPrefix": "Still broken? ",
+    "reportError": "Report to Nooka",
+    "toastLoggedIn": "Welcome back!",
+    "toastReported": "Thanks, our team has been notified",
+    "noAccountPrefix": "Don't have an account? ",
+    "createAccount": "Create account",
+    "alreadyHaveAccountPrefix": "Already have an account? ",
+    "signIn": "Log in",
+    "whatIsYourEmail": "What is your email?",
+    "emailSubtext": "Nooka will send a verification code to this email. We won't show your email to others.",
+    "termsNoticeEmailPrefix": "Tapping Continue means you agree to ",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "continueArrow": "Continue →",
+    "emailPlaceholder": "you@gmail.com",
+    "choosePassword": "Choose a password",
+    "passwordPlaceholder": "Password",
+    "show": "Show",
+    "hide": "Hide",
+    "passwordMinLengthPrefix": "Password must be at least ",
+    "passwordMinLengthNumber": "8 characters",
+    "whatIsYourName": "What is your name?",
+    "firstNamePlaceholder": "First name",
+    "lastNamePlaceholder": "Last name",
+    "nameSubtext": "This name will appear on your posts.",
+    "chooseUsername": "Choose a username",
+    "usernamePlaceholder": "@username",
+    "usernameAvailable": "Available",
+    "usernameSubtext": "Friends find you on Nooka by this name.",
+    "later": "Later",
+    "logInWithEmail": "Log in with email",
+    "emailLoginError": "Incorrect email or password. 4 attempts remaining before account is temporarily locked for 15 minutes.",
+    "forgotPassword": "Forgot password?",
+    "logInArrow": "Log in →"
   }
 }

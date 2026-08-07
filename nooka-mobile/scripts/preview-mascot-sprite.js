@@ -2,12 +2,17 @@
 const zlib = require('node:zlib');
 const fs = require('node:fs');
 
+// Bảng màu light của `constants/theme.ts`. Dùng chung cho linh vật, chiếc thang
+// và quả bóng (`scripts/preview-props.ts`) — ba món khai ký tự rời nhau nên gộp
+// được vào một bảng, trừ `o` (viền) và `h` (đốm sáng) vốn cùng nghĩa ở cả ba.
 const P = {
   '.': null,
-  o: '#9c8863', w: '#fffdf7', c: '#f7f0e0', s: '#e7dcc4',
+  o: '#9c8863', c: '#f7f0e0',
   v: '#e6f3ec', V: '#c3e2d5', g: '#f5c043', G: '#e8b02c',
   d: '#2b2620', h: '#ffffff', b: '#f7c9b0', m: '#e2604f',
   t: '#2e8b86', p: '#a9dfd0', q: '#7fc9bb',
+  a: '#dcd8cf', s: '#b0aa9f', f: '#d8563f',
+  r: '#ef7a63', R: '#d1523c', y: '#9c8863',
 };
 
 const frames = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));

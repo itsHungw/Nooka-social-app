@@ -6,6 +6,7 @@ import {
   MASCOT_MOVE,
   nextStage,
   stageDwell,
+  type MascotSpot,
   type MascotStage,
 } from '@/features/nooka/mascot';
 
@@ -24,12 +25,19 @@ import {
  * "Giảm chuyển động" của hệ thống thì đứng yên ở nhà — thứ tự chui ra chui vào
  * ngay cạnh ô nhập là đúng cái tuỳ chọn ấy sinh ra để tắt.
  */
-export function useMascotStage(roaming: boolean): MascotStage {
+export function useMascotStage(roaming: boolean): { stage: MascotStage; hide: () => void } {
   const reduceMotion = useReducedMotion();
   const [stage, setStage] = useState<MascotStage>(HOME_STAGE);
-  // Vòng lặp tự hẹn giờ nên phải đọc được chặng hiện tại mà không cần dựng lại
-  // effect sau mỗi bước — dựng lại là mỗi bước reset đồng hồ của bước sau.
   const current = useRef<MascotStage>(HOME_STAGE);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
   const go = useCallback((next: MascotStage) => {
     current.current = next;
     setStage(next);
@@ -37,29 +45,46 @@ export function useMascotStage(roaming: boolean): MascotStage {
 
   const wandering = roaming && !reduceMotion;
 
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
+  const scheduleNext = useCallback(() => {
+    clearTimer();
+    if (!wandering) return;
+    timerRef.current = setTimeout(() => {
+      const next = nextStage(current.current);
+      go(next);
+      scheduleNext();
+    }, stageDwell(current.current));
+  }, [wandering, clearTimer, go]);
 
+  const hide = useCallback(() => {
+    if (reduceMotion) return;
+    // Nếu Nooka đang bám ở sau ô nhập (`behind`), chọn ngẫu nhiên 50/50:
+    // chạy sang bên trái (`beside`) hoặc bên phải (`right`).
+    let targetSpot: MascotSpot;
+    if (current.current.spot === 'behind') {
+      targetSpot = Math.random() < 0.5 ? 'beside' : 'right';
+    } else {
+      targetSpot = 'behind';
+    }
+    const targetPose = targetSpot === 'behind' ? 'hidden' : 'grip';
+    go({ spot: targetSpot, pose: targetPose });
+    scheduleNext();
+  }, [reduceMotion, go, scheduleNext]);
+
+  useEffect(() => {
     if (wandering) {
-      const schedule = () => {
-        timer = setTimeout(() => {
-          go(nextStage(current.current));
-          schedule();
-        }, stageDwell(current.current));
-      };
-      schedule();
-      return () => clearTimeout(timer);
+      scheduleNext();
+      return () => clearTimer();
     }
 
     if (current.current.pose === 'hidden') {
       go({ spot: 'behind', pose: 'grip' });
-      timer = setTimeout(() => go(HOME_STAGE), MASCOT_MOVE.dip);
-      return () => clearTimeout(timer);
+      timerRef.current = setTimeout(() => go(HOME_STAGE), MASCOT_MOVE.dip);
+      return () => clearTimer();
     }
 
     go(HOME_STAGE);
-    return;
-  }, [wandering, go]);
+    return () => clearTimer();
+  }, [wandering, go, scheduleNext, clearTimer]);
 
-  return stage;
+  return { stage, hide };
 }

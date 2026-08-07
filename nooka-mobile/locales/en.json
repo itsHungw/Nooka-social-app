@@ -430,7 +430,15 @@
     "idle": "Nooka is waiting for your question",
     "searching": "Nooka is searching",
     "found": "Nooka found results",
-    "resting": "Nooka is resting"
+    "resting": "Nooka is resting",
+    "haul": "Nooka is leaning a ladder against the box",
+    "catch": "Nooka is reaching for a balloon",
+    "climb": "Nooka is climbing the ladder",
+    "float": "Nooka is floating up on a balloon",
+    "hop": "Nooka is jumping across to the box",
+    "grip": "Nooka is hanging on the box, looking over",
+    "doze": "Nooka is getting sleepy",
+    "sleep": "Nooka has fallen asleep"
   },
   "messages": {
     "title": "Messages",

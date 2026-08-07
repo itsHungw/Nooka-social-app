@@ -3,6 +3,7 @@ import { test } from 'node:test';
 
 import { MASCOT_FRAMES } from './mascot-frames.ts';
 import {
+  HIDE_DWELL,
   HOME_DWELL,
   HOME_STAGE,
   MASCOT_ANIMATION,
@@ -192,6 +193,8 @@ test('thời gian giữ một chặng lấy đúng khoảng của chỗ đang đ
     assert.ok(home >= HOME_DWELL.min && home <= HOME_DWELL.max, `${home} ngoài khoảng ở nhà`);
     const peek = stageDwell({ spot: 'behind', pose: 'grip' }, roll);
     assert.ok(peek >= PEEK_DWELL.min && peek <= PEEK_DWELL.max, `${peek} ngoài khoảng nấp`);
+    const hide = stageDwell({ spot: 'behind', pose: 'hidden' }, roll);
+    assert.ok(hide >= HIDE_DWELL.min && hide <= HIDE_DWELL.max, `${hide} ngoài khoảng chìm`);
   }
 });
 

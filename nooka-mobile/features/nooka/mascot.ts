@@ -82,7 +82,7 @@ export const isWaiting = (state: MascotState) => state === 'idle' || state === '
  * người dùng hỏi một câu là nó về bên trái ngay để còn kể chuyện đang đọc
  * review — nấp sau ô nhập mà suy nghĩ thì người dùng không thấy gì.
  */
-export type MascotSpot = 'beside' | 'behind';
+export type MascotSpot = 'beside' | 'behind' | 'right';
 
 /**
  * Nooka nấp sau thanh nhập tin và thỉnh thoảng thò lên.
@@ -135,8 +135,18 @@ export const HOME_DWELL = { min: 6400, max: 13000 };
 export const homeDwell = (roll = Math.random()) =>
   Math.round(HOME_DWELL.min + roll * (HOME_DWELL.max - HOME_DWELL.min));
 
+/** Thời gian Nooka chìm hẳn dưới ô nhập khi trốn. Rất ngắn để thụt xuống rồi nhô lên ngay. */
+export const HIDE_DWELL = { min: 100, max: 110 };
+
+export const hideDwell = (roll = Math.random()) =>
+  Math.round(HIDE_DWELL.min + roll * (HIDE_DWELL.max - HIDE_DWELL.min));
+
 export const stageDwell = (stage: MascotStage, roll = Math.random()) =>
-  stage.spot === 'beside' ? homeDwell(roll) : peekDwell(roll);
+  stage.spot === 'beside'
+    ? homeDwell(roll)
+    : stage.pose === 'hidden'
+      ? hideDwell(roll)
+      : peekDwell(roll);
 
 /** Xác suất rời chỗ nấp về nhà ở mỗi lượt đổi tư thế. */
 export const GO_HOME_CHANCE = 0.5;
@@ -152,7 +162,7 @@ export const GO_HOME_CHANCE = 0.5;
  * lên xuống, và trồi lên hết rồi mới đi về. Lên xuống ngay ở bên trái ô nhập là
  * hiện ra từ hư không giữa thanh nhập.
  */
-export const MASCOT_MOVE = { walk: 420, lift: 260, dip: 420 };
+export const MASCOT_MOVE = { walk: 420, lift: 260, dip: 160 };
 
 /**
  * Chặng kế tiếp. Ba luật, theo đúng thứ tự:
@@ -163,7 +173,7 @@ export const MASCOT_MOVE = { walk: 420, lift: 260, dip: 420 };
  * 3. Đang thò lên thì hoặc về nhà, hoặc đổi sang tư thế nấp khác.
  */
 export function nextStage({ spot, pose }: MascotStage, roll = Math.random()): MascotStage {
-  if (spot === 'beside' || pose === 'hidden') return { spot: 'behind', pose: 'grip' };
+  if (spot === 'beside' || spot === 'right' || pose === 'hidden') return { spot: 'behind', pose: 'grip' };
   if (roll < GO_HOME_CHANCE) return HOME_STAGE;
   return {
     spot: 'behind',
@@ -173,6 +183,9 @@ export function nextStage({ spot, pose }: MascotStage, roll = Math.random()): Ma
 
 export type SpritePath = { token: keyof (typeof Colors)['light']; d: string };
 
+/** Ký tự trong lưới → tên token màu. Mỗi món pixel khai một bảng riêng. */
+export type SpritePalette = Record<string, keyof (typeof Colors)['light']>;
+
 /**
  * Lưới ký tự → một `Path` cho mỗi màu.
  *
@@ -180,8 +193,15 @@ export type SpritePath = { token: keyof (typeof Colors)['light']; d: string };
  * thành một hình chữ nhật cao. Chỉ gộp ngang là không đủ — với hình có nhiều
  * đường cong, dải ngang bị cắt vụn và số lệnh vẽ gần bằng số ô, trong khi mảng
  * đặc lớn như vỏ đầu lẽ ra chỉ cần một hình.
+ *
+ * `palette` để mở vì linh vật không phải món pixel duy nhất — chiếc thang ở
+ * `ladder.ts` dùng lại đúng thuật toán này với bảng màu nhôm. Chép thuật toán
+ * sang file thứ hai thì đến lúc sửa cách gộp sẽ có một bản bị bỏ quên.
  */
-export function spritePaths(rows: readonly string[]): SpritePath[] {
+export function spritePaths(
+  rows: readonly string[],
+  palette: SpritePalette = MASCOT_PALETTE,
+): SpritePath[] {
   type Run = { x: number; y: number; len: number };
   const byChar = new Map<string, Run[]>();
 
@@ -205,7 +225,7 @@ export function spritePaths(rows: readonly string[]): SpritePath[] {
   const paths: SpritePath[] = [];
 
   for (const [ch, runs] of byChar) {
-    const token = MASCOT_PALETTE[ch];
+    const token = palette[ch];
     if (!token) continue;
 
     // Nhóm theo (cột bắt đầu, độ dài): chỉ những dải trùng khít mới chồng được.

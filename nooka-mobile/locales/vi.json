@@ -430,7 +430,15 @@
     "idle": "Nooka đang chờ bạn hỏi",
     "searching": "Nooka đang tìm",
     "found": "Nooka đã tìm xong",
-    "resting": "Nooka đang nghỉ"
+    "resting": "Nooka đang nghỉ",
+    "haul": "Nooka đang dựng thang vào khung nhập",
+    "catch": "Nooka đang với lấy quả bóng bay",
+    "climb": "Nooka đang trèo thang",
+    "float": "Nooka đang bay lên cùng quả bóng",
+    "hop": "Nooka đang nhảy sang khung nhập",
+    "grip": "Nooka đang bám khung nhập, nhìn qua",
+    "doze": "Nooka đang buồn ngủ",
+    "sleep": "Nooka đã ngủ mất rồi"
   },
   "messages": {
     "title": "Tin nhắn",

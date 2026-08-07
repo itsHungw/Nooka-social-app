@@ -105,7 +105,13 @@ UI hiện tại dựng từ prototype `Nooka - prototype.dc.html` (Claude Design
 
 **Tên route `ask` không đổi tuỳ tiện được.** `(tabs)` là group nên `app/(tabs)/search.tsx` đã chiếm `/search`; đặt màn Hỏi Nooka ở `app/search.tsx` là hai file cùng trỏ một đường dẫn. Đó là lý do nó tên `ask.tsx`.
 
-Trạng thái dùng chung nằm ở `providers/nooka-demo-provider.tsx`, không phải ở từng màn hình. Xếp hạng của "Hỏi Nooka" nằm ở `features/nooka/ranking.ts`, phần địa lý ở `features/nooka/geo.ts` — đều là hàm thuần, test chạy bằng `node --test features/nooka/ranking.test.ts features/nooka/geo.test.ts`. (Truyền cả thư mục thay vì từng file thì Node trên Windows báo `Cannot find module` — kể tên file ra.)
+Trạng thái dùng chung nằm ở `providers/nooka-demo-provider.tsx`, không phải ở từng màn hình. Xếp hạng của "Hỏi Nooka" nằm ở `features/nooka/ranking.ts`, phần địa lý ở `geo.ts`, linh vật ở `mascot.ts`, biểu cảm ở `mood.ts`, màn kịch leo lên ở `ascent.ts` với hai đạo cụ `ladder.ts` và `balloon.ts` — đều là hàm thuần, test chạy bằng:
+
+```bash
+node --test features/nooka/ranking.test.ts features/nooka/geo.test.ts features/nooka/mascot.test.ts features/nooka/ascent.test.ts features/nooka/ladder.test.ts features/nooka/balloon.test.ts features/nooka/mood.test.ts
+```
+
+(Truyền cả thư mục thay vì từng file thì Node trên Windows báo `Cannot find module` — kể tên file ra.)
 
 **Danh sách kết quả chỉ có một component.** `ResultRow` ở `components/nooka/ui.tsx` dùng chung cho sheet của tab Tìm và kết quả Hỏi Nooka. §5 của spec chốt một loại card cho cả hai chế độ — dựng thêm hàng riêng cho một bề mặt là phá luật đó.
 
@@ -148,6 +154,25 @@ Chỉ đi trốn **lúc đang chờ** (`isWaiting`). Người dùng hỏi một 
 **Ô nhập không đổi kích cỡ.** Chỗ của Nooka chừa cứng bằng `paddingLeft` trong `inputRow`. Nooka đi hay trốn thì ô nhập và nút gửi vẫn đứng yên — ô nhập co giãn theo bước chân của một món trang trí là thứ mắt bắt được ngay.
 
 Hai chỗ đó là **hai điểm neo của cùng một lớp phủ**, đi lại bằng phép dịch. Dựng hai nơi riêng thì lúc chuyển là một con biến mất và một con hiện ra — người xem không đọc ra đó là cùng một nhân vật.
+
+**Gõ quá dài thì Nooka phải leo lên mới nhìn qua được.** Ô nhập là multiline nên nó cao dần theo số dòng. Tới dòng thứ ba thì mép trên vượt hẳn tầm với và Nooka chìm nghỉm sau bức tường chữ. Lúc đó nó lấy một đạo cụ từ mép trái màn hình, lên tới mép, **nhảy sang bám vào khung ô nhập**, rồi treo ở đó nhìn qua.
+
+- **Có hai phương tiện, bốc thăm mỗi lượt**: vác thang tới dựa vào khung rồi trèo, hoặc tóm một quả bóng bay rồi để nó nhấc lên. `pickMeans` ở `features/nooka/ascent.ts`. Cố định một màn kịch thì tới lần thứ ba người dùng thôi không nhìn nữa. Hai cách đi **chung một đường và chung một máy trạng thái** — chỉ khác đạo cụ, tư thế và nhịp.
+- Máy trạng thái tám chặng ở `ascent.ts`, chạy bằng `hooks/use-nooka-ascent.ts`. **Đường về đi ngược đúng đường lên**, không có lối tắt: từ `away` không nhảy thẳng tới `gripping`, và buông khung là phải nhảy về đạo cụ trước chứ không rơi thẳng xuống đất. Đó là thứ giữ cho đạo cụ không biến mất dưới chân Nooka lúc người dùng xoá bớt chữ. Có test khoá cả hai chiều.
+- `hopping` **dùng chung cho cả hai chiều**. Chiều nào là do ý định lúc đó quyết định, không phải do tên chặng — nhờ vậy người dùng đổi ý ngay giữa cú nhảy thì Nooka quay đầu tại chỗ.
+- **Đường đi thẳng đứng cho chiếc thang.** Thang nhôm được dựng thẳng đứng bên cạnh ô nhập, Nooka trèo thẳng đứng lên theo thân thang rồi mới nhảy bám sang mép ô nhập.
+- **Nooka dừng thấp hơn đầu đạo cụ một quãng** (`climbStop`) rồi mới nhảy. Chỗ ở của nó rộng đúng bằng chính nó, nên trèo tới sát đầu thang là đã lọt nửa người ra sau ô nhập và cú nhảy chỉ còn là một cú trượt ngang mắt không đọc ra.
+- **Ô nhập cao thêm giữa chừng thì thang không dài ra.** Kích thước đạo cụ chốt lúc mở màn; Nooka lên hết đạo cụ, bám vào khung rồi **bò dọc mép** theo `rim`. Một chiếc thang đang có người đứng trên không tự mọc thêm bậc dưới chân họ.
+- **Nooka tự quyết định lúc nào xuống, không đợi người dùng gửi tin.** Treo trên khung một lúc thì tụt xuống nghỉ, nghỉ chán thì leo lại. `possible` truyền vào `useNookaAscent` là **hoàn cảnh** (ô nhập còn cao), còn ý định nằm trong hook. Đồng hồ chỉ chạy ở hai chặng nghỉ (`ascentResting`) — bấm giờ lúc mới có ý định thì quãng leo ăn mất một phần lượt treo. Lượt treo **luôn** dài hơn lượt nghỉ (`PERCH_DWELL.min > GROUND_DWELL.max`), cùng luật với `HOME_DWELL`/`PEEK_DWELL`.
+- **Biểu cảm buồn ngủ đếm theo thời gian người dùng để yên**, từ phím gõ cuối cùng (`useNookaMood`), **không** theo chặng của màn kịch leo. Đó là cách phá vòng phụ thuộc: màn kịch leo cần biết Nooka còn thức không (`restless`) để đứng yên khi nó ngủ, nên cơn buồn ngủ phải tính được trước. Biểu cảm chỉ nằm ở **đôi mắt**, `perch` chọn tư thế thân — nhờ vậy cùng một tâm trạng dùng được cả lúc bám khung lẫn lúc đứng dưới đất mà không phải vẽ hai bộ nhân vật. Có test khoá việc thân không đổi giữa khung thức và khung lim dim.
+- **Đang ngủ thì không đổi ý.** `restless` tắt là Nooka đứng nguyên chỗ đang ở. Thiếu vế này thì người dùng để yên một lúc là có một nhân vật vừa ngủ vừa trèo thang lên xuống.
+- Nooka **không được đi lang thang khi đạo cụ còn trên màn hình**. `useMascotStage` phải tắt cả lúc mới có ý định (để kịp đi về chỗ ở) lẫn suốt lúc đạo cụ còn đó (để không trượt ngang ra khỏi thang lúc đang tụt). Xem `app/ask.tsx`.
+- **Quả bóng neo vào bàn tay, không vào tâm nhân vật.** `BALLOON_HAND` / `BALLOON_HAND_GRIP` ở `balloon.ts` là hàng/cột của **đệm bàn tay trong lưới sprite**, đã tính 3 hàng headroom mà `liftFrame` chèn vào — quên phần đó là đáy dây rơi vào bụng, dây chui sau thân và quả bóng trông như bị cắm vào người. Có test khoá đúng ô neo là ô đệm bàn tay, ở cả khung bay lẫn khung bám khung.
+- **Bóng ngả quanh chính bàn tay** (`BALLOON_LEAN`, xoay quanh đáy ảnh). Bàn tay giơ lên nằm lọt trong bóng của cái đầu, nên một sợi dây thẳng đứng sẽ chui sau đầu rồi biến mất. Ngả ra thì cả đoạn dây chạy ngoài thân và mắt đọc ra ngay là nó đang được cầm.
+- **Đạo cụ không có file khung hình sinh sẵn** — khác linh vật. Kích thước chỉ biết lúc chạy, nên `ladderRows`/`balloonRows` dựng lưới đúng cỡ cần và ô pixel luôn vuông. Kéo dãn một khung hình cố định là ô thành hình chữ nhật dẹt và cả món đồ hết là pixel art. Xem bằng mắt: `node scripts/preview-props.ts /tmp/p.json && node scripts/preview-mascot-sprite.js /tmp/p.json /tmp/p.png`.
+- **Ba lưới pixel dùng chung một bảng màu ở công cụ xem**, nên ký tự của chúng không được đụng nhau (trừ `o` viền và `h` đốm sáng, cùng nghĩa ở cả ba). Có test khoá.
+- Ngưỡng lấy từ **chiều cao thật của ô nhập** (`onLayout`), không phải số ký tự — xuống dòng, dán một đoạn dài hay đổi cỡ chữ hệ thống đều làm ô nhập cao lên và chỉ chiều cao mới kể đúng cả ba.
+- `spritePaths` nhận bảng màu qua tham số nên thang và bóng dùng chung thuật toán gộp dải với linh vật. Chép nó sang file thứ hai thì đến lúc sửa cách gộp sẽ có một bản bị bỏ quên.
 
 **Khung hình sinh tự động.** `features/nooka/mascot-frames.ts` là file sinh ra, đừng sửa tay — lệch một cột là hỏng cả hình mà nhìn code không thấy. Sửa hình thì sửa `scripts/build-mascot-sprite.js` rồi chạy `node scripts/build-mascot-sprite.js`. Xem lại bằng mắt trước khi commit:
 

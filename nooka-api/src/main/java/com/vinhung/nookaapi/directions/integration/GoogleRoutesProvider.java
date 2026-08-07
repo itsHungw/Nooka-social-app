@@ -73,7 +73,7 @@ public class GoogleRoutesProvider implements DirectionsProvider {
                 waypoint(query.origin()),
                 waypoint(query.destination()),
                 query.mode().name(),
-                query.mode() == TravelMode.DRIVE ? "TRAFFIC_AWARE" : null,
+                null, // TRAFFIC_UNAWARE: omit routingPreference for non-traffic routing
                 false,
                 "en-US",
                 "METRIC");

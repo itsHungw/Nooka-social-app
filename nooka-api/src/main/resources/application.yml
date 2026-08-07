@@ -2,6 +2,16 @@ spring:
   application:
     name: nooka-api
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      username: ${REDIS_USERNAME:}
+      password: ${REDIS_PASSWORD:}
+      repositories:
+        enabled: false
+
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:nooka}
     username: ${DB_USER:nooka}
@@ -36,7 +46,16 @@ nooka:
   firebase:
     project-id: ${FIREBASE_PROJECT_ID:}
   directions:
-    provider: ${DIRECTIONS_PROVIDER:google}
+    provider: ${DIRECTIONS_PROVIDER:mapbox}
+    mapbox:
+      access-token: ${MAPBOX_ACCESS_TOKEN:}
+      base-url: ${MAPBOX_DIRECTIONS_BASE_URL:https://api.mapbox.com}
+    cache:
+      enabled: ${DIRECTIONS_CACHE_ENABLED:true}
+      ttl: "${DIRECTIONS_CACHE_TTL:PT15M}"
+      key-prefix: ${DIRECTIONS_CACHE_KEY_PREFIX:nooka:directions:route:v1}
+      origin-grid-decimals: ${DIRECTIONS_CACHE_ORIGIN_GRID_DECIMALS:3}
+      destination-grid-decimals: ${DIRECTIONS_CACHE_DESTINATION_GRID_DECIMALS:5}
   routes:
     google:
       api-key: ${GOOGLE_ROUTES_API_KEY:}

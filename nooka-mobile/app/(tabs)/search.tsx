@@ -162,7 +162,8 @@ export default function SearchTabScreen() {
 
         <View
           pointerEvents="box-none"
-          style={[styles.controls, { bottom: snapHeights[snapIndex] + 16 }]}>
+          style={[styles.controls, { bottom: snapHeights[snapIndex] + insets.bottom + 12 }]}
+        >
           <Chip
             floating
             label={t('map.layerVisited')}
@@ -299,23 +300,25 @@ function SearchBar({ onPress }: { onPress: () => void }) {
   const router = useRouter();
 
   return (
-    <Pressable
-      accessibilityLabel={t('search.universalPlaceholder')}
-      accessibilityRole="search"
-      onPress={onPress}
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.bar,
         {
           backgroundColor: colors.surface,
           borderColor: colors.borderSubtle,
           shadowColor: colors.shadow,
-          opacity: pressed ? 0.9 : 1,
         },
       ]}>
-      <Ionicons color={colors.textMuted} name="search" size={17} />
-      <Text numberOfLines={1} style={[styles.barText, { color: colors.textSubtle }]}>
-        {t('search.universalPlaceholder')}
-      </Text>
+      <Pressable
+        accessibilityLabel={t('search.universalPlaceholder')}
+        accessibilityRole="search"
+        onPress={onPress}
+        style={({ pressed }) => [styles.barSearch, { opacity: pressed ? 0.72 : 1 }]}>
+        <Ionicons color={colors.textMuted} name="search" size={17} />
+        <Text numberOfLines={1} style={[styles.barText, { color: colors.textSubtle }]}>
+          {t('search.universalPlaceholder')}
+        </Text>
+      </Pressable>
       <Pressable
         accessibilityLabel={t('search.askShort')}
         accessibilityRole="button"
@@ -327,7 +330,7 @@ function SearchBar({ onPress }: { onPress: () => void }) {
         <View style={[styles.askRing, { borderColor: colors.accent }]} />
         <Text style={[styles.askText, { color: colors.onInverse }]}>{t('search.askShort')}</Text>
       </Pressable>
-    </Pressable>
+    </View>
   );
 }
 
@@ -419,21 +422,21 @@ const styles = StyleSheet.create({
     paddingRight: 7,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.13,
     shadowRadius: 16,
     elevation: 6,
   },
+  barSearch: { alignItems: 'center', flex: 1, flexDirection: 'row', gap: 10, minHeight: 44, minWidth: 0 },
   barText: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 19, fontWeight: '600', letterSpacing: -0.2 },
   askPill: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
     borderRadius: 999,
     paddingLeft: 11,
     paddingRight: 13,
-    paddingVertical: 9,
   },
   askRing: { width: 13, height: 13, borderRadius: 7, borderWidth: 2 },
   askText: { fontSize: 13, lineHeight: 18, fontWeight: '700', letterSpacing: -0.2 },

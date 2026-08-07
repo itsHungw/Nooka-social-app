@@ -9,7 +9,8 @@
     "next": "Tiếp",
     "later": "Để sau",
     "optional": "Không bắt buộc",
-    "close": "Đóng"
+    "close": "Đóng",
+    "retry": "Thử lại"
   },
   "navigation": {
     "home": "Trang chủ",
@@ -266,11 +267,13 @@
     "drive": "Đi xe",
     "walk": "Đi bộ",
     "openInMaps": "Mở trong bản đồ",
+    "viewRouteDetails": "Xem chi tiết đường đi",
     "friendsBeen": {
       "one": "{{count}} bạn bè đã tới",
       "other": "{{count}} bạn bè đã tới"
     },
-    "noFriends": "Chưa có bạn nào tới đây"
+    "noFriends": "Chưa có bạn nào tới đây",
+    "normalConditions": "Điều kiện thường · không có giao thông thực"
   },
   "saved": {
     "title": "Đã lưu",

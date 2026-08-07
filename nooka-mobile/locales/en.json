@@ -9,7 +9,8 @@
     "next": "Next",
     "later": "Later",
     "optional": "Optional",
-    "close": "Close"
+    "close": "Close",
+    "retry": "Retry"
   },
   "navigation": {
     "home": "Home",
@@ -266,11 +267,13 @@
     "drive": "Drive",
     "walk": "Walk",
     "openInMaps": "Open in Maps",
+    "viewRouteDetails": "View route details",
     "friendsBeen": {
       "one": "{{count}} friend has been",
       "other": "{{count}} friends have been"
     },
-    "noFriends": "No friends have been here yet"
+    "noFriends": "No friends have been here yet",
+    "normalConditions": "Normal conditions · no live traffic"
   },
   "saved": {
     "title": "Saved",

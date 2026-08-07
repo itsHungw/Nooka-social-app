@@ -1,9 +1,8 @@
-import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { DirectionPreview } from '@/components/nooka/direction-preview';
+import { RoutePreviewSheet } from '@/components/nooka/route-preview-sheet';
 import { Button, Chip, CircleButton, Photo, ScreenShell, SectionLabel } from '@/components/nooka/ui';
 import {
   externalDirectionsUrl,
@@ -51,6 +50,8 @@ export default function SpotScreen() {
     async (mode: TravelMode) => {
       setRouteLoading(true);
       setRouteError(null);
+      setRoute(null);
+      setShowRoute(true);
 
       try {
         const origin = routeOrigin ?? (await getForegroundLocation());
@@ -66,17 +67,17 @@ export default function SpotScreen() {
     [routeOrigin, spot.coordinate],
   );
 
-  const openMaps = useCallback(async () => {
-    const platform = Platform.OS === 'ios' ? 'ios' : Platform.OS === 'web' ? 'web' : 'android';
-    await Linking.openURL(externalDirectionsUrl(spot.coordinate, routeMode, platform));
+  const openRouteInMaps = useCallback(() => {
+    const platform = Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
+    void Linking.openURL(externalDirectionsUrl(spot.coordinate, routeMode, platform));
   }, [routeMode, spot.coordinate]);
 
   const changeRouteMode = useCallback(
     (mode: TravelMode) => {
       setRouteMode(mode);
-      if (showRoute) void loadRoute(mode);
+      void loadRoute(mode);
     },
-    [loadRoute, showRoute],
+    [loadRoute],
   );
 
   return (
@@ -110,28 +111,12 @@ export default function SpotScreen() {
           />
           <Button
             label={t('spot.directions')}
-            onPress={() => {
-              setShowRoute(true);
-              void loadRoute(routeMode);
-            }}
+            onPress={() => void loadRoute(routeMode)}
             style={styles.action}
             tone="outline"
           />
           <Button label={t('home.checkin')} onPress={startCheckin} tone="outline" />
         </View>
-
-        {showRoute ? (
-          <DirectionPreview
-            destination={spot.coordinate}
-            error={routeError}
-            loading={routeLoading}
-            mode={routeMode}
-            onModeChange={changeRouteMode}
-            onOpenMaps={openMaps}
-            origin={routeOrigin}
-            route={route}
-          />
-        ) : null}
 
         <View style={styles.section}>
           <SectionLabel>{t('spot.whatPeopleSay')}</SectionLabel>
@@ -190,6 +175,21 @@ export default function SpotScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      <RoutePreviewSheet
+        visible={showRoute}
+        spotName={spotName(id)}
+        destination={spot.coordinate}
+        origin={routeOrigin}
+        route={route}
+        loading={routeLoading}
+        error={routeError}
+        mode={routeMode}
+        onClose={() => setShowRoute(false)}
+        onModeChange={changeRouteMode}
+        onRetry={() => void loadRoute(routeMode)}
+        onOpenMaps={openRouteInMaps}
+      />
     </ScreenShell>
   );
 }

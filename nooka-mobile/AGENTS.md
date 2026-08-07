@@ -128,7 +128,7 @@ Code trong scaffold (`hello-wave`, `parallax-scroll-view`...) là **demo của t
 
 **API key.** Expo Go không cần key. Build độc lập thì cần, và key **không được commit** — `app.config.js` đọc từ `GOOGLE_MAPS_ANDROID_KEY` / `GOOGLE_MAPS_IOS_KEY` và chỉ thêm plugin khi có. Đặt qua `eas secret:create` hoặc `.env.local`.
 
-**Vị trí người dùng.** Tab Search dùng `expo-location` để đọc GPS foreground khi màn hình đang mở và cập nhật chấm xanh theo chuyển động. Không đăng ký background location, không gửi tọa độ lên server, không lưu lịch sử vị trí. `showsUserLocation` vẫn để tắt vì chấm xanh được vẽ bằng lớp phủ Nooka; `nooka-map.tsx` nhận tọa độ live qua prop.
+**Vị trí người dùng.** Tab Search dùng `expo-location` để đọc GPS foreground khi màn hình đang mở và cập nhật chấm xanh theo chuyển động. Không đăng ký background location, không lưu lịch sử di chuyển, không gửi tọa độ định kỳ hay gửi tọa độ lên server. `showsUserLocation` vẫn để tắt vì chấm xanh được vẽ bằng lớp phủ Nooka; `nooka-map.tsx` nhận tọa độ live qua prop.
 
 Sheet ba điểm dừng ở `components/nooka/bottom-sheet.tsx` dùng gesture-handler + Reanimated, nên `GestureHandlerRootView` phải ở `app/_layout.tsx`. Bỏ nó ra thì cử chỉ im lặng không chạy, không có lỗi nào hiện.
 

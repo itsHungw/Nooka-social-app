@@ -58,6 +58,7 @@ export const INTENT_TAGS: Record<IntentId, TagId[]> = {
  *
  * GPS thật được quản lý bởi `use-user-location.ts`. Fallback này chỉ dùng khi
  * web không hỗ trợ native location hoặc user từ chối foreground permission.
+ * Không dùng fallback này để gửi location định kỳ lên server.
  */
 export const USER_LOCATION: Coordinate = { latitude: 10.8014, longitude: 106.7109 };
 

@@ -56,7 +56,6 @@ function decodePolylineValue(encoded: string, readCode: () => number): number {
 
   return (result & 1) === 1 ? ~(result >> 1) : result >> 1;
 }
-
 /**
  * Khung nhìn ôm trọn danh sách điểm.
  *

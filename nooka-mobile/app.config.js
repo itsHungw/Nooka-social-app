@@ -21,7 +21,7 @@ module.exports = ({ config }) => {
   const iosKey = process.env.GOOGLE_MAPS_IOS_KEY;
   const placesKey = process.env.GOOGLE_PLACES_KEY;
 
-  const plugins = config.plugins ?? [];
+  const plugins = [...(config.plugins ?? [])];
   if (androidKey || iosKey) {
     plugins.push([
       'react-native-maps',

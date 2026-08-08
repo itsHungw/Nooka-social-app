@@ -31,6 +31,20 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Post extends BaseEntity {
 
+    /**
+     * Định danh công khai, thứ duy nhất được xuất hiện trong API và URL.
+     *
+     * <p>Tách khỏi {@code id} vì {@code id} là UUID v7 và kể ra thời điểm tạo,
+     * trong khi {@link #hideTime} tồn tại để giấu đúng thứ đó.
+     *
+     * <p>{@code insertable = false, updatable = false}: giá trị do database sinh
+     * bằng {@code default gen_random_uuid()} và không bao giờ đổi. Không có
+     * setter — sửa nó là làm hỏng mọi link đã phát ra ngoài.
+     */
+    @Setter(lombok.AccessLevel.NONE)
+    @Column(name = "public_id", nullable = false, insertable = false, updatable = false)
+    private UUID publicId;
+
     @Column(name = "author_id", nullable = false)
     private UUID authorId;
 

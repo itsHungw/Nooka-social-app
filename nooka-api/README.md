@@ -48,49 +48,44 @@ Các lựa chọn khác:
 
 `-SkipDatabase` dùng khi PostgreSQL và Redis đã chạy. PostgreSQL và Redis mặc định tiếp tục chạy sau khi app dừng để giữ dữ liệu local.
 
-## Firebase Auth local
+## Custom email/password auth local
 
-### Không dùng auth
+Backend tự quản lý email/password, email verification OTP, password reset và persistent sessions. Password được hash bằng BCrypt; access token sống ngắn và refresh token được rotate/lưu hash trong PostgreSQL.
 
-Giữ cấu hình sau khi chưa có Firebase credentials:
+Khi chạy local chưa cấu hình SMTP, đặt:
 
 ```dotenv
 NOOKA_AUTH_ENABLED=false
-NOOKA_FIREBASE_PROJECT_ID=
-NOOKA_FIREBASE_CREDENTIALS=
+NOOKA_AUTH_EMAIL_ENABLED=false
 ```
 
-Firebase beans không được khởi tạo; local security permit request một cách tường minh.
-
-### Bật auth
-
-1. Tạo service-account JSON cho Firebase project.
-2. Lưu JSON **ngoài repository**.
-3. Điền `.env`:
+Để gửi OTP thật, cấu hình SMTP qua environment:
 
 ```dotenv
 NOOKA_AUTH_ENABLED=true
-NOOKA_FIREBASE_PROJECT_ID=your-firebase-project-id
-NOOKA_FIREBASE_CREDENTIALS="C:\path\outside\repo\firebase-service-account.json"
+NOOKA_AUTH_EMAIL_ENABLED=true
+NOOKA_AUTH_EMAIL_HOST=smtp.example.com
+NOOKA_AUTH_EMAIL_PORT=587
+NOOKA_AUTH_EMAIL_USERNAME=
+NOOKA_AUTH_EMAIL_PASSWORD=
+NOOKA_AUTH_EMAIL_FROM=noreply@example.com
 ```
 
-4. Kiểm tra rồi chạy:
+Mobile gọi `/auth/register`, `/auth/verify-email`, `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/forgot-password` và `/auth/reset-password`. Refresh token không được log hoặc lưu trong plain text.
 
-```powershell
-.\run.ps1 -Check
-.\run.ps1
+### OAuth Google, Apple và Facebook
+
+OAuth cũng đi qua backend để provider token được verify server-side trước khi tạo session Nooka. Backend không nhận `userId` từ mobile và không lưu provider access token.
+
+```dotenv
+NOOKA_OAUTH_GOOGLE_CLIENT_ID=your-google-client-id
+NOOKA_OAUTH_APPLE_CLIENT_ID=your-apple-services-id-or-client-id
+NOOKA_OAUTH_FACEBOOK_APP_ID=your-facebook-app-id
+NOOKA_OAUTH_FACEBOOK_APP_SECRET=your-facebook-app-secret
+NOOKA_OAUTH_FACEBOOK_GRAPH_BASE_URL=https://graph.facebook.com
 ```
 
-`run.ps1` chỉ resolve đường dẫn và export thành `GOOGLE_APPLICATION_CREDENTIALS`; script không đọc hoặc in nội dung JSON. Nếu `NOOKA_FIREBASE_CREDENTIALS` để trống, Firebase Admin thử Application Default Credentials đã tồn tại trên máy và startup sẽ fail-closed nếu không tìm thấy.
-
-Luồng xác thực:
-
-1. Mobile đăng nhập Firebase và nhận Firebase ID token.
-2. Mobile gửi `Authorization: Bearer <id-token>`.
-3. Backend gọi Firebase Admin `verifyIdToken`.
-4. Firebase UID đã verify trở thành principal; backend không tin `userId` do client tự gửi.
-
-Compose foundation hiện không tự mount Firebase credential từ host. Muốn bật auth khi chạy container cần một Compose override/secret mount riêng; `run.ps1` hỗ trợ auth khi chạy Spring Boot trực tiếp trên host.
+Các endpoint là `/auth/oauth/google`, `/auth/oauth/apple` và `/auth/oauth/facebook`. Khi provider trả về email đã verify, backend liên kết `oauth_accounts` với user hiện có cùng email hoặc tạo user mới; provider account đã liên kết có thể đăng nhập lại dù provider không gửi email ở các lần sau. App secret của Facebook chỉ được đặt ở backend, không đưa vào Expo/mobile.
 
 ## Chạy toàn bộ bằng Docker
 
@@ -117,9 +112,9 @@ $env:OPENAPI_ENABLED='true'
 .\mvnw.cmd spring-boot:run
 ```
 
-Khi chạy trực tiếp, Spring dùng các biến runtime `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `PORT`, `AUTH_ENABLED`, `FIREBASE_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS` và `OPENAPI_ENABLED`. Ưu tiên dùng `run.ps1` để mapping thống nhất.
+Khi chạy trực tiếp, Spring dùng DB_*, PORT, AUTH_ENABLED, AUTH_EMAIL_*, OAUTH_* và OPENAPI_ENABLED. Ưu tiên dùng run.ps1 để mapping thống nhất.
 
-Production/default là secure-by-default: `AUTH_ENABLED=true`. Khi đó bắt buộc cung cấp `FIREBASE_PROJECT_ID` và Application Default Credentials phù hợp.
+Production/default là secure-by-default: AUTH_ENABLED=true. Cấu hình SMTP khi bật AUTH_EMAIL_ENABLED=true.
 
 ## Endpoint hạ tầng
 
@@ -142,7 +137,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test-run.ps1
 Test repository/Flyway dùng PostgreSQL thật qua Testcontainers nên Docker phải chạy. Các guard kiến trúc có thể chạy riêng không cần Docker:
 
 ```powershell
-.\mvnw.cmd "-Dtest=ModularityTest,ArchitectureTest,ApiExceptionHandlerTest,SecurityConfigTest,BearerTokenAuthenticationFilterTest,FirebaseConfigTest,OpenApiEndpointTest" test
+.\mvnw.cmd "-Dtest=ModularityTest,ArchitectureTest,ApiExceptionHandlerTest,SecurityConfigTest,BearerTokenAuthenticationFilterTest,OpenApiEndpointTest" test
 ```
 
 ## Biến `.env`
@@ -158,8 +153,17 @@ Test repository/Flyway dùng PostgreSQL thật qua Testcontainers nên Docker ph
 | `NOOKA_REDIS_PORT` | `6379` | cổng Redis publish ra host |
 | `NOOKA_REDIS_PASSWORD` | rỗng | password Redis local; không commit secret |
 | `NOOKA_AUTH_ENABLED` | `false` | chỉ tắt auth cho local |
-| `NOOKA_FIREBASE_PROJECT_ID` | rỗng | bắt buộc khi bật auth |
-| `NOOKA_FIREBASE_CREDENTIALS` | rỗng | host path cho `run.ps1`; không commit JSON |
+| `NOOKA_AUTH_EMAIL_HOST` | rỗng | SMTP host khi gửi OTP |
+| `NOOKA_AUTH_EMAIL_ENABLED` | `false` | bật gửi OTP qua SMTP |
+| `NOOKA_AUTH_EMAIL_PORT` | `587` | SMTP port |
+| `NOOKA_AUTH_EMAIL_USERNAME` | rỗng | SMTP username; không commit |
+| `NOOKA_AUTH_EMAIL_PASSWORD` | rỗng | SMTP password; không commit |
+| `NOOKA_AUTH_EMAIL_FROM` | rỗng | địa chỉ gửi email |
+| `NOOKA_OAUTH_GOOGLE_CLIENT_ID` | rỗng | Google client ID cho ID token |
+| `NOOKA_OAUTH_APPLE_CLIENT_ID` | rỗng | Apple client/services ID |
+| `NOOKA_OAUTH_FACEBOOK_APP_ID` | rỗng | Facebook app ID |
+| `NOOKA_OAUTH_FACEBOOK_APP_SECRET` | rỗng | Facebook app secret; backend-only |
+| `NOOKA_OAUTH_FACEBOOK_GRAPH_BASE_URL` | `https://graph.facebook.com` | override khi cần |
 | `NOOKA_OPENAPI_ENABLED` | `true` | chỉ bật docs cho local |
 | `DIRECTIONS_PROVIDER` | `mapbox` | `mapbox` (default) hoặc `google` |
 | `MAPBOX_ACCESS_TOKEN` | rỗng | bắt buộc khi dùng mapbox; không commit |
@@ -172,7 +176,7 @@ Test repository/Flyway dùng PostgreSQL thật qua Testcontainers nên Docker ph
 | `GOOGLE_ROUTES_API_KEY` | rỗng | fallback; không commit |
 | `GOOGLE_ROUTES_BASE_URL` | `https://routes.googleapis.com` | override nếu cần |
 
-Không commit credential Firebase, R2, database production hoặc token.
+Không commit credential custom auth, R2, database production hoặc token.
 
 ## Kiến trúc package
 

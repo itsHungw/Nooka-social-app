@@ -568,6 +568,21 @@
     "logInWithEmail": "Đăng nhập bằng email",
     "emailLoginError": "Email hoặc mật khẩu chưa đúng. Còn 4 lần thử trước khi tài khoản tạm khoá 15 phút.",
     "forgotPassword": "Quên mật khẩu?",
-    "logInArrow": "Đăng nhập →"
+    "logInArrow": "Đăng nhập →",
+    "verifyEmailTitle": "Xác nhận email",
+    "verifyEmailSubtext": "Nhập mã 6 số đã được gửi tới email của bạn.",
+    "verificationCodePlaceholder": "Mã 6 số",
+    "verifyEmailButton": "Xác nhận email",
+    "invalidVerificationCode": "Mã không đúng hoặc đã hết hạn.",
+    "emailVerified": "Email đã được xác nhận",
+    "registerError": "Chưa tạo được tài khoản. Kiểm tra thông tin rồi thử lại.",
+    "forgotPasswordTitle": "Đặt lại mật khẩu",
+    "forgotPasswordSubtext": "Nooka sẽ gửi mã dùng một lần tới email của bạn.",
+    "sendResetCode": "Gửi mã đặt lại",
+    "newPasswordPlaceholder": "Mật khẩu mới",
+    "resetPasswordButton": "Đặt lại mật khẩu",
+    "resetCodeSent": "Đã gửi mã đặt lại",
+    "passwordReset": "Đã đặt lại mật khẩu",
+    "resetPasswordError": "Mã không đúng hoặc yêu cầu đặt lại đã lỗi."
   }
 }

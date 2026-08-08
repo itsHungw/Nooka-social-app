@@ -154,31 +154,6 @@ function Set-ProcessEnvironment {
     [System.Environment]::SetEnvironmentVariable('REDIS_HOST', 'localhost', 'Process')
 }
 
-function Resolve-FirebaseCredentials {
-    param(
-        [Parameter(Mandatory = $true)]
-        [AllowEmptyString()]
-        [string]$ConfiguredPath
-    )
-
-    if (-not [string]::IsNullOrWhiteSpace($ConfiguredPath)) {
-        $resolvedPath = Resolve-ProjectPath $ConfiguredPath
-        if (-not (Test-Path -LiteralPath $resolvedPath -PathType Leaf)) {
-            throw 'NOOKA_FIREBASE_CREDENTIALS must point to an existing service-account JSON file.'
-        }
-
-        [System.Environment]::SetEnvironmentVariable(
-                'GOOGLE_APPLICATION_CREDENTIALS', $resolvedPath, 'Process')
-        return 'explicit file'
-    }
-
-    if (-not [string]::IsNullOrWhiteSpace($env:GOOGLE_APPLICATION_CREDENTIALS)) {
-        return 'existing GOOGLE_APPLICATION_CREDENTIALS'
-    }
-
-    return 'host ADC fallback'
-}
-
 function Wait-PostgresHealthy {
     param(
         [Parameter(Mandatory = $true)]
@@ -271,8 +246,6 @@ if ([string]::IsNullOrWhiteSpace($redisPortText)) {
 $redisPort = ConvertTo-PortValue 'NOOKA_REDIS_PORT' $redisPortText
 $authEnabled = ConvertTo-BooleanValue 'NOOKA_AUTH_ENABLED' (Get-RequiredValue $values 'NOOKA_AUTH_ENABLED')
 $openApiEnabled = ConvertTo-BooleanValue 'NOOKA_OPENAPI_ENABLED' (Get-RequiredValue $values 'NOOKA_OPENAPI_ENABLED')
-$firebaseProjectId = Get-OptionalValue $values 'NOOKA_FIREBASE_PROJECT_ID'
-$firebaseCredentials = Get-OptionalValue $values 'NOOKA_FIREBASE_CREDENTIALS'
 
 $mapping = @{
     NOOKA_DB_NAME = 'DB_NAME'
@@ -283,18 +256,25 @@ $mapping = @{
     NOOKA_REDIS_PORT = 'REDIS_PORT'
     NOOKA_REDIS_PASSWORD = 'REDIS_PASSWORD'
     NOOKA_AUTH_ENABLED = 'AUTH_ENABLED'
-    NOOKA_FIREBASE_PROJECT_ID = 'FIREBASE_PROJECT_ID'
+    NOOKA_AUTH_ACCESS_TOKEN_TTL = 'AUTH_ACCESS_TOKEN_TTL'
+    NOOKA_AUTH_REFRESH_TOKEN_TTL = 'AUTH_REFRESH_TOKEN_TTL'
+    NOOKA_AUTH_VERIFICATION_CODE_TTL = 'AUTH_VERIFICATION_CODE_TTL'
+    NOOKA_AUTH_RESET_CODE_TTL = 'AUTH_RESET_CODE_TTL'
+    NOOKA_AUTH_MAX_CODE_ATTEMPTS = 'AUTH_MAX_CODE_ATTEMPTS'
+    NOOKA_AUTH_EMAIL_ENABLED = 'AUTH_EMAIL_ENABLED'
+    NOOKA_AUTH_EMAIL_HOST = 'AUTH_EMAIL_HOST'
+    NOOKA_AUTH_EMAIL_PORT = 'AUTH_EMAIL_PORT'
+    NOOKA_AUTH_EMAIL_USERNAME = 'AUTH_EMAIL_USERNAME'
+    NOOKA_AUTH_EMAIL_PASSWORD = 'AUTH_EMAIL_PASSWORD'
+    NOOKA_AUTH_EMAIL_FROM = 'AUTH_EMAIL_FROM'
+    NOOKA_OAUTH_GOOGLE_CLIENT_ID = 'OAUTH_GOOGLE_CLIENT_ID'
+    NOOKA_OAUTH_APPLE_CLIENT_ID = 'OAUTH_APPLE_CLIENT_ID'
+    NOOKA_OAUTH_FACEBOOK_APP_ID = 'OAUTH_FACEBOOK_APP_ID'
+    NOOKA_OAUTH_FACEBOOK_APP_SECRET = 'OAUTH_FACEBOOK_APP_SECRET'
+    NOOKA_OAUTH_FACEBOOK_GRAPH_BASE_URL = 'OAUTH_FACEBOOK_GRAPH_BASE_URL'
     NOOKA_OPENAPI_ENABLED = 'OPENAPI_ENABLED'
 }
 Set-ProcessEnvironment $values $mapping
-
-$credentialSource = Resolve-FirebaseCredentials $firebaseCredentials
-if ($authEnabled -and [string]::IsNullOrWhiteSpace($firebaseProjectId)) {
-    throw 'NOOKA_FIREBASE_PROJECT_ID is required when NOOKA_AUTH_ENABLED=true.'
-}
-if ($authEnabled -and $credentialSource -eq 'host ADC fallback') {
-    Write-Warning 'Firebase credentials are not explicitly configured. Firebase Admin will try another host Application Default Credentials source and fail closed if none is available.'
-}
 
 Write-Output "Environment file: $envPath"
 Write-Output "Database: localhost:$dbPort/$dbName"
@@ -302,10 +282,6 @@ Write-Output "Redis: localhost:$redisPort"
 Write-Output "API port: $apiPort"
 Write-Output "OpenAPI: $(if ($openApiEnabled) { 'enabled' } else { 'disabled' })"
 Write-Output "Authentication: $(if ($authEnabled) { 'enabled' } else { 'disabled' })"
-if ($authEnabled) {
-    Write-Output 'Firebase project: configured'
-    Write-Output "Firebase credentials: $credentialSource"
-}
 
 if ($Check) {
     Write-Output 'Configuration check passed.'

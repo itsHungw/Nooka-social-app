@@ -431,7 +431,7 @@
     "deny": "Don't allow",
     "allow": "While using the app"
   },
-    "settings": {
+  "settings": {
     "title": "Settings",
     "appearance": "Appearance",
     "appearanceDescription": "Choose how Nooka looks on this device.",
@@ -568,6 +568,21 @@
     "logInWithEmail": "Log in with email",
     "emailLoginError": "Incorrect email or password. 4 attempts remaining before account is temporarily locked for 15 minutes.",
     "forgotPassword": "Forgot password?",
-    "logInArrow": "Log in →"
+    "logInArrow": "Log in →",
+    "verifyEmailTitle": "Verify your email",
+    "verifyEmailSubtext": "Enter the 6-digit code we sent to your email.",
+    "verificationCodePlaceholder": "6-digit code",
+    "verifyEmailButton": "Verify email",
+    "invalidVerificationCode": "That code is invalid or expired.",
+    "emailVerified": "Email verified",
+    "registerError": "Could not create your account. Check your details and try again.",
+    "forgotPasswordTitle": "Reset your password",
+    "forgotPasswordSubtext": "We will send a one-time code to your email.",
+    "sendResetCode": "Send reset code",
+    "newPasswordPlaceholder": "New password",
+    "resetPasswordButton": "Reset password",
+    "resetCodeSent": "Reset code sent",
+    "passwordReset": "Password reset",
+    "resetPasswordError": "That code is invalid or the reset request failed."
   }
 }

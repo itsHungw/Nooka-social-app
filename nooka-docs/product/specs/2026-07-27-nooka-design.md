@@ -582,7 +582,7 @@ Chưa cần chốt trước khi lập kế hoạch, nhưng phải chốt trướ
 |---|---|
 | Mobile | **React Native + Expo** (EAS build iOS trên cloud — máy dev là Windows) |
 | Backend | **Spring Boot + PostgreSQL** |
-| Auth | **Firebase Auth** phát hành token, Spring Boot verify JWT. Không tự viết auth |
+| Auth | **Custom auth** trong Spring Boot: BCrypt password hash, email OTP, password reset, access/refresh session token; Google/Apple/Facebook OAuth được verify server-side và map qua `oauth_accounts` |
 | Lưu media | **Cloudflare R2** (không phí egress) |
 | Push | FCM |
 | Hosting | Railway hoặc Fly.io cho backend, Neon cho Postgres |

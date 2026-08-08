@@ -4,9 +4,9 @@
 
 **Goal:** Deliver the maintainable backend foundation approved by the user: full package layout, Spring Modulith/ArchUnit boundaries, centralized errors/security/OpenAPI configuration, and a Docker Compose API service without business endpoints yet.
 
-**Architecture:** Keep feature modules at the first package level (`user`, `spot`, `post`). Publish only named API/query contracts; keep entities and repositories internal. Use explicit `viewerId`, preserve Post visibility as the only read gate, and add provider boundaries only for Firebase/security.
+**Architecture:** Keep feature modules at the first package level (`user`, `spot`, `post`). Publish only named API/query contracts; keep entities and repositories internal. Use explicit `viewerId`, preserve Post visibility as the only read gate, and add provider boundaries only for custom auth/security.
 
-**Tech Stack:** Java 21, Spring Boot 4.1.0, Spring Data JPA, PostgreSQL 17, Flyway, Spring Modulith 2.1.0, ArchUnit 1.4.2, Spring Security + Firebase Admin SDK, Lombok, Docker Compose.
+**Tech Stack:** Java 21, Spring Boot 4.1.0, Spring Data JPA, PostgreSQL 17, Flyway, Spring Modulith 2.1.0, ArchUnit 1.4.2, Spring Security + Spring Security auth/session layer, Lombok, Docker Compose.
 
 ---
 
@@ -53,7 +53,7 @@
 - Create: `spot/package-info.java`, `spot/api/package-info.java`, `spot/service/package-info.java`, `spot/controller/package-info.java`, `spot/dto/package-info.java`
 - Create: `post/package-info.java`, `post/api/package-info.java`, `post/service/package-info.java`, `post/controller/package-info.java`, `post/dto/package-info.java`, `post/exception/package-info.java`
 - Create: `shared/package-info.java`, `shared/entity/package-info.java`, `shared/error/package-info.java`
-- Create: `platform/package-info.java`, `platform/security/package-info.java`, `platform/firebase/package-info.java`, `platform/openapi/package-info.java`
+- Create: `platform/package-info.java`, `platform/security/package-info.java`, `auth/integration/package-info.java`, `platform/openapi/package-info.java`
 - Create: `user/query/RelationshipCriteria.java`
 - Create: `post/api/PostAccess.java`, `post/api/PostCardView.java`, `post/api/PostDetailView.java`
 
@@ -96,7 +96,7 @@
 - Create: `platform/security/SecurityConfig.java`
 - Create: `platform/security/AuthenticatedUser.java`
 - Create: `platform/security/TokenAuthenticationFilter.java` only if Spring Security’s resource-server converter cannot carry the internal principal cleanly.
-- Create: `platform/firebase/FirebaseTokenVerifier.java` only when its dependency/configuration is verified.
+- Create: `auth/integration/AuthTokenVerifier.java` only when its dependency/configuration is verified.
 - Create: `nooka-api/src/test/java/com/vinhung/nookaapi/platform/security/SecurityConfigTest.java`
 
 - [ ] Configure production authentication centrally; do not add implicit allow-all behavior.

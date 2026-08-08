@@ -231,9 +231,7 @@ Không viết chuỗi hiển thị thẳng vào JSX, kể cả tiếng Anh, kể
 
 ## Auth
 
-Firebase Auth phát hành token; gửi kèm request bằng `Authorization: Bearer`. Không tự xây login/password, không thêm màn hình đăng ký bằng mật khẩu.
-
-Không dùng `userId` phía client làm định danh tin cậy — backend map từ token đã verify. Client giữ id chỉ để hiển thị.
+Mobile gọi custom auth API bằng email/password. Access token gửi kèm request bằng Authorization: Bearer; refresh token lưu bằng SecureStore trên native và được rotate qua backend. Email verification OTP, forgot password, password reset và Google/Apple/Facebook OAuth đều đi qua backend. Không tin userId từ client để xác định identity.
 
 ## API
 

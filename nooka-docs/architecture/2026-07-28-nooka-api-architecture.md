@@ -66,7 +66,7 @@ com.vinhung.nookaapi
 │
 └── platform/          Adapter ra thế giới ngoài. KHÔNG chứa nghiệp vụ.
     ├── security/        Spring Security filter, principal
-    ├── firebase/        implements user.spi.TokenVerifier
+    ├── auth/        implements user.spi.TokenVerifier
     ├── r2/              implements media.spi.MediaStorage
     └── fcm/             implements notification.spi.PushSender
 ```
@@ -455,10 +455,12 @@ So lại ba thứ trước khi tin rằng cấu hình cũ vẫn đúng: file `sc
 ```
 platform/security/       filter, principal, argument resolver
 user/spi/TokenVerifier   port
-platform/firebase/FirebaseTokenVerifier   adapter
+auth/integration/AuthTokenVerifier   adapter
 ```
 
-Luồng: filter đọc `Authorization: Bearer`, `TokenVerifier` verify và trả `firebaseUid`, `platform.security` đổi sang `UUID` nội bộ qua `user :: api`, đặt vào `SecurityContext`.
+Luồng: filter đọc `Authorization: Bearer`, token verifier tra access session hash trong PostgreSQL và trả `UUID` nội bộ vào `SecurityContext`. Auth service cấp access token ngắn hạn và refresh token rotate được; logout/reset password revoke session.
+
+Email/password, email verification OTP và password reset đều thuộc module `auth`. OAuth Google, Apple và Facebook cũng đi qua module này: backend verify provider token bằng Google/Apple JWK hoặc Facebook Graph `debug_token`, sau đó map `(provider, subject)` trong bảng `oauth_accounts` tới user Nooka. Nếu provider email đã verify trùng email Nooka thì liên kết account; nếu chưa có user thì tạo user mới với password không dùng được. Provider secret không đi xuống mobile và không được ghi log.
 
 Từ đó xuống dưới, **`viewerId` là tham số tường minh**. Không ThreadLocal, không `SecurityContextHolder` ở tầng service hay repository.
 

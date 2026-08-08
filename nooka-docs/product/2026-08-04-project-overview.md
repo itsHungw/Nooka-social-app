@@ -186,7 +186,7 @@ AI **không được** tạo review, không tạo giá, không tạo việc ai �
 | Chế độ sáng/tối | App đi theo cài đặt của hệ điều hành; **không có nút đổi trong app**, nên cả hai chế độ đều xuất hiện với người dùng thật |
 | Ngôn ngữ | Chuỗi gốc là tiếng Anh, mọi chuỗi đi qua lớp i18n. Người dùng chính nói tiếng Việt, và bản dịch tiếng Việt thường dài hơn bản tiếng Anh 30–40% |
 | Backend | Spring Boot + PostgreSQL |
-| Đăng nhập | Firebase Auth |
+| Đăng nhập | custom email/password auth + email OTP/password reset + Google/Apple/Facebook OAuth |
 | Lưu ảnh | Cloudflare R2 · Thông báo đẩy: FCM |
 
 ---

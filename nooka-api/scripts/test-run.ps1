@@ -85,49 +85,11 @@ $tests = @(
     @{
         Name = 'auth disabled passes without exposing password'
         Run = {
-            $content = $baseEnv + "`n" + (@(
-                'NOOKA_AUTH_ENABLED=false'
-                'NOOKA_FIREBASE_PROJECT_ID='
-                'NOOKA_FIREBASE_CREDENTIALS='
-            ) -join "`n")
+            $content = $baseEnv + "`n" + 'NOOKA_AUTH_ENABLED=false'
             $envPath = Write-TestEnv 'auth-disabled.env' $content
             $result = Invoke-RunnerCheck $envPath
             Assert-Equal $result.ExitCode 0 'Auth-disabled check failed'
             Assert-Contains $result.Output 'Authentication: disabled' 'Auth status was not reported'
-            Assert-NotContains $result.Output 'super-secret=value' 'Database password leaked'
-        }
-    },
-    @{
-        Name = 'auth enabled requires Firebase project ID'
-        Run = {
-            $content = $baseEnv + "`n" + (@(
-                'NOOKA_AUTH_ENABLED=true'
-                'NOOKA_FIREBASE_PROJECT_ID='
-                'NOOKA_FIREBASE_CREDENTIALS='
-            ) -join "`n")
-            $envPath = Write-TestEnv 'missing-project.env' $content
-            $result = Invoke-RunnerCheck $envPath
-            if ($result.ExitCode -eq 0) {
-                throw 'Auth-enabled check unexpectedly succeeded without a project ID.'
-            }
-            Assert-Contains $result.Output 'NOOKA_FIREBASE_PROJECT_ID' 'Missing project ID error was unclear'
-            Assert-NotContains $result.Output 'super-secret=value' 'Database password leaked'
-        }
-    },
-    @{
-        Name = 'explicit Firebase credential path must exist'
-        Run = {
-            $content = $baseEnv + "`n" + (@(
-                'NOOKA_AUTH_ENABLED=true'
-                'NOOKA_FIREBASE_PROJECT_ID=nooka-test'
-                'NOOKA_FIREBASE_CREDENTIALS=missing-service-account.json'
-            ) -join "`n")
-            $envPath = Write-TestEnv 'missing-credential.env' $content
-            $result = Invoke-RunnerCheck $envPath
-            if ($result.ExitCode -eq 0) {
-                throw 'Auth-enabled check unexpectedly succeeded with a missing credential file.'
-            }
-            Assert-Contains $result.Output 'NOOKA_FIREBASE_CREDENTIALS' 'Missing credential error was unclear'
             Assert-NotContains $result.Output 'super-secret=value' 'Database password leaked'
         }
     }

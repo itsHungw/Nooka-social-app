@@ -34,31 +34,77 @@ create table areas (
 
 
 -- ---------------------------------------------------------------------------
--- User
+-- User and local authentication
 --
--- Firebase Auth phát hành token, backend chỉ verify (§20). Vì vậy bảng này
--- không có cột mật khẩu và sẽ không bao giờ có.
--- ---------------------------------------------------------------------------
 
 create table users (
-    id           uuid primary key default gen_random_uuid(),
-    firebase_uid text        not null unique,
-    username     text        not null,
-    display_name text        not null,
-    avatar_url   text,
+    id                    uuid primary key default gen_random_uuid(),
+    email                 text        not null unique,
+    password_hash         text        not null,
+    email_verified_at     timestamptz,
+    username              text        not null,
+    display_name          text        not null,
+    avatar_url            text,
 
-    -- §13: mặc định KHÔNG phải Public với tài khoản mới.
     default_post_visibility text not null default 'FOLLOWERS'
         check (default_post_visibility in ('PUBLIC', 'FOLLOWERS', 'CLOSE_FRIENDS', 'PRIVATE')),
 
-    created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now()
+    created_at            timestamptz not null default now(),
+    updated_at            timestamptz not null default now()
 );
 
--- Username phân biệt hoa thường khi hiển thị nhưng không được trùng khi bỏ qua
--- hoa thường — nếu không thì "Minh" và "minh" là hai người khác nhau.
 create unique index users_username_lower_key on users (lower(username));
 
+create table auth_sessions (
+    id                  uuid primary key default gen_random_uuid(),
+    user_id             uuid not null references users on delete cascade,
+    access_token_hash   text not null unique,
+    refresh_token_hash  text not null unique,
+    access_expires_at   timestamptz not null,
+    refresh_expires_at  timestamptz not null,
+    last_used_at        timestamptz not null default now(),
+    revoked_at          timestamptz,
+    created_at          timestamptz not null default now()
+);
+
+create index auth_sessions_user_idx on auth_sessions (user_id);
+create index auth_sessions_refresh_idx on auth_sessions (refresh_token_hash);
+
+create table oauth_accounts (
+    id          uuid primary key default gen_random_uuid(),
+    user_id     uuid not null references users on delete cascade,
+    provider    text not null check (provider in ('GOOGLE', 'APPLE', 'FACEBOOK')),
+    subject     text not null,
+    created_at  timestamptz not null default now(),
+    unique (provider, subject)
+);
+
+create index oauth_accounts_user_idx on oauth_accounts (user_id);
+
+create table email_verification_codes (
+    id           uuid primary key default gen_random_uuid(),
+    user_id      uuid not null references users on delete cascade,
+    code_hash    text not null,
+    expires_at   timestamptz not null,
+    attempts     integer not null default 0,
+    consumed_at  timestamptz,
+    created_at   timestamptz not null default now()
+);
+
+create index email_verification_codes_user_idx on email_verification_codes (user_id, created_at desc);
+
+create table password_reset_tokens (
+    id           uuid primary key default gen_random_uuid(),
+    user_id      uuid not null references users on delete cascade,
+    token_hash   text not null,
+    expires_at   timestamptz not null,
+    consumed_at  timestamptz,
+    created_at   timestamptz not null default now()
+);
+
+create index password_reset_tokens_user_idx on password_reset_tokens (user_id, created_at desc);
+
+-- ---------------------------------------------------------------------------
 
 -- ---------------------------------------------------------------------------
 -- Quan hệ xã hội (§3)

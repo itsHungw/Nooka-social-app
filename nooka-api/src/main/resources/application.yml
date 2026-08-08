@@ -43,8 +43,26 @@ spring:
 nooka:
   security:
     enabled: ${AUTH_ENABLED:true}
-  firebase:
-    project-id: ${FIREBASE_PROJECT_ID:}
+  auth:
+    access-token-ttl: ${AUTH_ACCESS_TOKEN_TTL:PT15M}
+    refresh-token-ttl: ${AUTH_REFRESH_TOKEN_TTL:P30D}
+    verification-code-ttl: ${AUTH_VERIFICATION_CODE_TTL:PT10M}
+    reset-code-ttl: ${AUTH_RESET_CODE_TTL:PT10M}
+    max-code-attempts: ${AUTH_MAX_CODE_ATTEMPTS:5}
+    email:
+      enabled: ${AUTH_EMAIL_ENABLED:false}
+      host: ${AUTH_EMAIL_HOST:}
+      port: ${AUTH_EMAIL_PORT:587}
+      username: ${AUTH_EMAIL_USERNAME:}
+      password: ${AUTH_EMAIL_PASSWORD:}
+      from: ${AUTH_EMAIL_FROM:}
+    oauth:
+      google-client-id: ${OAUTH_GOOGLE_CLIENT_ID:}
+      apple-client-id: ${OAUTH_APPLE_CLIENT_ID:}
+      facebook:
+        app-id: ${OAUTH_FACEBOOK_APP_ID:}
+        app-secret: ${OAUTH_FACEBOOK_APP_SECRET:}
+        graph-base-url: ${OAUTH_FACEBOOK_GRAPH_BASE_URL:https://graph.facebook.com}
   directions:
     provider: ${DIRECTIONS_PROVIDER:mapbox}
     mapbox:

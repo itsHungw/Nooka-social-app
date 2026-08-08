@@ -38,6 +38,4 @@ build/
 !.env.example
 
 ### Local credentials ###
-.firebase/
-*-firebase-adminsdk-*.json
 service-account*.json

@@ -12,7 +12,7 @@ com.vinhung.nookaapi
 ├── user/         Account and relationship data
 ├── spot/         City, Area, Spot, Place, Experience
 ├── post/         Post, visibility policy, read boundary
-└── platform/     Spring Security, Firebase Admin and OpenAPI adapters
+└── platform/     Spring Security, custom auth Admin and OpenAPI adapters
 ```
 
 `user`, `spot`, and `post` are Spring Modulith application modules. `platform` contains adapters only. `media`, `notification`, `moderation`, `feed`, and `search` are not created until they have a real use case.
@@ -53,7 +53,7 @@ post/
 
 platform/
   security/            SecurityFilterChain and principal boundary
-  firebase/            Token adapter boundary
+  auth/            Token adapter boundary
   openapi/              OpenAPI configuration
 ```
 
@@ -65,7 +65,7 @@ No `gitkeep` files and no empty package are added. A package appears only with a
 2. Annotate the application for Modulith and declare named interfaces for real cross-module contracts.
 3. Move existing classes to the feature package layout and preserve current Post visibility behavior.
 4. Add one global RFC 9457 `ProblemDetail` handler. Do not expose stack traces, class names, table names, tokens, or Private content.
-5. Add a centralized Spring Security boundary for Firebase JWT. Production is never implicitly allow-all; local test bypasses are test-only configuration.
+5. Add a centralized Spring Security boundary for opaque bearer session token. Production is never implicitly allow-all; local test bypasses are test-only configuration.
 6. Add OpenAPI configuration behind an explicit property and verify `/v3/api-docs` with a smoke test.
 7. Extend the existing PostgreSQL compose setup with an API service and healthcheck; secrets remain environment-provided.
 

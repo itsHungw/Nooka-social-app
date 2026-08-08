@@ -443,7 +443,11 @@
     "darkDescription": "Always use the dark appearance",
     "preview": "Onboarding & Auth Screens",
     "welcomeScreen": "View Start Screen",
-    "loginScreen": "View Login Screen"
+    "loginScreen": "View Login Screen",
+    "account": "Account",
+    "logout": "Log out",
+    "logoutDescription": "Log out of your account on this device",
+    "logoutToast": "Logged out of Nooka"
   },
   "mascot": {
     "idle": "Nooka is waiting for your question",

@@ -443,7 +443,11 @@
     "darkDescription": "Luôn dùng giao diện tối",
     "preview": "Màn hình Bắt đầu & Đăng nhập",
     "welcomeScreen": "Xem trang Bắt đầu",
-    "loginScreen": "Xem trang Đăng nhập"
+    "loginScreen": "Xem trang Đăng nhập",
+    "account": "Tài khoản",
+    "logout": "Đăng xuất",
+    "logoutDescription": "Đăng xuất khỏi tài khoản trên thiết bị này",
+    "logoutToast": "Đã đăng xuất khỏi Nooka"
   },
   "mascot": {
     "idle": "Nooka đang chờ bạn hỏi",

@@ -84,10 +84,15 @@ Bắt đầu bằng test nhỏ nhất liên quan trực tiếp tới thay đổi
 
 Tổ chức theo feature/package, không chia toàn bộ dự án thành các thư mục kỹ thuật toàn cục.
 
-- `shared`: primitive dùng chung thật sự, hiện có `BaseEntity`, visibility value và HTTP error contract.
+- `shared`: primitive dùng chung thật sự, hiện có `BaseEntity`, visibility value, `TagVote` và HTTP error contract.
 - `user`: user và social graph.
-- `spot`: City, Area, Spot, Place và Experience.
+- `spot`: City, Area, Spot, Place, Experience, giờ mở cửa, chống trùng và độ hợp thẻ.
 - `post`: Post, visibility policy và cổng truy cập Post.
+- `tag`: danh mục thẻ và bản dịch. Module lá, không phụ thuộc module nghiệp vụ nào.
+- `review`: review có cấu trúc; bộ câu hỏi và luật "đáp án nào sinh thẻ nào" là **dữ liệu**, không phải code.
+- `insight`: số liệu tổng hợp của địa điểm. Module đọc, nằm trên `post`/`review`/`tag` và không sở hữu bảng nào.
+
+Module mới phải khai `@ApplicationModule(allowedDependencies = ...)` ở `package-info.java` của package gốc, và phần được phép lộ ra ngoài phải có `@NamedInterface`. `ModularityTest` verify đồ thị này.
 
 Khi thêm capability mới, đặt controller, DTO, service, repository và test cạnh feature sở hữu nghiệp vụ đó. Chỉ đưa code vào `common` khi có ít nhất hai feature thực sự dùng chung và semantics giống nhau.
 
@@ -122,6 +127,9 @@ Business rule phải nằm ở domain/service hoặc query policy có tên rõ r
 - `PRIVATE` chỉ tác giả thấy.
 - Block chặn khả năng xem theo cả hai chiều.
 - **R9:** bài của tài khoản có `users.deleted_at` khác null không hiển thị với bất kỳ ai, kể cả chính tác giả. Phép kiểm đi qua `user.query.RelationshipCriteria.deletedAuthorExists` và phải có mặt ở **cả hai** nhánh của `visibleTo` — quên nhánh khách chưa đăng nhập là lỗ rò lớn nhất vì đó là nhánh ai cũng chạm được.
+- **R3a:** mọi con số về Post **phụ thuộc người xem** cũng phải đi qua `PostAccess`, không chỉ phép đọc. `count(*) from posts` viết ra rất tự nhiên và rất dễ lọt review, nhưng nó rò nội dung riêng tư qua con số: §8 chốt `Been` tự bật khi đăng bài kể cả bài `PRIVATE`, nên "mấy bạn của tôi đã tới đây" đếm sai là bạn bè biết mình vừa ở đâu.
+- **R3b:** con số **toàn cục** đếm tầng cố định `PUBLIC` + `FOLLOWERS`, không bao giờ đếm `CLOSE_FRIENDS` hay `PRIVATE`, và **không nhận `viewerId`**. Phụ thuộc người xem là tự chặn đường cache về sau.
+- Module `insight` là nơi duy nhất trả lời "địa điểm này có bao nhiêu…". Không module nào khác được tự đếm.
 - Không phân biệt “không tồn tại” và “không có quyền xem” trong response công khai nếu việc phân biệt làm lộ nội dung.
 
 Mọi thay đổi luật visibility phải viết hoặc cập nhật test trước, bao gồm chiều quan hệ và trường hợp âm.

@@ -1,29 +1,36 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
 
-export default function PasswordInputScreen() {
+export default function ForgotPasswordScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ email?: string }>();
   const { colors } = useNookaTheme();
 
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('ban@gmail.com');
   const [isFocused, setIsFocused] = useState(true);
 
-  const isValid = password.length >= 8;
+  const isValid = email.trim().length > 3 && email.includes('@');
 
-  const handleNext = () => {
+  const handleSendOtp = () => {
     if (!isValid) return;
-    router.push({ pathname: '/auth/otp', params: { email: params.email, password, purpose: 'signup' } });
+    router.push({ pathname: '/auth/otp', params: { email, purpose: 'reset_password' } });
   };
 
   return (
-    <ScreenShell testID="auth-password-screen">
+    <ScreenShell testID="auth-forgot-password-screen">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
@@ -35,9 +42,12 @@ export default function PasswordInputScreen() {
           </View>
 
           {/* Tiêu đề */}
-          <Text style={[styles.title, { color: colors.text }]}>{t('auth.choosePassword')}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('auth.resetPasswordTitle')}</Text>
 
-          {/* Khung Nhập Mật khẩu */}
+          {/* Mô tả */}
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>{t('auth.resetPasswordSubtitle')}</Text>
+
+          {/* Ô Nhập Email */}
           <View
             style={[
               styles.inputBox,
@@ -47,40 +57,29 @@ export default function PasswordInputScreen() {
               },
             ]}>
             <TextInput
-              accessibilityLabel={t('auth.choosePassword')}
+              accessibilityLabel={t('auth.emailPlaceholder')}
               autoCapitalize="none"
               autoCorrect={false}
               autoFocus
+              keyboardType="email-address"
               onBlur={() => setIsFocused(false)}
-              onChangeText={setPassword}
+              onChangeText={setEmail}
               onFocus={() => setIsFocused(true)}
-              placeholder={t('auth.passwordPlaceholder')}
+              placeholder={t('auth.emailPlaceholder')}
               placeholderTextColor={colors.textSubtle}
-              secureTextEntry={!showPassword}
               style={[styles.input, { color: colors.text }]}
-              value={password}
+              value={email}
             />
-            <Pressable onPress={() => setShowPassword((prev) => !prev)} style={styles.toggleButton}>
-              <Text style={[styles.toggleText, { color: colors.text }]}>
-                {showPassword ? t('auth.hide') : t('auth.show')}
-              </Text>
-            </Pressable>
           </View>
 
-          {/* Chú thích độ dài mật khẩu */}
-          <Text style={[styles.subtext, { color: colors.textMuted }]}>
-            {t('auth.passwordMinLengthPrefix')}
-            <Text style={[styles.boldSubtext, { color: colors.accentInk }]}>{t('auth.passwordMinLengthNumber')}</Text>
-          </Text>
-
-          {/* Nút Tiếp tục ở đáy màn hình */}
+          {/* Nút Gửi mã OTP & Link Quay lại đăng nhập */}
           <View style={styles.bottomSection}>
             <Button
-              accessibilityLabel={t('auth.continueArrow')}
-              label={t('auth.continueArrow')}
-              onPress={handleNext}
+              accessibilityLabel={t('auth.sendOtpBtn')}
+              label={t('auth.sendOtpBtn')}
+              onPress={handleSendOtp}
               style={[
-                styles.continueButton,
+                styles.sendButton,
                 {
                   backgroundColor: isValid ? colors.accent : colors.surfaceMuted,
                   opacity: isValid ? 1 : 0.6,
@@ -88,6 +87,16 @@ export default function PasswordInputScreen() {
               ]}
               tone={isValid ? 'accent' : 'outline'}
             />
+
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push('/auth/email-login')}
+              style={styles.backLinkFooter}>
+              <Text style={[styles.backLinkText, { color: colors.textMuted }]}>
+                {t('auth.rememberedPassword')}
+                <Text style={[styles.backLinkBold, { color: colors.accentInk }]}>{t('auth.backToLogin')}</Text>
+              </Text>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -116,47 +125,46 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     fontWeight: '800',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 13.5,
+    lineHeight: 19,
+    textAlign: 'center',
+    marginBottom: 28,
+    maxWidth: 300,
+    alignSelf: 'center',
   },
   inputBox: {
     minHeight: 56,
     borderRadius: 16,
     borderWidth: 1.5,
     paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'center',
   },
   input: {
-    flex: 1,
     fontSize: 16,
     lineHeight: 22,
     fontWeight: '600',
-  },
-  toggleButton: {
-    paddingLeft: 12,
-    paddingVertical: 8,
-  },
-  toggleText: {
-    fontSize: 13.5,
-    fontWeight: '700',
-  },
-  subtext: {
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-    marginTop: 14,
-  },
-  boldSubtext: {
-    fontWeight: '800',
   },
   bottomSection: {
     marginTop: 'auto',
     paddingTop: 32,
     alignItems: 'center',
+    gap: 16,
   },
-  continueButton: {
+  sendButton: {
     width: '100%',
     minHeight: 52,
     borderRadius: 16,
+  },
+  backLinkFooter: {
+    paddingVertical: 6,
+  },
+  backLinkText: {
+    fontSize: 13,
+  },
+  backLinkBold: {
+    fontWeight: '700',
   },
 });

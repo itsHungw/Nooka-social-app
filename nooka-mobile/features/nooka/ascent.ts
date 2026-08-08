@@ -1,4 +1,4 @@
-import { MASCOT_MOVE, type FrameId } from './mascot.ts';
+import { MASCOT_MOVE, PEEK_DWELL, type FrameId } from './mascot.ts';
 
 /**
  * Nooka lên tới mép ô nhập bằng cách nào.
@@ -105,6 +105,26 @@ export const nextAscentPhase = (phase: AscentPhase, wants: boolean): AscentPhase
 export const ascentOnStage = (phase: AscentPhase) => phase !== 'away';
 
 /**
+ * Màn kịch leo có đang **giữ chỗ đứng của Nooka** không.
+ *
+ * Chỗ đứng của Nooka do đúng **một** hệ quyết định tại một thời điểm. Hai hệ
+ * cùng dịch một lớp phủ: `useMascotStage` đưa nó đi trốn quanh ô nhập, còn màn
+ * kịch này đưa nó dọc đạo cụ rồi lên mép. Cộng cả hai vào nhau thì Nooka rời
+ * khỏi chiếc thang đúng bằng quãng đi trốn, quả bóng tuột khỏi tay đúng bằng
+ * ngần ấy, và lúc bám khung nó vọt lên cao hơn mép đúng một quãng nhô — tới mức
+ * ngủ là ngồi trên không.
+ *
+ * Ghim từ lúc **mới có cớ** (`wanted`), không đợi tới lúc đạo cụ ra: Nooka cần
+ * trọn `ASCENT_MOVE.lead` để đi về chỗ ở, mà cho nó đi trốn trong quãng đó thì
+ * đạo cụ tới nơi lúc nhân vật đang ở chỗ khác.
+ *
+ * Một luật viết **một lần**, cho cả hai việc: tắt hệ đi lang thang, và từ chối
+ * một cú chạm đòi đi trốn. Hai chỗ đọc hai điều kiện khác nhau thì tới lúc thêm
+ * chặng mới sẽ có một chỗ bị bỏ quên.
+ */
+export const ascentPins = (phase: AscentPhase, wanted: boolean) => wanted || ascentOnStage(phase);
+
+/**
  * Đạo cụ đang ở chỗ của nó, **hoặc đang trên đường tới đó**.
  *
  * Khác `ascentInPlace` ở đúng chặng `arriving`, và khác biệt đó là cả điểm: cú
@@ -146,7 +166,11 @@ export const risingUp = (phase: AscentPhase) =>
  *   stow   — đạo cụ rút khỏi mép trái
  */
 export const ASCENT_MOVE = {
-  lead: MASCOT_MOVE.walk,
+  // Đường về **xa nhất**, không phải đoạn cuối của nó: đang chìm hẳn dưới ô
+  // nhập thì Nooka phải trồi lên (`dip`), hạ khỏi mép (`lift`), rồi mới đi ngang
+  // về (`walk`). Lấy mỗi `walk` thì đạo cụ tới nơi trong lúc nhân vật còn đang
+  // lùi ra khỏi ô nhập, và nó với lấy chiếc thang từ một chỗ không phải chỗ ở.
+  lead: MASCOT_MOVE.dip + MASCOT_MOVE.lift + MASCOT_MOVE.walk,
   fetch: 560,
   drift: 760,
   settle: 220,
@@ -156,6 +180,12 @@ export const ASCENT_MOVE = {
   // đà thì mắt đọc ra là đang trôi ngang chứ không phải đang nhảy.
   hop: 180,
   stow: 460,
+  // Rời mép mà đang đứng lệch thì **bò dọc mép về trên đầu đạo cụ đã**, rồi mới
+  // nhảy. Cùng dạng với `lead`, và cùng lý do: trồi lên khỏi chỗ nấp (`dip`) rồi
+  // bò về (`walk`). Bỏ quãng này thì cú nhảy về phải gánh thêm cả quãng lệch, và
+  // một cú nhảy dài gấp đôi trong đúng `hop` mili giây thì mắt đọc ra là trượt
+  // ngang chứ không phải nhảy — đúng thứ `hop` ngắn được đặt ra để tránh.
+  rimHome: MASCOT_MOVE.dip + MASCOT_MOVE.walk,
 };
 
 export function ascentPhaseMs(phase: AscentPhase, means: AscentMeans, rungs: number): number {
@@ -178,11 +208,21 @@ export function ascentPhaseMs(phase: AscentPhase, means: AscentMeans, rungs: num
 }
 
 /** Nooka đang diễn gì. `null` là cứ chạy hoạt cảnh của trạng thái như thường. */
-export type AscentAct = 'haul' | 'catch' | 'climb' | 'float' | 'hop' | 'grip';
+export type AscentAct = 'haul' | 'catch' | 'climb' | 'float' | 'hop' | 'grip' | 'greet';
 
 export const ASCENT_ANIMATION: Record<AscentAct, { frames: readonly FrameId[]; ms: number }> = {
   haul: { frames: ['HAUL_A', 'HAUL_B'], ms: 210 },
   catch: { frames: ['CATCH_A', 'CATCH_B'], ms: 240 },
+  // Vẫy tay trên mép — **dùng lại đúng khung vẫy tay dưới đất**, cùng nhịp.
+  //
+  // Không có khung "vừa bám mép vừa vẫy": lưới rộng 34 ô mà cái đầu chiếm cột
+  // 3–31, hai bên má không đủ chỗ cho một cánh tay dày 4 ô (đã dựng thử và xem
+  // bằng mắt — xem ghi chú trong `scripts/build-mascot-sprite.js`). Mà cũng
+  // không nên có: **không ai vẫy tay trong lúc treo người bằng hai bàn tay.**
+  // Muốn vẫy thì phải đu lên đứng hẳn trên mép đã, và lúc đó tư thế đúng là tư
+  // thế đứng vẫy sẵn có. Quãng nhấc người là `RIM_LIFT` ở `app/ask.tsx`, đúng
+  // bằng quãng dùng cho lúc ngồi ngủ — cùng một việc: đưa cả người lên khỏi mép.
+  greet: { frames: ['IDLE_A', 'IDLE_B'], ms: 460 },
   // Một khung một bậc: chân đổi bên đúng nhịp Nooka nhích lên.
   climb: { frames: ['CLIMB_A', 'CLIMB_B'], ms: ASCENT_MOVE.step },
   float: { frames: ['FLOAT_A', 'FLOAT_B'], ms: 520 },
@@ -192,10 +232,16 @@ export const ASCENT_ANIMATION: Record<AscentAct, { frames: readonly FrameId[]; m
   grip: { frames: ['GRIP', 'GRIP_B'], ms: 700 },
 };
 
-export function ascentAct(phase: AscentPhase, means: AscentMeans): AscentAct | null {
+export function ascentAct(
+  phase: AscentPhase,
+  means: AscentMeans,
+  greeting = false,
+): AscentAct | null {
   if (phase === 'away') return null;
   if (phase === 'hopping') return 'hop';
-  if (phase === 'gripping') return 'grip';
+  // Chỉ **trên mép** mới có chuyện vẫy tay: đang trèo hay đang đu bóng thì hai
+  // tay đều bận, và một nhân vật vừa leo thang vừa vẫy là một nhân vật sắp ngã.
+  if (phase === 'gripping') return greeting ? 'greet' : 'grip';
   if (phase === 'arriving' || phase === 'leaving') return means === 'ladder' ? 'haul' : 'catch';
   if (phase === 'climbing' || phase === 'descending') return means === 'ladder' ? 'climb' : 'float';
   // `ready`: cầm thang thì buông tay đứng thẳng, cầm bóng thì đã nắm dây rồi.
@@ -220,6 +266,79 @@ export const PAW_RATIO = 10 / 47;
 export const gripRise = (fieldH: number, mascotH: number) =>
   Math.max(0, fieldH - mascotH * PAW_RATIO);
 
+/**
+ * Trốn **ngay tại mép**: buông tay, tụt xuống sau bức tường chữ, rồi trèo lại
+ * lên nhìn.
+ *
+ * Dưới đất Nooka trốn bằng cách đi ngang vào sau ô nhập. Trên mép thì không còn
+ * cách đó — đi ngang là rời khỏi mép, mà mép mới là thứ đang giữ nó. Chiều duy
+ * nhất còn lại là chiều sâu, và đó cũng đúng là động tác một người đang đu trên
+ * gờ tường làm khi muốn khuất: thả người xuống.
+ *
+ * Quãng thả **suy ra từ hình, không phải chọn bằng mắt**: đúng bằng phần thân
+ * nằm trên hai bàn tay. Tư thế treo đặt tay lên mép, nên thả đúng ngần ấy là
+ * đỉnh đầu hạ xuống **khít mép** — thấp hơn thì có một mẩu đầu còn nhô, cao hơn
+ * thì Nooka chìm sâu hơn mức cần và lúc trồi lên phải bù một quãng thừa. Có test
+ * khoá bằng chính `gripRise`, nên đổi `PAW_RATIO` là hai bên đi theo cùng nhau.
+ */
+export const perchSink = (mascotH: number) => mascotH * (1 - PAW_RATIO);
+
+/**
+ * Trốn ở mép được bao lâu rồi trèo lại lên nhìn.
+ *
+ * **Luôn ngắn hơn một lượt treo** (`DUCK_DWELL.max < PERCH_DWELL.min`, có test):
+ * chỗ Nooka có việc là trên mép nhìn người dùng gõ, còn tụt xuống chỉ là một
+ * lượt nghịch. Dài bằng lượt treo thì bức tường chữ thành chỗ ở, và người dùng
+ * chạm vào nhân vật để rồi mất hút nó cả chục giây.
+ *
+ * Đây là quãng **người dùng vừa chạm vào Nooka và đang chờ xem nó làm gì**, nên
+ * nó phải ngắn hơn hẳn mọi lượt nghỉ khác. Cú ú oà chỉ vui khi cái "oà" tới sớm;
+ * để nhân vật khuất bốn giây thì người dùng đã quay lại gõ tiếp và bỏ lỡ đúng
+ * nửa sau của trò.
+ *
+ * Sàn cứng là `MASCOT_MOVE.dip + walk` — cú dịch dọc mép phải xong hẳn trước lúc
+ * trồi lên, nếu không Nooka hiện ra giữa lúc còn đang lướt ngang (có test). Nhưng
+ * `min` **không** đặt sát sàn: hạ tới đó thì cú dịch vừa dứt là nhân vật nhô lên
+ * ngay, và cả lượt nấp đọc thành một cú trượt liền mạch chứ không phải "chìm
+ * xuống, đi, rồi ló ra". Chừa lại chừng nửa giây đứng yên trong bóng tối là đủ
+ * để mắt kịp mất dấu nó.
+ */
+export const DUCK_DWELL = { min: 1200, max: 2600 };
+
+/**
+ * Nooka bám ở đâu dọc mép ô nhập: `0` là ngay trên đầu đạo cụ, `1` là lệch sang
+ * phải một quãng.
+ *
+ * **Nấp xong thì trồi lên ở chỗ khác** — đó là cả cái gag. Chìm xuống rồi nhô
+ * lên đúng chỗ cũ thì cú nấp chỉ là một nhịp nhấp nháy; đổi chỗ thì người dùng
+ * mới đọc ra là nhân vật vừa đi đâu đó sau bức tường chữ.
+ *
+ * Chỗ bám **chỉ được đổi trong lúc Nooka đang chìm**, không bao giờ lúc đang
+ * hiện. Trượt ngang dọc mép giữa thanh thiên bạch nhật là một nhân vật đang bám
+ * bằng hai tay mà lại lướt đi — mắt đọc ra ngay là sai. Màn hình lo phần đó bằng
+ * cách hoãn cú dịch đúng một nhịp `dip`, và `DUCK_DWELL.min` đủ dài để cú dịch
+ * xong hẳn trước lúc trồi lên (có test).
+ */
+export type RimSpot = 0 | 1;
+
+/** Chỗ bám kế tiếp sau một lượt nấp. Hai chỗ nên "khác chỗ hiện tại" là đổi qua lại. */
+export const nextRimSpot = (spot: RimSpot): RimSpot => (spot === 0 ? 1 : 0);
+
+/**
+ * Giữ một tư thế trên mép bao lâu rồi đổi — treo yên nhìn qua, hay đu lên vẫy.
+ *
+ * Đúng vai trò của `PEEK_DWELL` ở `mascot.ts`, chỉ khác chỗ đứng: dưới đất Nooka
+ * bốc thăm giữa nấp / bám mép / vẫy tay, trên mép thì giữa treo và vẫy. Vì vậy
+ * lấy cùng khoảng thời gian — cùng một nhân vật, cùng một nhịp đổi ý, không nên
+ * có hai tốc độ tuỳ chỗ nó đang đứng.
+ *
+ * **Ngắn hơn hẳn một lượt treo** (`PERCH_DWELL.min`), nếu không thì có những
+ * lượt Nooka lên tới nơi, chưa kịp đổi tư thế lần nào đã tới giờ tụt xuống.
+ */
+export const PERCH_POSE_DWELL = PEEK_DWELL;
+
+export const perchPoseDwell = (roll = Math.random()) => spread(PERCH_POSE_DWELL, roll);
+
 /** Thiếu ít hơn ngần này thì kiễng chân là đủ, chưa đáng gọi đạo cụ ra. */
 export const ASCENT_SLACK = 18;
 
@@ -243,15 +362,28 @@ export const ASCENT_SLACK = 18;
  *
  * `GROUND_DWELL.min` còn phải dài hơn **trọn một chuyến đi lên**, nếu không
  * Nooka vừa đặt chân xuống đã quay đầu leo lại.
+ *
+ * **Hai khoảng này đua với đồng hồ ngủ, và cuộc đua đó là chỗ ngẫu nhiên đến.**
+ * Người dùng ngừng gõ là `MOOD_STEPS` bắt đầu đếm; tới mức `sleep` thì Nooka
+ * đứng nguyên chỗ đang đứng. Ai về đích trước quyết định lần này người dùng thấy
+ * gì — ngủ luôn trên mép, tụt xuống rồi ngủ dưới đất, hay kịp xuống và leo lên
+ * lại. Vì vậy khoảng treo phải **vắt qua** mốc ngủ: `max` vượt qua nó (mới có
+ * những lượt ngủ trên mép) còn `min` đủ sớm để trọn một vòng xuống–lên vẫn lọt
+ * (mới có những lượt đi được cả hai chiều). Cả hai vế đều có test.
+ *
+ * Số hiện tại cho khoảng 32% ngủ trên mép, 40% xuống rồi ngủ, 28% đi trọn vòng.
+ * Đó là **chủ ý**, không phải số bốc ra: ba việc phải cùng có mặt thì nhân vật
+ * mới có vẻ đang tự sống. Đổi số ở đây là đổi tỉ lệ đó — đo lại rồi hãy chốt.
  */
-export const PERCH_DWELL = { min: 12000, max: 24000 };
-export const GROUND_DWELL = { min: 6000, max: 11000 };
+export const PERCH_DWELL = { min: 8200, max: 27000 };
+export const GROUND_DWELL = { min: 3500, max: 7900 };
 
 const spread = (range: { min: number; max: number }, roll: number) =>
   Math.round(range.min + roll * (range.max - range.min));
 
 export const perchDwell = (roll = Math.random()) => spread(PERCH_DWELL, roll);
 export const groundDwell = (roll = Math.random()) => spread(GROUND_DWELL, roll);
+export const duckDwell = (roll = Math.random()) => spread(DUCK_DWELL, roll);
 
 /**
  * Chặng nào là **chỗ nghỉ** — nơi đồng hồ "chán rồi, đổi chỗ" được phép chạy.

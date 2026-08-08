@@ -5,12 +5,16 @@ import {
   ASCENT_MOVE,
   ascentPhaseMs,
   ascentResting,
+  duckDwell,
   nextAscentPhase,
+  nextRimSpot,
   onFrame,
+  perchPoseDwell,
   pickMeans,
   restingDwell,
   type AscentMeans,
   type AscentPhase,
+  type RimSpot,
 } from '@/features/nooka/ascent';
 
 /**
@@ -41,6 +45,31 @@ export type AscentTrip = AscentPlan & {
    * tụt xuống nghỉ.
    */
   wants: boolean;
+};
+
+export type Ascent = AscentTrip & {
+  /** Đang tụt xuống trốn sau bức tường chữ, ngay tại chỗ bám. */
+  ducked: boolean;
+  /** Đang bám ở đâu dọc mép. Đổi mỗi lượt nấp, và chỉ đổi lúc đang chìm. */
+  rimSpot: RimSpot;
+  /**
+   * Đang đu lên đứng trên mép vẫy tay.
+   *
+   * Không phải một chặng của chuyến đi — Nooka vẫn ở nguyên trên mép, chỉ là
+   * nhấc mình lên khỏi nó. Màn hình lo phần nhấc (`RIM_LIFT`), vì không ai vẫy
+   * tay trong lúc treo người bằng hai bàn tay.
+   */
+  waving: boolean;
+  /**
+   * Trốn ngay tại mép — buông tay tụt xuống, rồi tự trèo lại lên nhìn.
+   *
+   * **Trả `false` khi Nooka không ở trên mép**, và người gọi phải có phản ứng
+   * khác. Đây là bản sinh đôi của `hide` ở `useMascotStage`: cùng một ý muốn
+   * ("đi trốn"), hai động tác khác nhau vì hai chỗ đứng khác nhau. Ở đâu thì
+   * hệ sở hữu chỗ đó lo — dưới đất là hệ đi lại, trên mép là màn kịch này.
+   * Cho hệ đi lại dịch ngang một Nooka đang bám mép thì nó rời khỏi mép.
+   */
+  duck: () => boolean;
 };
 
 /**
@@ -77,7 +106,7 @@ export function useNookaAscent(
   possible: boolean,
   restless: boolean,
   planFor: (means: AscentMeans) => AscentPlan,
-): AscentTrip {
+): Ascent {
   const reduceMotion = useReducedMotion();
   const [trip, setTrip] = useState<AscentTrip>({
     phase: 'away',
@@ -89,6 +118,16 @@ export function useNookaAscent(
   // Ý của nhân vật, tách khỏi hoàn cảnh. Hết cớ thì tắt hẳn; còn cớ thì nó tự
   // bật tắt theo nhịp riêng.
   const [urge, setUrge] = useState(false);
+  // Đang trốn tại mép. Tách khỏi `phase` vì nó không phải một chặng của chuyến
+  // đi — Nooka vẫn đang bám mép, chỉ là thả người xuống cho khuất.
+  const [ducked, setDucked] = useState(false);
+  // Chỗ bám dọc mép. Ref đi kèm vì máy trạng thái phải đọc được nó lúc dựng lại
+  // effect mà không nhận nó làm dependency — nhận thì mỗi lần đổi chỗ bám là
+  // máy bị đá đi một chặng.
+  const [waving, setWaving] = useState(false);
+  const [rimSpot, setRimSpot] = useState<RimSpot>(0);
+  const rimRef = useRef(rimSpot);
+  rimRef.current = rimSpot;
 
   // Vòng lặp tự hẹn giờ nên phải đọc được lượt hiện tại mà không cần dựng lại
   // effect sau mỗi bước — dựng lại là mỗi bước reset đồng hồ của bước sau.
@@ -117,13 +156,88 @@ export function useNookaAscent(
   // `restless` tắt là **đứng nguyên chỗ đang ở**, dù trên khung hay dưới đất:
   // Nooka đang ngủ thì không đổi ý. Thiếu vế này thì người dùng để yên một lúc
   // là có một nhân vật vừa ngủ vừa trèo thang lên xuống.
+  //
+  // `ducked` cũng khoá đồng hồ này: đang trốn thì lượt treo tạm dừng, hết trốn
+  // mới đếm lại từ đầu. Thiếu vế đó thì có lúc Nooka đang chìm nghỉm sau bức
+  // tường chữ đã tới giờ tụt xuống, và nó trồi lên chỉ để lập tức nhảy về đạo cụ
+  // — người dùng thấy nhân vật giật lên một cái rồi biến mất.
   useEffect(() => {
-    if (!possible || !restless || !ascentResting(trip.phase)) return;
+    if (!possible || !restless || ducked || !ascentResting(trip.phase)) return;
     const timer = setTimeout(() => setUrge(!onFrame(trip.phase)), restingDwell(trip.phase));
     return () => clearTimeout(timer);
-  }, [possible, restless, trip.phase]);
+  }, [possible, restless, ducked, trip.phase]);
+
+  const perched = onFrame(trip.phase);
+
+  /**
+   * Trốn xong thì trèo lại lên nhìn.
+   *
+   * **Không** phụ thuộc `restless`, khác mọi đồng hồ còn lại ở hook này: đây là
+   * một chuyến do cú chạm của người dùng mở ra, và chuyến đã đi thì phải về.
+   * Gắn nó vào "còn thức không" thì người dùng chạm vào Nooka rồi ngồi im chín
+   * giây là nhân vật ngủ quên trong lúc đang chìm nghỉm — không có gì trên màn
+   * hình nữa, và cũng không còn gì để chạm cho nó tỉnh.
+   */
+  useEffect(() => {
+    if (!ducked) return;
+    const timer = setTimeout(() => setDucked(false), duckDwell());
+    return () => clearTimeout(timer);
+  }, [ducked]);
+
+  const duck = useCallback((): boolean => {
+    // Đọc chặng từ ref chứ không từ state: cú chạm tới bất cứ lúc nào, kể cả
+    // giữa hai lần render.
+    if (reduceMotion || !onFrame(current.current.phase)) return false;
+    setDucked(true);
+    // Chốt chỗ bám mới **ngay lúc chìm xuống**, không đợi lúc trồi lên: màn hình
+    // hoãn cú dịch đúng một nhịp `dip` nên nó diễn trọn vẹn trong lúc Nooka còn
+    // khuất. Đợi tới lúc trồi mới đổi thì cú dịch chạy trước mắt người dùng.
+    setRimSpot(nextRimSpot);
+    return true;
+  }, [reduceMotion]);
 
   const active = urge && possible && !reduceMotion;
+
+  /**
+   * Hết cớ ở lại trên mép, hoặc đã rời mép: về chỗ bám gốc và thôi nấp.
+   *
+   * Đường xuống bắt đầu từ **trên đầu đạo cụ**, nên trước khi nhảy về Nooka phải
+   * trồi lên khỏi chỗ nấp rồi bò dọc mép về đó. Máy trạng thái bên dưới chờ đúng
+   * `ASCENT_MOVE.rimHome` cho hai việc ấy — hai vế phải đi cùng nhau, đặt lệch
+   * một bên là nhân vật nhảy đi từ chỗ nó chưa kịp bò tới.
+   *
+   * Vế `!perched` lo nốt trường hợp đã rời mép vì lý do khác: để sót `ducked`
+   * hay `rimSpot` bật thì phép dịch của cú nấp đi theo Nooka suốt đường xuống,
+   * và nó tụt thang ở một chỗ lệch hẳn khỏi cái thang.
+   */
+  useEffect(() => {
+    if (active && perched) return;
+    setDucked(false);
+    setRimSpot(0);
+  }, [active, perched]);
+
+  /**
+   * Trên mép thì đổi tư thế theo nhịp riêng: treo yên nhìn qua, rồi đu lên vẫy
+   * một lúc, rồi lại treo.
+   *
+   * Cùng vai trò với `nextPeekPose` ở hệ đi lại — chỉ khác là trên mép chỉ có
+   * hai tư thế nên "khác tư thế hiện tại" thành ra đổi qua lại. Nhịp thì lấy
+   * chung `PEEK_DWELL`: cùng một nhân vật, không nên đổi ý nhanh chậm tuỳ chỗ
+   * đang đứng.
+   *
+   * Ba cửa đóng: rời mép (không còn mép để đứng), đang nấp (đang khuất thì vẫy
+   * cho ai xem), và ngủ hẳn (`restless`). Mỗi cửa đóng đều **đưa về tư thế treo**
+   * chứ không giữ nguyên — bỏ sót thì Nooka mang quãng nhấc người ấy đi khắp nơi
+   * và nó tụt thang trong lúc lơ lửng cao hơn mặt đất một đoạn.
+   */
+  useEffect(() => {
+    if (!perched || ducked || !restless) {
+      setWaving(false);
+      return;
+    }
+    const timer = setTimeout(() => setWaving((on) => !on), perchPoseDwell());
+    return () => clearTimeout(timer);
+  }, [perched, ducked, restless, waving]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -146,14 +260,20 @@ export function useNookaAscent(
       }, after);
     };
 
-    // Nooka phải về tới chỗ ở rồi mới với được đạo cụ. Chỉ chờ ở nhịp đầu —
-    // mọi chặng sau đều nối tiếp ngay.
-    run(active && current.current.phase === 'away' ? ASCENT_MOVE.lead : 0);
+    // Hai chỗ phải chờ nhân vật đi tới nơi trước, và **chỉ** hai chỗ đó — mọi
+    // chặng khác nối tiếp ngay:
+    //
+    //   lead    — dưới đất: về tới chỗ ở rồi mới với được đạo cụ
+    //   rimHome — trên mép: trồi lên khỏi chỗ nấp và bò về trên đầu đạo cụ rồi
+    //             mới nhảy về được
+    const opening = current.current.phase === 'away';
+    const stranded = !active && onFrame(current.current.phase) && rimRef.current !== 0;
+    run(active && opening ? ASCENT_MOVE.lead : stranded ? ASCENT_MOVE.rimHome : 0);
     return () => clearTimeout(timer);
   }, [active, go]);
 
   // `wants` phải là ý định **hiện tại**, không phải ý định lúc chốt chặng gần
   // nhất: người dùng xoá bớt chữ ngay giữa cú nhảy thì chiều phải đổi tại chỗ,
   // chứ không đợi sang chặng sau mới biết mình đang đi đâu.
-  return trip.wants === active ? trip : { ...trip, wants: active };
+  return { ...trip, wants: active, ducked, rimSpot, waving, duck };
 }

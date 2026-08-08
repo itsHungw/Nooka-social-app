@@ -7,9 +7,11 @@ import {
   ASCENT_MOVE,
   ASCENT_PHASES,
   ASCENT_SLACK,
+  DUCK_DWELL,
   GROUND_DWELL,
   HOP_REACH,
   PERCH_DWELL,
+  PERCH_POSE_DWELL,
   PAW_RATIO,
   ascentAct,
   ascentInPlace,
@@ -17,23 +19,50 @@ import {
   ascentLength,
   ascentOnStage,
   ascentPhaseMs,
+  ascentPins,
   ascentResting,
   climbStop,
   gripRise,
   needsAscent,
+  duckDwell,
   nextAscentPhase,
+  nextRimSpot,
   offGround,
   onFrame,
+  perchPoseDwell,
+  perchSink,
   pickMeans,
   restingDwell,
   type AscentMeans,
   type AscentPhase,
 } from './ascent.ts';
 import { MASCOT_FRAMES } from './mascot-frames.ts';
-import { MASCOT_H, MASCOT_MOVE } from './mascot.ts';
+import { MASCOT_ANIMATION, MASCOT_H, MASCOT_MOVE } from './mascot.ts';
+import { MOOD_STEPS } from './mood.ts';
 
 const MASCOT_HEIGHT = 64; // MASCOT_SIZE 46 quy ra chiều cao ở app/ask.tsx
 const PEEK = 30; // BEHIND_OFFSET.y
+
+/** Người dùng để yên bao lâu thì Nooka ngủ hẳn và thôi đổi ý. */
+function sleepAfter(): number {
+  const step = MOOD_STEPS.find((item) => item.mood === 'sleep');
+  if (!step) throw new Error('MOOD_STEPS không còn mức `sleep` — màn kịch leo hết đối thủ để đua');
+  return step.after;
+}
+
+/** Trọn một chuyến đi lên / đi xuống, tính bằng ms. */
+const climbTrip = (means: AscentMeans, rungs: number) =>
+  ASCENT_MOVE.lead +
+  ascentPhaseMs('arriving', means, rungs) +
+  ascentPhaseMs('ready', means, rungs) +
+  ascentPhaseMs('climbing', means, rungs) +
+  ascentPhaseMs('hopping', means, rungs);
+
+const descendTrip = (means: AscentMeans, rungs: number) =>
+  ascentPhaseMs('hopping', means, rungs) +
+  ascentPhaseMs('descending', means, rungs) +
+  ascentPhaseMs('ready', means, rungs) +
+  ascentPhaseMs('leaving', means, rungs);
 
 test('mỗi chặng đi tiếp được cả hai chiều và không rơi ra ngoài bảng', () => {
   for (const phase of ASCENT_PHASES) {
@@ -118,10 +147,54 @@ test('chỉ có đúng một chặng Nooka bám vào khung', () => {
 });
 
 test('chờ Nooka về tới chỗ ở rồi mới gọi đạo cụ tới', () => {
+  // Đường về xa nhất là từ dưới đáy ô nhập: trồi lên, hạ khỏi mép, rồi đi ngang
+  // về. Lấy mỗi `walk` thì đạo cụ tới nơi trong lúc nhân vật còn đang lùi ra.
   assert.ok(
-    ASCENT_MOVE.lead >= MASCOT_MOVE.walk,
+    ASCENT_MOVE.lead >= MASCOT_MOVE.dip + MASCOT_MOVE.lift + MASCOT_MOVE.walk,
     'đạo cụ tới trước thì Nooka đón nó trong lúc còn đang đi ở chỗ khác',
   );
+});
+
+test('đạo cụ còn trên màn hình thì màn kịch giữ chỗ đứng, bất kể còn cớ hay không', () => {
+  // Đây là luật chống cộng dồn hai phép dịch: hệ đi lại quanh ô nhập và màn kịch
+  // leo cùng dịch một lớp phủ, nên chỉ một hệ được cầm lái tại một thời điểm.
+  for (const phase of ASCENT_PHASES) {
+    if (!ascentOnStage(phase)) continue;
+    for (const wanted of [true, false]) {
+      assert.equal(
+        ascentPins(phase, wanted),
+        true,
+        `${phase}/${wanted}: đạo cụ còn đó mà Nooka được phép đi trốn — nó trượt ngang ra khỏi thang`,
+      );
+    }
+  }
+});
+
+test('mới có cớ là đã ghim, không đợi đạo cụ ra tới nơi', () => {
+  // Nooka cần trọn `ASCENT_MOVE.lead` để đi về chỗ ở trước khi đạo cụ tới. Ghim
+  // muộn hơn thì nó đi trốn đúng trong quãng đó.
+  assert.equal(ascentPins('away', true), true);
+});
+
+test('chỉ đúng một hoàn cảnh là Nooka được tự do đi lại', () => {
+  const free = ASCENT_PHASES.filter((phase) => !ascentPins(phase, false));
+  assert.deepEqual(free, ['away'], 'hết đạo cụ và hết cớ thì mới tới lượt hệ đi lại');
+});
+
+test('quãng nhô lên khi chưa có đạo cụ phủ đúng tới ngưỡng gọi đạo cụ', () => {
+  // `PEEK_REACH` ở `app/ask.tsx` là `BEHIND_OFFSET.y + ASCENT_SLACK`. Hai bên
+  // phải nối liền: mọi chiều cao chưa cần đạo cụ đều nằm trong tầm với, nếu
+  // không thì có một quãng ô nhập mà tư thế `grip` bám vào khoảng không dưới mép
+  // và cũng chẳng có thang nào được gọi ra bù.
+  const reach = PEEK + ASCENT_SLACK;
+  for (const fieldH of [44, 52, 58, 62, 76, 120]) {
+    const rise = gripRise(fieldH, MASCOT_HEIGHT);
+    if (needsAscent(rise, PEEK)) continue;
+    assert.ok(
+      Math.min(rise, reach) === rise,
+      `ô nhập ${fieldH}pt: chưa gọi đạo cụ mà mép đã ngoài tầm với`,
+    );
+  }
 });
 
 test('chặng nào có diễn thì có thời lượng, hai đầu thì không', () => {
@@ -194,6 +267,45 @@ test('hai phương tiện diễn khác nhau ở lúc lấy đạo cụ và lúc 
   }
 });
 
+test('chỉ trên mép mới vẫy tay được — mọi chặng khác hai tay đều bận', () => {
+  // Đang trèo thang hay đang đu dây bóng mà vẫy tay là một nhân vật sắp ngã.
+  for (const means of ASCENT_MEANS) {
+    for (const phase of ASCENT_PHASES) {
+      if (onFrame(phase)) continue;
+      assert.equal(
+        ascentAct(phase, means, true),
+        ascentAct(phase, means, false),
+        `${means}/${phase}: buông tay ra vẫy trong lúc còn đang bám đạo cụ`,
+      );
+    }
+  }
+});
+
+test('trên mép thì vẫy tay là một tư thế khác hẳn tư thế treo', () => {
+  for (const means of ASCENT_MEANS) {
+    assert.equal(ascentAct('gripping', means, false), 'grip');
+    assert.equal(ascentAct('gripping', means, true), 'greet');
+  }
+});
+
+test('cú vẫy trên mép dùng lại đúng khung vẫy dưới đất, cùng nhịp', () => {
+  // Không dựng khung "vừa bám mép vừa vẫy": lưới không đủ chỗ cạnh cái đầu, và
+  // dù có chỗ thì cũng sai — không ai vẫy tay lúc treo bằng hai bàn tay. Nooka
+  // đu lên đứng trên mép, nên tư thế đúng là tư thế đứng vẫy sẵn có.
+  assert.deepEqual(ASCENT_ANIMATION.greet.frames, MASCOT_ANIMATION.idle.frames);
+  assert.equal(ASCENT_ANIMATION.greet.ms, MASCOT_ANIMATION.idle.ms);
+});
+
+test('đổi tư thế trên mép nhiều lần trong một lượt treo', () => {
+  // Giữ tư thế lâu bằng cả lượt treo thì có những lượt Nooka lên tới nơi, chưa
+  // kịp vẫy lần nào đã tới giờ tụt xuống.
+  assert.ok(PERCH_POSE_DWELL.max < PERCH_DWELL.min);
+  for (const roll of [0, 0.5, 1]) {
+    const ms = perchPoseDwell(roll);
+    assert.ok(ms >= PERCH_POSE_DWELL.min && ms <= PERCH_POSE_DWELL.max, `${roll}: ${ms} ngoài khoảng`);
+  }
+});
+
 test('nhảy và bám khung thì hai phương tiện giống nhau — lúc đó đạo cụ hết việc', () => {
   for (const phase of ['hopping', 'gripping'] as const) {
     assert.equal(ascentAct(phase, 'ladder'), ascentAct(phase, 'balloon'));
@@ -253,6 +365,68 @@ test('một dòng và hai dòng thì không cần đạo cụ, ba dòng thì c�
   assert.equal(needsAscent(gripRise(76, MASCOT_HEIGHT), PEEK), true, 'ba dòng mà Nooka vẫn chìm nghỉm');
 });
 
+test('trốn ở mép thì đỉnh đầu hạ xuống khít mép, không hơn không kém', () => {
+  // Quãng thả là thứ **suy ra từ hình**, không phải chọn bằng mắt: thả đúng phần
+  // thân trên hai bàn tay thì đỉnh đầu rơi đúng vào mép ô nhập, và ô nhập (vẽ
+  // sau lớp linh vật) che nốt phần còn lại. Hụt một chút là còn một mẩu đầu nhô
+  // lên giữa bức tường chữ.
+  for (const fieldH of [76, 96, 120]) {
+    const crown = gripRise(fieldH, MASCOT_HEIGHT) - perchSink(MASCOT_HEIGHT) + MASCOT_HEIGHT;
+    assert.ok(Math.abs(crown - fieldH) < 1e-9, `ô nhập ${fieldH}pt: đỉnh đầu ở ${crown}pt`);
+  }
+});
+
+test('quãng thả nằm gọn trong chiều cao của chính Nooka', () => {
+  // Thả sâu hơn cả con thì hai bàn tay tụt xuống dưới đáy ô nhập, mà tay vẫn
+  // đang bám mép — nhân vật dài ra giữa chừng.
+  assert.ok(perchSink(MASCOT_HEIGHT) > 0);
+  assert.ok(perchSink(MASCOT_HEIGHT) < MASCOT_HEIGHT);
+});
+
+test('lượt trốn ở mép luôn ngắn hơn lượt treo — trốn không được thành chỗ ở', () => {
+  // Cùng luật với `PERCH_DWELL`/`GROUND_DWELL` và `HOME_DWELL`/`PEEK_DWELL`:
+  // chỗ Nooka có việc phải là chỗ nó ở lâu nhất.
+  assert.ok(
+    DUCK_DWELL.max < PERCH_DWELL.min,
+    'chạm một cái rồi mất hút nhân vật lâu hơn cả lượt nó đứng nhìn',
+  );
+  for (const roll of [0, 0.5, 1]) {
+    const ms = duckDwell(roll);
+    assert.ok(ms >= DUCK_DWELL.min && ms <= DUCK_DWELL.max, `${roll}: ${ms} ngoài khoảng`);
+  }
+});
+
+test('nấp xong là trồi lên chỗ khác, không bao giờ đúng chỗ cũ', () => {
+  // Trồi lên đúng chỗ vừa chìm xuống thì cú nấp chỉ là một nhịp nhấp nháy.
+  for (const spot of [0, 1] as const) {
+    assert.notEqual(nextRimSpot(spot), spot, `chỗ ${spot}: nấp xong lại hiện ra y chỗ cũ`);
+  }
+  assert.equal(nextRimSpot(nextRimSpot(0)), 0, 'hai lượt nấp phải đưa Nooka về lại chỗ gốc');
+});
+
+test('cú dịch dọc mép xong hẳn trước lúc trồi lên — không ai thấy nó đi', () => {
+  // Màn hình hoãn cú dịch một nhịp `dip` rồi đi hết `walk`. Lượt nấp ngắn hơn
+  // tổng đó thì Nooka trồi lên giữa chừng và người dùng thấy nó lướt ngang trong
+  // lúc đang bám mép bằng hai tay.
+  //
+  // Và phải dôi ra một quãng đứng yên, không chỉ vừa khít: dịch xong là nhô lên
+  // ngay thì cả lượt nấp đọc thành một cú trượt liền mạch chứ không phải "chìm
+  // xuống, đi, rồi ló ra". Đây là chỗ đầu tiên bị gặm khi có ai thấy Nooka trốn
+  // hơi lâu — gặm tới sát sàn là mất luôn cú ú oà.
+  const move = MASCOT_MOVE.dip + MASCOT_MOVE.walk;
+  assert.ok(DUCK_DWELL.min > move, 'lượt nấp ngắn hơn cú dịch — nhân vật hiện ra giữa đường');
+  assert.ok(
+    DUCK_DWELL.min - move >= MASCOT_MOVE.lift,
+    'dịch xong là ló lên ngay, mắt chưa kịp mất dấu nó',
+  );
+});
+
+test('rời mép mà đang đứng lệch thì có đủ thì giờ bò về trên đầu đạo cụ', () => {
+  // Cùng dạng với `lead`: trồi lên khỏi chỗ nấp rồi bò dọc mép về. Thiếu quãng
+  // này thì cú nhảy về phải gánh thêm quãng lệch trong đúng `hop` mili giây.
+  assert.ok(ASCENT_MOVE.rimHome >= MASCOT_MOVE.dip + MASCOT_MOVE.walk);
+});
+
 test('chỉ hai đầu máy trạng thái mới là chỗ nghỉ', () => {
   // Đồng hồ "chán rồi, đổi chỗ" chỉ được chạy ở đây. Cho nó chạy giữa lúc đang
   // leo thì quãng lấy đạo cụ ăn mất một phần lượt treo, và chiếc thang vừa dựng
@@ -280,16 +454,50 @@ test('mỗi lượt bốc một quãng riêng, và quãng đủ rộng để nh�
 test('nghỉ một lượt vẫn dài hơn cả chuyến đi lên', () => {
   // Trọn một lượt lên: chờ về chỗ ở, lấy đạo cụ, đứng vào chỗ, leo, rồi nhảy.
   for (const means of ASCENT_MEANS) {
-    const trip =
-      ASCENT_MOVE.lead +
-      ascentPhaseMs('arriving', means, 8) +
-      ascentPhaseMs('ready', means, 8) +
-      ascentPhaseMs('climbing', means, 8) +
-      ascentPhaseMs('hopping', means, 8);
+    const trip = climbTrip(means, 8);
     assert.ok(
       GROUND_DWELL.min > trip,
       `${means}: đi lên mất ${trip}ms mà nghỉ ít nhất chỉ ${GROUND_DWELL.min}ms — Nooka leo lên leo xuống không ngơi`,
     );
+  }
+});
+
+test('có những lượt Nooka ngủ luôn trên mép — lượt treo vắt qua giờ đi ngủ', () => {
+  // Vế thứ nhất của cuộc đua. `max` không vượt qua mốc ngủ thì lượt treo nào
+  // cũng kết thúc trước giờ ngủ, và Nooka **luôn** tụt xuống trước khi thiu thiu
+  // — mất hẳn cảnh nó ngủ gật ngay trên mép ô nhập.
+  assert.ok(
+    PERCH_DWELL.max > sleepAfter(),
+    `treo lâu nhất ${PERCH_DWELL.max}ms mà ${sleepAfter()}ms đã ngủ — không lượt nào ngủ trên mép`,
+  );
+});
+
+test('có những lượt Nooka kịp xuống rồi leo lên lại trước khi ngủ', () => {
+  // Vế thứ hai. Đây là vế dễ mất nhất: chỉ cần ai đó nâng `PERCH_DWELL.min` lên
+  // một chút là trọn vòng xuống–lên không còn lọt trong quãng thức, và người dùng
+  // ngồi yên sẽ chẳng bao giờ thấy Nooka tự leo lên lại.
+  for (const means of ASCENT_MEANS) {
+    const round = PERCH_DWELL.min + descendTrip(means, 8) + GROUND_DWELL.min + climbTrip(means, 8);
+    assert.ok(
+      round < sleepAfter(),
+      `${means}: vòng nhanh nhất mất ${round}ms mà ${sleepAfter()}ms đã ngủ — không lượt nào đi được cả hai chiều`,
+    );
+  }
+});
+
+test('khoá màn kịch bằng mốc lim dim là mất hẳn vòng xuống–lên', () => {
+  // Vì sao `app/ask.tsx` truyền `!isAsleep(mood)` chứ không phải `!isDrowsy(mood)`:
+  // vòng xuống–lên **nhanh nhất** vẫn dài hơn quãng tới lúc lim dim, nên lấy mốc
+  // lim dim là không lượt nào đi trọn được và người dùng ngồi yên sẽ luôn thấy
+  // Nooka ngủ tại chỗ đang đứng. Test này giữ đúng cái lý do đó: hôm nào nó bắt
+  // đầu fail nghĩa là hai mốc đã đủ xa nhau để `isDrowsy` dùng lại được — lúc ấy
+  // đọc lại cả ba luật rồi hãy đổi, đừng xoá test.
+  const doze = MOOD_STEPS.find((step) => step.mood === 'doze');
+  assert.ok(doze, 'không còn mức lim dim');
+  assert.ok(doze.after < sleepAfter(), 'lim dim phải tới trước ngủ hẳn');
+  for (const means of ASCENT_MEANS) {
+    const round = PERCH_DWELL.min + descendTrip(means, 8) + GROUND_DWELL.min + climbTrip(means, 8);
+    assert.ok(round > doze.after, `${means}: vòng nhanh nhất ${round}ms lọt cả trong quãng chưa lim dim`);
   }
 });
 

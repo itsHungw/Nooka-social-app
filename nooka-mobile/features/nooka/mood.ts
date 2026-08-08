@@ -41,6 +41,19 @@ export function moodFor(idleMs: number): NookaMood {
 export const isDrowsy = (mood: NookaMood): mood is Exclude<NookaMood, 'awake'> => mood !== 'awake';
 
 /**
+ * Ngủ **hẳn** — khác lim dim, và khác biệt đó quyết định Nooka còn đổi ý được
+ * hay không.
+ *
+ * `isDrowsy` là câu hỏi của **đôi mắt**: có phải đổi khung hình không. Cái này
+ * là câu hỏi của **ý định**: có còn tự quyết định đi đâu không. Gộp hai câu hỏi
+ * làm một thì lim dim cũng đóng băng luôn màn kịch leo, mà mốc lim dim (9s) tới
+ * trước mọi lượt treo — kết quả là người dùng ngồi yên thì Nooka *luôn luôn* ngủ
+ * tại chỗ đang đứng, không bao giờ kịp tự tụt xuống hay tự leo lên lại. Có test
+ * ở `ascent.test.ts` khoá việc cả ba đều phải xảy ra được.
+ */
+export const isAsleep = (mood: NookaMood) => mood === 'sleep';
+
+/**
  * Khung hình cho từng tâm trạng ở từng chỗ nghỉ.
  *
  * Nhịp **chậm dần theo độ buồn ngủ**: lim dim chậm hơn thức, ngủ chậm hơn lim

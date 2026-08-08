@@ -30,16 +30,19 @@ import { Chip, CircleButton, ResultRow, ScreenShell } from '@/components/nooka/u
 import { checkinLine, formatDistance, spotName, tagLabel, tagSynonyms } from '@/features/nooka/labels';
 import {
   ASCENT_MOVE,
+  ASCENT_SLACK,
   PAW_RATIO,
   ascentAct,
   ascentLength,
   ascentOnStage,
   ascentPhaseMs,
+  ascentPins,
   ascentSettling,
   climbStop,
   gripRise,
   needsAscent,
   onFrame,
+  perchSink,
   risingUp,
 } from '@/features/nooka/ascent';
 import {
@@ -55,7 +58,7 @@ import {
 } from '@/features/nooka/balloon';
 import { ladderRungs, ladderWidth } from '@/features/nooka/ladder';
 import { MASCOT_H, MASCOT_MOVE, MASCOT_W, isWaiting, type MascotState } from '@/features/nooka/mascot';
-import { MOOD_SETTLE, isDrowsy } from '@/features/nooka/mood';
+import { MOOD_SETTLE, isAsleep, isDrowsy } from '@/features/nooka/mood';
 import { explainTags, matchTags, rankSpots, spotTags } from '@/features/nooka/ranking';
 import { INTENT_IDS, SPOTS, TAG_IDS, type IntentId, type SpotId, type TagId } from '@/features/nooka/spots';
 import { useMascotStage } from '@/hooks/use-mascot-stage';
@@ -110,6 +113,42 @@ const RIGHT_OFFSET = { x: 210, y: 30 };
 const FIELD_MIN = 44;
 
 /**
+ * Nhô lên tới đâu khi **chưa có đạo cụ**: đúng mép ô nhập hiện tại, chặn ở hết
+ * tầm kiễng chân.
+ *
+ * `BEHIND_OFFSET.y` một mình chỉ đúng ở **đúng một** chiều cao — lúc ô nhập ở
+ * `minHeight`, chỗ hai bàn tay vừa chạm mép (có test ở `ascent.test.ts`). Gõ
+ * sang dòng thứ hai là mép cao lên mà quãng nhô vẫn y nguyên, và tư thế `grip`
+ * bám vào khoảng không dưới mép. Chặn trên đặt đúng bằng ngưỡng của
+ * `needsAscent` nên hai bên nối liền nhau, không có khe: còn trong tầm thì kiễng
+ * chân là tới mép, quá tầm thì đã có đạo cụ lo.
+ */
+const PEEK_REACH = BEHIND_OFFSET.y + ASCENT_SLACK;
+
+/**
+ * Phép dịch của hệ **đi lại quanh ô nhập** — đi trốn, và nhô lên khỏi mép.
+ *
+ * Cả Nooka lẫn quả bóng đọc từ đây. Quả bóng đang **được cầm trên tay**, nên mọi
+ * phép dịch tác động lên nhân vật phải tác động lên nó y hệt; để lớp bóng chỉ
+ * chịu phép dịch của màn kịch leo thì mỗi bước Nooka đi trốn là sợi dây tuột
+ * khỏi tay đúng bằng ngần ấy, và cả hai cùng bay lên trong lúc cách nhau một
+ * quãng. Viết hai lần ở hai lớp thì tới lúc sửa một bên sẽ có một bên bị bỏ
+ * quên, và dấu hiệu vẫn đúng là sợi dây đó.
+ *
+ * `reach` là mép ô nhập hiện tại đã chặn ở tầm với — xem `PEEK_REACH`.
+ */
+function stageShift(walked: number, lifted: number, reach: number) {
+  'worklet';
+  return {
+    x:
+      walked <= 1
+        ? walked * BEHIND_OFFSET.x
+        : BEHIND_OFFSET.x + (walked - 1) * (RIGHT_OFFSET.x - BEHIND_OFFSET.x),
+    y: -lifted * reach,
+  };
+}
+
+/**
  * Chiếc thang nhôm của Nooka đứng **thẳng đứng** ngay cạnh ô nhập (không nghiêng chéo).
  *
  * Chân thang đứng ở vị trí Nooka bên trái ô nhập, đầu thang hướng thẳng đứng lên.
@@ -147,14 +186,39 @@ const BALLOON_SHIFT = {
 };
 
 /**
- * **Ngủ là ngồi**, kể cả khi đang ở trên mép ô nhập: không ai ngủ trong lúc treo
- * người bằng hai bàn tay. Tới lúc nhắm mắt, Nooka đu người lên ngồi hẳn lên mép.
+ * Quãng đu người lên **khỏi mép**, dùng chung cho hai việc Nooka không làm được
+ * trong lúc treo bằng hai bàn tay: **ngủ** và **vẫy tay**.
  *
- * Quãng nhấc lên đúng bằng khoảng mà tư thế treo **thấp hơn** mép — treo thì
- * bàn tay đặt lên mép và thân chìm sau ô nhập, ngồi thì mông đặt lên mép và cả
- * người ở trên. Xem `PAW_RATIO`.
+ * Cả hai đều là "đưa cả người lên trên mép", nên đều là đúng một quãng: khoảng
+ * mà tư thế treo **thấp hơn** mép. Treo thì bàn tay đặt lên mép và thân chìm sau
+ * ô nhập; nhấc ngần này thì gót chạm mép và cả người ở trên. Xem `PAW_RATIO`.
+ *
+ * Tên cũ là `SIT_LIFT` — đổi khi cú vẫy dùng chung, vì "ngồi" chỉ còn đúng một
+ * nửa số chỗ gọi nó.
  */
-const SIT_LIFT = MASCOT_HEIGHT * PAW_RATIO;
+const RIM_LIFT = MASCOT_HEIGHT * PAW_RATIO;
+
+/**
+ * Trốn **ngay tại mép**: buông tay thả người xuống sau bức tường chữ.
+ *
+ * Dưới đất Nooka trốn bằng cách đi ngang vào sau ô nhập — trên mép thì đi ngang
+ * là rời khỏi mép. Quãng thả suy ra từ hình (xem `perchSink`) nên đỉnh đầu hạ
+ * xuống khít mép ô nhập, và ô nhập vẽ **sau** lớp linh vật nên nó che nốt phần
+ * còn lại. Không cần xén, không cần lớp phủ riêng: bức tường chữ vốn đã là thứ
+ * Nooka nấp sau.
+ */
+const PERCH_SINK = perchSink(MASCOT_HEIGHT);
+
+/**
+ * Nấp xong thì **trồi lên ở chỗ khác**: lệch sang phải một quãng dọc mép.
+ *
+ * Rộng hơn chính Nooka một chút nên cú đổi chỗ đọc ra ngay là "nó vừa đi đâu đó"
+ * chứ không phải "hình bị lệch". Nhưng cũng **không rộng hơn nhiều**: quãng này
+ * là quãng cú nhảy về phải gánh thêm nếu Nooka còn đứng lệch, và ở đây nó không
+ * gánh — `ASCENT_MOVE.rimHome` bắt nó bò về trước. Giữ nhỏ để lỡ có ngày ai đó
+ * bỏ quãng chờ đó thì hỏng cũng còn nhẹ.
+ */
+const RIM_STEP = MASCOT_SLOT;
 
 /** Ngồi thì hai tay buông xuống, chỗ neo dây bóng dời theo lần nữa. */
 const BALLOON_HOLD_SIT = balloonHold(MASCOT_SIZE, MASCOT_HEIGHT, BALLOON_HAND_SIT);
@@ -240,14 +304,26 @@ export default function AskNookaScreen() {
   // rời `away`, nên nó đọc đúng chiều cao ô nhập ở khoảnh khắc đó rồi thôi:
   // người dùng gõ thêm dòng sau đó thì chiếc thang không dài ra, Nooka bám vào
   // khung mà bò tiếp.
-  const trip = useNookaAscent(canAscend, !drowsy, () => ({
+  /**
+   * **Lim dim vẫn đổi ý được; ngủ hẳn mới đứng nguyên chỗ.**
+   *
+   * `restless` từng nhận `!drowsy`, và đó là chỗ làm mất hai trong ba việc Nooka
+   * biết làm: mốc lim dim (9s) tới trước *mọi* lượt treo, nên người dùng ngồi
+   * yên là nó luôn luôn ngủ tại chỗ đang đứng — không bao giờ kịp tự tụt xuống
+   * nghỉ hay tự leo lên lại. Lấy mốc `sleep` thì cả ba việc cùng đua với đồng hồ
+   * ngủ, và lần nào thấy cái nào là ngẫu nhiên. Xem `PERCH_DWELL`.
+   *
+   * Hệ đi lại quanh ô nhập vẫn dừng ở `drowsy` — đó là chuyện khác: đi lang
+   * thang với đôi mắt lim dim thì đọc ra là nhân vật đang mộng du.
+   */
+  const trip = useNookaAscent(canAscend, !isAsleep(mood), () => ({
     rise,
     // Thang dựa nghiêng nên chiều dài đo theo **cạnh huyền**, không phải quãng
     // dọc — thang ngắn hơn khoảng nó phải bắc qua là thang chống lên không khí.
     rungs: ladderRungs(ascentLength(ASCENT_RUN, rise)),
   }));
-  const { phase, means, rungs } = trip;
-  const act = ascentAct(phase, means);
+  const { phase, means, rungs, duck } = trip;
+  const act = ascentAct(phase, means, trip.waving);
 
   /**
    * Biểu cảm chỉ **hiện ra khi Nooka đang nghỉ tại chỗ**: bám mép ô nhập, hoặc
@@ -260,22 +336,25 @@ export default function AskNookaScreen() {
   const perch = onFrame(phase) ? 'frame' : ascentOnStage(phase) ? null : 'ground';
 
   /**
-   * Chờ thì Nooka được đi lang thang; đang đọc review hay vừa reo mừng thì
-   * `useMascotStage` giữ nó ở bên trái ô nhập để còn thấy nó đang làm gì.
+   * **Chỗ đứng của Nooka do đúng một hệ quyết định tại một thời điểm.**
    *
-   * Ba điều kiện nữa giữ nó ở nhà:
+   * `ascentPins` là cả cái luật đó, viết một lần: còn cớ để lên (`canAscend`,
+   * **hoàn cảnh** chứ không phải chặng — ô nhập còn cao thì sau ô nhập là chỗ
+   * không ai nhìn thấy gì, kể cả trong lượt Nooka đang nghỉ dưới đất giữa hai
+   * lần leo), hoặc đạo cụ còn trên màn hình. Trong suốt quãng đó, hệ đi lại
+   * không được dời nhân vật đi đâu — kể cả khi người dùng chạm vào nó.
    *
-   * - `canAscend` là **hoàn cảnh**, không phải ý định — dùng nó chứ không dùng
-   *   chặng hiện tại. Ô nhập còn cao thì sau ô nhập là chỗ không ai nhìn thấy
-   *   gì, kể cả trong lượt Nooka đang nghỉ dưới đất giữa hai lần leo.
-   * - `ascentOnStage` giữ nó ở nhà cho tới khi đạo cụ ra khỏi màn hình hẳn.
-   *   Thiếu vế này thì lúc đang tụt thang Nooka được phép đi trốn — và nó trượt
-   *   ngang ra khỏi chiếc thang.
-   * - `drowsy`: đã ngủ thì không đi đâu nữa.
+   * Ba điều kiện, **một** tham số: `pinned`, `isWaiting` (đang đọc review hay
+   * vừa reo mừng thì phải đứng trọn con bên trái để còn thấy nó làm gì) và
+   * `drowsy` (đã ngủ thì không đi đâu nữa). Cộng lại thành quyền dời Nooka, và
+   * `useMascotStage` đọc đúng quyền đó cho **cả** đồng hồ đi lang thang lẫn cửa
+   * sau `hide` — xem hook. Tách cú chạm ra một điều kiện riêng là chép lại danh
+   * sách này lần thứ hai: bản chép thiếu vế nào thì đúng vế đó dời được Nooka
+   * khỏi chỗ mà không ai còn đưa nó về, và phép dịch bỏ quên ấy cộng thẳng vào
+   * màn kịch leo.
    */
-   const { stage, hide } = useMascotStage(
-    isWaiting(mascot) && !canAscend && !ascentOnStage(phase) && !drowsy,
-  );
+  const pinned = ascentPins(phase, canAscend);
+  const { stage, hide } = useMascotStage(isWaiting(mascot) && !pinned && !drowsy);
 
   // Hai đoạn, **không bao giờ chạy cùng lúc**: đi ngang vào sau ô nhập rồi mới
   // nhô lên; và hạ xuống hết rồi mới đi ngang về. Chạy song song thì Nooka đi
@@ -388,31 +467,86 @@ export default function AskNookaScreen() {
    * ngồi ngay tại chỗ, không phải nhấc đi đâu.
    */
   const sat = useSharedValue(0);
-  const napping = perch === 'frame' && mood === 'sleep';
+  // Đang trốn thì không ngồi lên mép: chỗ ngồi ở **trên** mép, mà trốn là đang
+  // ở dưới. Cộng cả hai thì Nooka ngủ ngồi lơ lửng nửa trong nửa ngoài bức
+  // tường chữ.
+  const napping = perch === 'frame' && mood === 'sleep' && !trip.ducked;
   useEffect(() => {
     sat.value = withTiming(napping ? 1 : 0, { duration: MOOD_SETTLE });
   }, [napping, sat]);
 
+  /**
+   * Đu lên đứng hẳn trên mép để vẫy tay: 0 là còn treo, 1 là đã đứng trên mép.
+   *
+   * **Không ai vẫy tay trong lúc treo người bằng hai bàn tay** — cùng lý do làm
+   * cho "ngủ là ngồi", nên cũng đúng một quãng nhấc (`RIM_LIFT`) và cùng nhịp
+   * (`MOOD_SETTLE`) với cú đu lên ngồi. Nhờ vậy tư thế vẫy dùng lại được nguyên
+   * khung `IDLE` sẵn có: đứng trên mép thì cả cánh tay nằm trên nền trống.
+   *
+   * Không bao giờ chồng với `sat`: vẫy đòi Nooka còn thức (`restless`), mà ngồi
+   * ngủ thì đã qua mức đó rồi.
+   */
+  const stood = useSharedValue(0);
+  useEffect(() => {
+    stood.value = withTiming(trip.waving ? 1 : 0, { duration: MOOD_SETTLE });
+  }, [trip.waving, stood]);
+
+  /**
+   * Thả người xuống trốn sau bức tường chữ: 0 là còn treo nhìn qua mép, 1 là đã
+   * khuất hẳn. Dùng chung nhịp `dip` với cú trốn dưới đất — cùng một động tác
+   * chìm xuống, chỉ khác chỗ đứng, nên không đáng có hai con số.
+   *
+   * **Cả hai lớp đọc từ đây**, y như `stageShift`: quả bóng đang nằm trong tay
+   * Nooka nên nó phải tụt theo đúng ngần ấy. Để mỗi lớp tự tính thì sợi dây tuột
+   * khỏi tay đúng bằng quãng thả, và quả bóng ở lại lơ lửng trên mép trong lúc
+   * người cầm nó đã khuất.
+   */
+  const sunk = useSharedValue(0);
+  useEffect(() => {
+    sunk.value = withTiming(trip.ducked ? 1 : 0, { duration: MASCOT_MOVE.dip });
+  }, [trip.ducked, sunk]);
+
+  /**
+   * Chỗ bám dọc mép: 0 là ngay trên đầu đạo cụ, 1 là lệch sang phải `RIM_STEP`.
+   *
+   * **Hoãn đúng một nhịp `dip`** để cú dịch ngang diễn ra trọn vẹn trong lúc
+   * Nooka còn khuất sau bức tường chữ — chìm xuống xong mới đi, đi xong mới trồi
+   * lên. Cùng luật "ba đoạn không bao giờ chạy cùng lúc" với `walk`/`lift`/`dip`
+   * ở hệ đi lại: một nhân vật đang bám mép bằng hai tay mà lướt ngang giữa thanh
+   * thiên bạch nhật thì mắt đọc ra ngay là sai.
+   *
+   * Nhịp hoãn đó đúng cho **cả hai chiều**: lúc đi là chờ chìm xuống, lúc về là
+   * chờ trồi lên. `ASCENT_MOVE.rimHome` đã tính đủ cả hai.
+   */
+  const rimAt = useSharedValue(0);
+  useEffect(() => {
+    rimAt.value = withDelay(
+      MASCOT_MOVE.dip,
+      withTiming(trip.rimSpot, { duration: MASCOT_MOVE.walk }),
+    );
+  }, [trip.rimSpot, rimAt]);
+
   const walk = useAnimatedStyle(() => {
     const along = travel.value * top.value;
-    const spotX =
-      walked.value <= 1
-        ? walked.value * BEHIND_OFFSET.x
-        : BEHIND_OFFSET.x + (walked.value - 1) * (RIGHT_OFFSET.x - BEHIND_OFFSET.x);
+    const shift = stageShift(walked.value, lifted.value, Math.min(rim.value, PEEK_REACH));
     return {
       transform: [
         {
           translateX:
-            spotX +
+            shift.x +
             travel.value * climbRun +
-            perched.value * (GRIP_X - climbRun),
+            // Chỗ lệch dọc mép nằm **trong** ngoặc của `perched`: nó là một phần
+            // của chỗ bám, nên buông mép là nó tự tan theo. Cộng ra ngoài thì
+            // Nooka mang quãng lệch ấy xuống tận mặt đất.
+            perched.value * (GRIP_X - climbRun + rimAt.value * RIM_STEP),
         },
         {
           translateY:
-            -lifted.value * BEHIND_OFFSET.y -
+            shift.y -
             (along + perched.value * (rim.value - along)) -
             arc.value -
-            sat.value * SIT_LIFT,
+            (sat.value + stood.value) * RIM_LIFT +
+            sunk.value * PERCH_SINK,
         },
       ],
     };
@@ -439,22 +573,38 @@ export default function AskNookaScreen() {
   const balloonPivot = balloonHeight(BALLOON_TAIL) / 2;
   const float = useAnimatedStyle(() => {
     const along = travel.value * top.value;
+    // Cùng phép dịch với nhân vật, không phải một phép dịch riêng: quả bóng đang
+    // nằm trong tay nó. Xem `stageShift`.
+    const shift = stageShift(walked.value, lifted.value, Math.min(rim.value, PEEK_REACH));
     return {
       transform: [
         {
           translateX:
+            shift.x +
             (propIn.value - 1) * BALLOON_TRAVEL +
             travel.value * climbRun +
-            perched.value * (GRIP_X - climbRun + BALLOON_SHIFT.x) +
-            sat.value * BALLOON_SIT_SHIFT.x,
+            // Đi đâu thì quả bóng theo đó, kể cả cú dịch dọc mép lúc nấp.
+            perched.value * (GRIP_X - climbRun + BALLOON_SHIFT.x + rimAt.value * RIM_STEP) +
+            sat.value * BALLOON_SIT_SHIFT.x -
+            // Đu lên vẫy là về đúng tư thế giơ tay của `IDLE`, mà `BALLOON_HAND`
+            // vốn đo từ chính bàn tay ấy — nên chỗ neo **trả lại** đúng phần đã
+            // lệch đi lúc bám mép, không phải cộng thêm một lệch thứ ba.
+            stood.value * BALLOON_SHIFT.x,
         },
         {
           translateY:
-            -(along + perched.value * (rim.value - along)) -
+            shift.y -
+            (along + perched.value * (rim.value - along)) -
             arc.value -
             bob.value * BALLOON_BOB.travel +
             perched.value * BALLOON_SHIFT.drop -
-            sat.value * (SIT_LIFT - BALLOON_SIT_SHIFT.drop),
+            sat.value * (RIM_LIFT - BALLOON_SIT_SHIFT.drop) -
+            // Đu lên vẫy: bàn tay đi lên cùng cả người (`RIM_LIFT`) **và** trở
+            // lại chỗ giơ cao, tức trả lại quãng đã hạ xuống lúc bám mép.
+            stood.value * (RIM_LIFT + BALLOON_SHIFT.drop) +
+            // Quả bóng đang nằm trong tay Nooka, nên nó tụt xuống trốn cùng —
+            // cùng một quãng, đọc từ cùng một chỗ.
+            sunk.value * PERCH_SINK,
         },
         // Ngả và đưa qua đưa lại quanh **đáy dây**, tức là quanh bàn tay đang
         // nắm: dịch xuống nửa chiều cao để tâm xoay rơi vào đáy ảnh, xoay, rồi
@@ -472,21 +622,38 @@ export default function AskNookaScreen() {
   }, []);
 
   /**
-   * Khi người dùng chạm vào Nooka: tỉnh ngủ ngay (nếu đang ngủ gật),
-   * và bốc ngẫu nhiên 50/50:
-   * - 50% Nooka vui thích thú (reo mừng nhảy lên `found`).
-   * - 50% Nooka không thích nên đi trốn (`hide`).
+   * Khi người dùng chạm vào Nooka: tỉnh ngủ ngay (nếu đang ngủ gật), và bốc
+   * ngẫu nhiên 50/50 — hoặc reo mừng tại chỗ (`found`), hoặc bỏ đi trốn.
+   *
+   * **Đi trốn là một ý muốn, hai động tác** — chỗ đứng quyết định động tác nào,
+   * và hệ sở hữu chỗ đó lo phần việc:
+   *
+   * - dưới đất: `hide` đưa nó đi ngang vào sau ô nhập (`useMascotStage`);
+   * - trên mép: `duck` cho nó buông tay tụt xuống sau bức tường chữ, mang theo
+   *   quả bóng đang cầm (`useNookaAscent`).
+   *
+   * Gọi nối tiếp bằng `||` là đủ, không cần hỏi Nooka đang ở đâu: mỗi hàm tự từ
+   * chối khi không phải chỗ của mình, nên nhiều nhất một cái chạy. Hỏi trước rồi
+   * mới gọi là dựng lại điều kiện của hai hook ở đây, và bản dựng lại sẽ lệch
+   * ngay lần đầu một trong hai đổi luật.
+   *
+   * **Vẫn có lúc cả hai cùng từ chối**, và đó là nhánh hay chạy chứ không phải
+   * trường hợp hiếm: đang vác thang, đang trèo, đang nhảy — chỗ đứng lúc ấy
+   * thuộc về một chuyến đi đang dở, không phải một chỗ để trốn.
+   *
+   * Reo mừng là phản ứng đúng chứ không phải chỗ trú tạm: `found` làm Nooka hết
+   * "đang chờ", tức là hết cớ để lên, nên nó tụt xuống và cất đạo cụ **theo đúng
+   * đường đã lên** — máy trạng thái ở `ascent.ts` vốn không có lối tắt. Xong
+   * lượt reo là `resting`, có cớ trở lại, và nó leo lên lại.
    */
   const handleMascotPress = useCallback(() => {
     setTypedAt(Date.now());
-    const happy = Math.random() < 0.5;
-    if (happy) {
-      setMascot('found');
-    } else {
+    if (Math.random() < 0.5 && (hide() || duck())) {
       setMascot('resting');
-      hide();
+      return;
     }
-  }, [hide]);
+    setMascot('found');
+  }, [hide, duck]);
 
   /** Xếp hạng lại với tập tag hiện có rồi nối một lượt trả lời. */
   const answer = useCallback(

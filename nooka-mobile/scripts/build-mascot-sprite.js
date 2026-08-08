@@ -519,6 +519,18 @@ function build({ pose, dy = 0, lift = 0, beat = 0, mark = null, mouthKind = 'ope
     paw(g, 8, 32);
     paw(g, 21, 32);
   }
+  // **Không có tư thế "vừa bám mép vừa vẫy tay", và đó là kết luận đã đo.** Lưới
+  // rộng 34 ô mà riêng cái đầu chibi đã chiếm cột 3–31, nên hai bên má chỉ còn
+  // 2–4 cột trống ở tầm mắt — không đủ cho một cánh tay dày 4 ô. Đã dựng thử ba
+  // biến thể và xem bằng mắt: để bàn tay thấp thì nó lọt vào bóng cái đầu và cú
+  // vẫy đọc thành một cái má động đậy; đưa lên cao cho thấy rõ thì cánh tay cắt
+  // chéo qua mặt và đọc thành một vết xước. Cả ba đều bị trả lại.
+  //
+  // Cách đi đúng nằm ở `app/ask.tsx`, không nằm ở đây: **không ai vẫy tay trong
+  // lúc treo người bằng hai bàn tay** — muốn vẫy thì phải đu lên đã. Nooka nhấc
+  // mình lên đứng hẳn trên mép rồi dùng lại đúng khung `IDLE_A`/`IDLE_B`; lúc ấy
+  // cả cánh tay nằm trên nền trống và cú vẫy đọc ra ngay. Cùng lối nghĩ với "ngủ
+  // là ngồi". Đừng thêm khung mới ở đây cho việc này.
   if (pose === 'think') {
     // Tay phải buông; tay trái gập lên chống cằm, bàn tay dừng ngay dưới miệng.
     blob(g, 22, 33, 25, 38, 'c', 'o', 2); put(g, 23, 36, 'p');

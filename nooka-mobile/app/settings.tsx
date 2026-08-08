@@ -5,10 +5,17 @@ import { ThemeOption } from '@/components/nooka/theme-option';
 import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
+import { useNookaDemo } from '@/providers/nooka-demo-provider';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { colors } = useNookaTheme();
+  const { flash } = useNookaDemo();
+
+  const handleLogout = () => {
+    flash(t('settings.logoutToast'));
+    router.replace('/welcome');
+  };
 
   return (
     <ScreenShell testID="settings-screen">
@@ -54,6 +61,17 @@ export default function SettingsScreen() {
         <View style={styles.options}>
           <Button label={t('settings.welcomeScreen')} onPress={() => router.push('/welcome')} tone="outline" />
           <Button label={t('settings.loginScreen')} onPress={() => router.push('/login')} tone="outline" />
+        </View>
+
+        <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('settings.account')}</Text>
+          <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
+            {t('settings.logoutDescription')}
+          </Text>
+        </View>
+
+        <View style={styles.options}>
+          <Button label={t('settings.logout')} onPress={handleLogout} tone="accent" />
         </View>
       </ScrollView>
     </ScreenShell>

@@ -115,7 +115,10 @@ export default function EmailLoginScreen() {
           )}
 
           {/* Link Quên mật khẩu? */}
-          <Pressable accessibilityRole="button" style={styles.forgotButton}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/auth/forgot-password')}
+            style={styles.forgotButton}>
             <Text style={[styles.forgotText, { color: colors.accentInk }]}>{t('auth.forgotPassword')}</Text>
           </Pressable>
 

@@ -64,6 +64,10 @@ function RootNavigator() {
         <Stack.Screen name="auth/name" options={{ animation: 'slide_from_right', headerShown: false }} />
         <Stack.Screen name="auth/username" options={{ animation: 'slide_from_right', headerShown: false }} />
         <Stack.Screen name="auth/email-login" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/otp" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/forgot-password" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/reset-password" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/reset-success" options={{ animation: 'slide_from_right', headerShown: false }} />
         <Stack.Screen name="ask" options={{ animation: 'slide_from_bottom', headerShown: false }} />
         <Stack.Screen name="spot/[id]" options={{ animation: 'slide_from_right', headerShown: false }} />
         <Stack.Screen name="story/[index]" options={{ animation: 'fade', headerShown: false }} />

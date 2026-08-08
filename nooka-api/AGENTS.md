@@ -45,7 +45,7 @@ Nếu tài liệu mâu thuẫn với migration hoặc code đã được test, k
 
 - Java 21.
 - Spring Boot 4.1.0, Spring Web MVC, Spring Data JPA, Bean Validation và Actuator.
-- PostgreSQL 17 cho local và integration test.
+- PostgreSQL 17 **có PostGIS** cho local và integration test. Image là `postgis/postgis:17-3.5-alpine`, không phải `postgres:17-alpine` — schema cần extension `postgis` và `pg_trgm` từ `V3_1`.
 - Flyway sở hữu schema.
 - Maven Wrapper là cách chạy Maven chuẩn.
 - Testcontainers 1.21.3 + JUnit Jupiter cho test cần database.
@@ -102,7 +102,8 @@ Business rule phải nằm ở domain/service hoặc query policy có tên rõ r
 - Không trả JPA entity trực tiếp từ API. Dùng request/response DTO để tránh lazy-loading, recursion và rò rỉ field nội bộ.
 - Không thêm `@Data`, `@EqualsAndHashCode` hoặc equals/hashCode sinh tự động cho entity kế thừa `BaseEntity`.
 - Entity có khoá kép dạng value object có thể dùng equality theo toàn bộ key.
-- Giữ UUID làm định danh chính trừ khi product spec thay đổi.
+- Giữ UUID làm định danh chính trừ khi product spec thay đổi. `BaseEntity` sinh **UUID v7** qua `@UuidGenerator(style = VERSION_7)`. Không dùng `Style.TIME`: tên nghe hợp lý nhưng nó là UUID v1 và nhúng địa chỉ IP/MAC của máy chủ vào id. `BaseEntityIdTest` khoá lại điều này.
+- `Post` có hai định danh: `id` (v7, nội bộ và khoá ngoại) và `public_id` (ngẫu nhiên, thứ duy nhất xuất hiện trong API và URL). Lý do: v7 kể ra thời điểm tạo, mà `hide_time` tồn tại để giấu đúng thứ đó.
 - Kiểm tra N+1 cho mọi endpoint trả collection.
 
 ## Luật truy cập Post
@@ -120,6 +121,7 @@ Business rule phải nằm ở domain/service hoặc query policy có tên rõ r
 - `CLOSE_FRIENDS` kiểm tra viewer nằm trong danh sách do author sở hữu; nó không phải tập con của followers.
 - `PRIVATE` chỉ tác giả thấy.
 - Block chặn khả năng xem theo cả hai chiều.
+- **R9:** bài của tài khoản có `users.deleted_at` khác null không hiển thị với bất kỳ ai, kể cả chính tác giả. Phép kiểm đi qua `user.query.RelationshipCriteria.deletedAuthorExists` và phải có mặt ở **cả hai** nhánh của `visibleTo` — quên nhánh khách chưa đăng nhập là lỗ rò lớn nhất vì đó là nhánh ai cũng chạm được.
 - Không phân biệt “không tồn tại” và “không có quyền xem” trong response công khai nếu việc phân biệt làm lộ nội dung.
 
 Mọi thay đổi luật visibility phải viết hoặc cập nhật test trước, bao gồm chiều quan hệ và trường hợp âm.

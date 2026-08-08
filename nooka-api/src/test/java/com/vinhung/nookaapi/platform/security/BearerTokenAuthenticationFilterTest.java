@@ -20,8 +20,8 @@ class BearerTokenAuthenticationFilterTest {
     }
 
     @Test
-    void validTokenCreatesFirebasePrincipal() throws Exception {
-        TokenVerifier verifier = token -> "firebase-user";
+    void validTokenCreatesUserPrincipal() throws Exception {
+        TokenVerifier verifier = token -> java.util.UUID.fromString("00000000-0000-0000-0000-000000000001");
         var filter = new BearerTokenAuthenticationFilter(verifier);
         var request = new MockHttpServletRequest();
         request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer valid-token");
@@ -30,7 +30,7 @@ class BearerTokenAuthenticationFilterTest {
         filter.doFilter(request, response, new MockFilterChain());
 
         assertThat(SecurityContextHolder.getContext().getAuthentication().getPrincipal())
-                .isEqualTo("firebase-user");
+                .isEqualTo(java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"));
         assertThat(response.getStatus()).isEqualTo(200);
     }
 

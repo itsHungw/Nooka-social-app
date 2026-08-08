@@ -1,6 +1,8 @@
 package com.vinhung.nookaapi.user.spi;
 
-/** Verifies an external identity token and returns the Firebase user ID. */
+import java.util.UUID;
+
+/** Verifies a bearer token and returns the internal user ID. */
 public interface TokenVerifier {
-    String verify(String token);
+    UUID verify(String token);
 }

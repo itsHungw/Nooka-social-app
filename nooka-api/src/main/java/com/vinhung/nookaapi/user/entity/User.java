@@ -15,10 +15,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.UpdateTimestamp;
 
-/**
- * Không có cột mật khẩu và sẽ không bao giờ có: Firebase Auth phát hành token,
- * backend chỉ verify (§20 của spec).
- */
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -27,8 +24,14 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity {
 
-    @Column(name = "firebase_uid", nullable = false, unique = true)
-    private String firebaseUid;
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash;
+
+    @Column(name = "email_verified_at")
+    private Instant emailVerifiedAt;
 
     @Column(nullable = false)
     private String username;
@@ -50,5 +53,17 @@ public class User extends BaseEntity {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    public boolean isEmailVerified() {
+        return emailVerifiedAt != null;
+    }
+
+    public void verifyEmail(Instant verifiedAt) {
+        emailVerifiedAt = verifiedAt;
+    }
+
+    public void changePassword(String newPasswordHash) {
+        passwordHash = newPasswordHash;
+    }
 }
 

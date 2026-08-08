@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
@@ -32,9 +33,9 @@ class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authorization != null && authorization.startsWith(PREFIX)) {
             try {
-                String firebaseUid = tokenVerifier.verify(authorization.substring(PREFIX.length()));
+                UUID userId = tokenVerifier.verify(authorization.substring(PREFIX.length()));
                 var authentication = UsernamePasswordAuthenticationToken.authenticated(
-                        firebaseUid, null, List.of());
+                        userId, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (TokenVerificationException exception) {
                 SecurityContextHolder.clearContext();

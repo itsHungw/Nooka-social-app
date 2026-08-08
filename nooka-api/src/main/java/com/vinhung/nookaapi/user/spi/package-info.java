@@ -1,2 +1,2 @@
-@org.springframework.modulith.NamedInterface("spi")
+@org.springframework.modulith.NamedInterface
 package com.vinhung.nookaapi.user.spi;

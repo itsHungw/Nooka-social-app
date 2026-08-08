@@ -1,2 +1,2 @@
-/** Internal user persistence adapters. */
+@org.springframework.modulith.NamedInterface
 package com.vinhung.nookaapi.user.repository;

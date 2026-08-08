@@ -229,7 +229,8 @@ class PostVisibilityRulesTest {
 
     private User persistUser(String username) {
         User user = User.builder()
-                .firebaseUid("firebase-" + username)
+                .email(username + "@example.test")
+                .passwordHash("unused")
                 .username(username)
                 .displayName(username)
                 .build();

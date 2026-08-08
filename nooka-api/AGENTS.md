@@ -149,8 +149,8 @@ Khi thêm endpoint:
 
 ## Security và privacy
 
-- Firebase Auth phát hành token; backend chỉ verify JWT. Không thêm cột password hoặc tự xây hệ thống mật khẩu.
-- Spring Security + Firebase Admin token verification được cấu hình tập trung trong `platform.security`; mặc định fail-closed và chỉ tắt bằng cấu hình local/test tường minh.
+- Auth nội bộ xử lý email/password, email OTP, password reset, Google/Apple/Facebook OAuth và session token; password chỉ lưu dưới dạng BCrypt hash. OAuth token phải được verify server-side; Facebook app secret chỉ ở backend environment.
+- Spring Security + bearer session verification được cấu hình tập trung trong `platform.security`; mặc định fail-closed và chỉ tắt bằng cấu hình local/test tường minh.
 - Không tin `userId` do client gửi để xác định principal; ánh xạ từ token đã verify.
 - R1 của product spec là bắt buộc: media upload phải strip EXIF ở server trước khi lưu/phân phối. Không tin client đã xoá metadata.
 - Không thêm real-time location tracking.

@@ -17,7 +17,7 @@
 - PostgreSQL 17, Spring Data JPA, Flyway; `ddl-auto=validate`, OSIV tắt.
 - Spring Modulith 2.1.0 với JDBC event publication registry.
 - ArchUnit 1.4.2 cho luật bên trong module.
-- Spring Security + Firebase Admin SDK cho Firebase JWT boundary.
+- Spring Security + custom auth service cho bearer session boundary.
 - springdoc-openapi 3.0.3, mặc định tắt bằng config.
 - Testcontainers 1.21.3 với PostgreSQL thật.
 - Spring Data Redis dùng Redis Docker cho cache route preview; chưa thêm Caffeine.
@@ -30,7 +30,7 @@ Các application module cấp một:
 - `user`: entity social graph và named interface `query` cho relationship criteria.
 - `spot`: City, Area, Spot, Place, Experience.
 - `post`: Post, `PostAccess`, projection đọc, repository và visibility policy.
-- `platform`: security/OpenAPI/Firebase adapter packages.
+- `platform`: security/OpenAPI/auth integration packages.
 
 Quy tắc đang được test:
 
@@ -53,12 +53,12 @@ Quy tắc đang được test:
 ## Runtime
 
 - Authentication mặc định bật: `AUTH_ENABLED=true`.
-- Khi auth bật, `FIREBASE_PROJECT_ID` bắt buộc; thiếu config làm startup fail thay vì chạy insecure.
+- Auth email delivery dùng SMTP environment; không khởi động insecure khi production thiếu cấu hình cần thiết.
 - Local compose đặt `AUTH_ENABLED=false` tường minh.
 - OpenAPI mặc định tắt; local compose đặt `OPENAPI_ENABLED=true`.
 - Compose tại `infra/compose.yaml` chạy cả PostgreSQL và API; `Dockerfile` build bằng Maven Wrapper trong multi-stage image.
 - Local Compose dùng `.env` bị ignore và template `.env.example`; biến host-side có prefix `NOOKA_*` để tránh collision, chạy bằng `docker compose --env-file .env -f infra/compose.yaml ...`.
-- `run.ps1` là entry point Windows local: đọc `.env`, map sang Spring process env, đợi PostgreSQL healthy và chạy Maven. Firebase host credentials dùng `NOOKA_FIREBASE_CREDENTIALS` → `GOOGLE_APPLICATION_CREDENTIALS`; không đọc hoặc log JSON.
+- `run.ps1` là entry point Windows local: đọc `.env`, map sang Spring process env, đợi PostgreSQL healthy và chạy Maven.
 
 ## Database
 
@@ -71,7 +71,7 @@ Quy tắc đang được test:
 Guard không cần Docker:
 
 ```powershell
-.\mvnw.cmd "-Dtest=ModularityTest,ArchitectureTest,ApiExceptionHandlerTest,SecurityConfigTest,BearerTokenAuthenticationFilterTest,FirebaseConfigTest,OpenApiEndpointTest" test
+.\mvnw.cmd "-Dtest=ModularityTest,ArchitectureTest,ApiExceptionHandlerTest,SecurityConfigTest,BearerTokenAuthenticationFilterTest,OpenApiEndpointTest" test
 ```
 
 Full test cần Docker:
@@ -87,4 +87,4 @@ Docker daemon phải chạy cho full suite Testcontainers; không được che p
 - Chưa có Account/Post/Feed/Spot business controller hoặc application service.
 - Chưa có media upload, server-side EXIF stripping hoặc Cloudflare R2 adapter.
 - Chưa có Want to go, Been, follow-up workflow, notification, report, comment, reaction, search hoặc Ask Nooka.
-- Security mới dựng boundary JWT; mapping principal sang internal user UUID sẽ được làm cùng Account API để tránh abstraction không có caller.
+- Security dùng opaque access token + rotating refresh session; principal là internal user UUID.

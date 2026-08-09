@@ -100,9 +100,10 @@ type ButtonProps = {
   tone?: ButtonTone;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
+  selected?: boolean;
 };
 
-export function Button({ label, onPress, tone = 'primary', style, accessibilityLabel }: ButtonProps) {
+export function Button({ label, onPress, tone = 'primary', style, accessibilityLabel, selected }: ButtonProps) {
   const { colors } = useNookaTheme();
   const palette: Record<ButtonTone, { background: string; text: string; border: string }> = {
     primary: { background: colors.inverseSurface, text: colors.onInverse, border: colors.inverseSurface },
@@ -116,6 +117,7 @@ export function Button({ label, onPress, tone = 'primary', style, accessibilityL
     <Pressable
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityRole="button"
+      accessibilityState={selected === undefined ? undefined : { selected }}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,

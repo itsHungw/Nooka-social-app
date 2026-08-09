@@ -12,7 +12,7 @@ import { useNookaDemo } from '@/providers/nooka-demo-provider';
 export default function SavedScreen() {
   const router = useRouter();
   const { colors } = useNookaTheme();
-  const { saved, extraTags } = useNookaDemo();
+  const { wantToGo, extraTags } = useNookaDemo();
 
   return (
     <ScreenShell testID="saved-screen">
@@ -21,10 +21,10 @@ export default function SavedScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-        {saved.length === 0 ? (
+        {wantToGo.length === 0 ? (
           <Text style={[styles.empty, { color: colors.textMuted }]}>{t('saved.empty')}</Text>
         ) : (
-          saved.map((id) => (
+          wantToGo.map((id) => (
             <SpotRow
               key={id}
               line={[spotDistrict(id), ...spotTags(id, extraTags).slice(0, 2).map((tag) => tagLabel(tag.id))].join(' · ')}

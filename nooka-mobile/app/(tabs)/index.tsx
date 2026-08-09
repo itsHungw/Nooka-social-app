@@ -5,6 +5,7 @@ import {
   FlatList,
   Modal,
   Pressable,
+  Share,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,7 +16,14 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { AskNookaBar, Button, Chip, Photo, ScreenShell } from '@/components/nooka/ui';
-import { formatDistance, spotDistrict, spotName, tagLabel } from '@/features/nooka/labels';
+import {
+  formatDistance,
+  spotDistrict,
+  spotName,
+  tagLabel,
+  wantToGoAccessibilityLabel,
+  wantToGoLabel,
+} from '@/features/nooka/labels';
 import { FRIENDS, PICKABLE_TAG_IDS, SPOTS, type FeedPost } from '@/features/nooka/spots';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { useStartCheckin } from '@/hooks/use-start-checkin';
@@ -30,7 +38,6 @@ export default function HomeScreen() {
 
   const [scrolled, setScrolled] = useState(false);
   const [journalVisible, setJournalVisible] = useState(true);
-  const [stripOpen, setStripOpen] = useState(false);
   const [cardHeight, setCardHeight] = useState(0);
 
   const flatListRef = useRef<FlatList>(null);
@@ -39,7 +46,7 @@ export default function HomeScreen() {
 
   const animHeight = useSharedValue(1);
 
-  const isStripShowing = scrolled ? stripOpen : journalVisible;
+  const isStripShowing = !scrolled && journalVisible;
 
   useEffect(() => {
     animHeight.value = withTiming(isStripShowing ? 1 : 0, { duration: 250 });
@@ -60,7 +67,6 @@ export default function HomeScreen() {
     const currentY = event.nativeEvent.contentOffset.y;
     if (isStripShowing && cardHeight > 0) {
       setJournalVisible(false);
-      setStripOpen(false);
       const currentPageIndex = Math.round(currentY / cardHeight);
       flatListRef.current?.scrollToOffset({ offset: currentPageIndex * cardHeight, animated: false });
     }
@@ -76,26 +82,24 @@ export default function HomeScreen() {
       isScrollingDown.current = false;
     }
 
-    // TikTok Rule: If Journal is open (either page 1 or overlay page 2+) and user swipes UP to scroll down
+    // Dải Nhật ký chỉ thuộc đầu feed: vuốt lên là thu lại trước khi snap sang bài kế.
     if (isStripShowing && dy > 8 && cardHeight > 0) {
       setJournalVisible(false);
-      setStripOpen(false);
       const currentPageIndex = Math.round(currentY / cardHeight);
       flatListRef.current?.scrollToOffset({ offset: currentPageIndex * cardHeight, animated: false });
       lastY.current = currentY;
       return;
     }
 
-    // TikTok Rule 2 & 3: When scrolling down past page 1, close journal strip and keep it hidden on scroll up between pages 2, 3...
+    // Giữ Nhật ký ẩn giữa các bài; không dùng pill nổi vì nó che hàng tác giả.
     if (currentY > 40 && isScrollingDown.current) {
       if (!scrolled) {
         setScrolled(true);
       }
       setJournalVisible(false);
-      setStripOpen(false);
     }
 
-    // TikTok Rule 4: Pull down at top of page 1 to re-open/show journal strip
+    // Kéo xuống ở đầu feed thì dải Nhật ký xuất hiện lại.
     if (currentY <= 0 && dy < -5) {
       setScrolled(false);
       setJournalVisible(true);
@@ -132,24 +136,6 @@ export default function HomeScreen() {
               onStory={(index) => router.push({ pathname: '/story/[index]', params: { index } })}
             />
           </Animated.View>
-        ) : null}
-
-        {scrolled ? (
-          <View style={styles.stripOverlayContainer}>
-            <Animated.View style={[animatedStripStyle, styles.stripOverlayCard]}>
-              <JournalList
-                onCheckin={startCheckin}
-                onStory={(index) => router.push({ pathname: '/story/[index]', params: { index } })}
-              />
-            </Animated.View>
-
-            <View style={styles.stripToggleRow}>
-              <Chip
-                label={stripOpen ? t('home.journalOpen') : t('home.journalClosed')}
-                onPress={() => setStripOpen((open) => !open)}
-              />
-            </View>
-          </View>
         ) : null}
 
         <Animated.View onLayout={(event) => setCardHeight(event.nativeEvent.layout.height)} style={[styles.feedArea, animatedFeedAreaStyle]}>
@@ -189,22 +175,48 @@ function FeedCard({ post, height }: { post: FeedPost; height: number }) {
   const spot = SPOTS[post.spot];
   const author = post.friend ? t(`friends.${post.friend}`) : t('feed.you');
   const caption = post.captionKey ? t(post.captionKey) : (post.caption ?? '');
+  const reacted = demo.isPostReacted(post.id);
+  const reactionCount = post.reactionCount + (reacted ? 1 : 0);
+  const wantsToGo = demo.wantsToGo(post.spot);
+  const hasBeen = demo.isBeen(post.spot);
   const openSpot = () => router.push({ pathname: '/spot/[id]', params: { id: post.spot } });
+  const sharePost = async () => {
+    try {
+      const result = await Share.share({
+        message: String(
+          t('feed.shareMessage', {
+            author,
+            spot: spotName(post.spot),
+            caption,
+          }),
+        ),
+      });
+      if (result.action === Share.sharedAction) demo.flash(t('toast.postShared'));
+    } catch {
+      demo.flash(t('toast.shareFailed'));
+    }
+  };
 
   return (
     <View style={[styles.card, height ? { height } : null]}>
       <View style={styles.cardAuthor}>
         <View style={[styles.cardAvatar, { backgroundColor: colors.avatarDefault }]} />
-        <Text style={[styles.cardAuthorName, { color: colors.text }]}>{author}</Text>
-        <Text style={[styles.cardMeta, { color: colors.textMuted }]}>
-          {t('home.postedBy', { time: t(post.timeKey) })}
-        </Text>
+        <View style={styles.cardAuthorCopy}>
+          <Text numberOfLines={1} style={[styles.cardAuthorName, { color: colors.text }]}>{author}</Text>
+          <Text numberOfLines={1} style={[styles.cardMeta, { color: colors.textMuted }]}>
+            {t('home.postedBy', { time: t(post.timeKey) })}
+          </Text>
+        </View>
         <Text style={[styles.cardMeta, styles.cardDistance, { color: colors.textMuted }]}>
           {formatDistance(spot.distanceM)}
         </Text>
       </View>
 
-      <Pressable accessibilityLabel={caption} accessibilityRole="button" onPress={openSpot} style={styles.cardPhotoPress}>
+      <Pressable
+        accessibilityLabel={t('feed.openSpot', { spot: spotName(post.spot) })}
+        accessibilityRole="button"
+        onPress={openSpot}
+        style={({ pressed }) => [styles.cardPhotoPress, { opacity: pressed ? 0.92 : 1 }]}>
         <Photo style={styles.cardPhoto} tint={spot.photoTint}>
           <View style={[styles.photoBadge, { backgroundColor: colors.background }]}>
             <Text style={[styles.photoBadgeText, { color: colors.textMuted }]}>{t('home.photoBadge')}</Text>
@@ -215,44 +227,109 @@ function FeedCard({ post, height }: { post: FeedPost; height: number }) {
         </Photo>
       </Pressable>
 
-      <Pressable accessibilityLabel={spotName(post.spot)} accessibilityRole="button" onPress={openSpot} style={styles.cardSpotRow}>
-        <Text numberOfLines={1} style={[styles.cardSpotName, { color: colors.text }]}>{spotName(post.spot)}</Text>
-        <Text style={[styles.cardMeta, { color: colors.textMuted }]}>{spotDistrict(post.spot)}</Text>
-      </Pressable>
-
-      {post.tags.length ? (
-        <View style={styles.cardTags}>
-          {post.tags.map((tag) => (
-            <Chip key={tag} label={tagLabel(tag)} />
-          ))}
-        </View>
-      ) : null}
-
       {post.hashtagsKey ? (
         <Text style={[styles.hashtags, { color: colors.accentInk }]}>{t(post.hashtagsKey)}</Text>
       ) : null}
 
-      <View style={styles.cardActions}>
-        <Button
-          label={demo.isSaved(post.spot) ? t('actions.saved') : t('actions.want')}
-          onPress={() => demo.toggleSave(post.spot)}
-          style={styles.cardAction}
-          tone={demo.isSaved(post.spot) ? 'soft' : 'primary'}
+      <View style={[styles.postActions, { borderColor: colors.borderSubtle }]}>
+        <PostAction
+          accessibilityLabel={t('feed.reactionAccessibility', { count: reactionCount })}
+          count={reactionCount}
+          icon={reacted ? 'heart' : 'heart-outline'}
+          label={t('actions.react')}
+          onPress={() => demo.togglePostReaction(post.id)}
+          selected={reacted}
         />
-        <Button
-          label={demo.isBeen(post.spot) ? t('actions.beenDone') : t('actions.been')}
-          onPress={() => demo.toggleBeen(post.spot)}
-          style={styles.cardAction}
-          tone={demo.isBeen(post.spot) ? 'soft' : 'outline'}
+        <PostAction
+          accessibilityLabel={t('feed.commentAccessibility', { count: post.commentCount })}
+          count={post.commentCount}
+          icon="chatbubble-outline"
+          label={t('actions.comment')}
+          onPress={() => demo.flash(t('toast.commentOpened', { name: author }))}
         />
-        <Button
-          label={t('actions.ask')}
-          onPress={() => demo.flash(t('toast.asked', { name: author }))}
-          style={styles.cardAction}
-          tone="outline"
+        <PostAction
+          accessibilityLabel={t('actions.share')}
+          icon="arrow-redo-outline"
+          label={t('actions.share')}
+          onPress={() => void sharePost()}
         />
       </View>
+
+      <View style={[styles.spotAttachment, { backgroundColor: colors.surfaceMuted, borderColor: colors.borderSubtle }]}>
+        <Pressable
+          accessibilityLabel={t('feed.openSpot', { spot: spotName(post.spot) })}
+          accessibilityRole="button"
+          onPress={openSpot}
+          style={({ pressed }) => [styles.spotAttachmentCopy, { opacity: pressed ? 0.7 : 1 }]}>
+          <View style={styles.spotAttachmentTitleRow}>
+            <Text numberOfLines={1} style={[styles.cardSpotName, { color: colors.text }]}>{spotName(post.spot)}</Text>
+            <Ionicons color={colors.textMuted} name="chevron-forward" size={16} />
+          </View>
+          <Text numberOfLines={1} style={[styles.spotAttachmentMeta, { color: colors.textMuted }]}>
+            {[spotDistrict(post.spot), ...post.tags.slice(0, 2).map(tagLabel)].join(' · ')}
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityLabel={wantToGoAccessibilityLabel(hasBeen, wantsToGo)}
+          accessibilityRole="button"
+          accessibilityState={{ selected: wantsToGo }}
+          onPress={() => demo.toggleWantToGo(post.spot)}
+          style={({ pressed }) => [
+            styles.wantButton,
+            {
+              backgroundColor: wantsToGo ? colors.accentSoft : colors.inverseSurface,
+              borderColor: wantsToGo ? colors.accentSoft : colors.inverseSurface,
+              opacity: pressed ? 0.76 : 1,
+            },
+          ]}>
+          <Ionicons
+            color={wantsToGo ? colors.accentInk : colors.onInverse}
+            name={wantsToGo ? 'bookmark' : 'bookmark-outline'}
+            size={17}
+          />
+          <Text
+            numberOfLines={1}
+            style={[styles.wantButtonLabel, { color: wantsToGo ? colors.accentInk : colors.onInverse }]}>
+            {wantToGoLabel(hasBeen, wantsToGo)}
+          </Text>
+        </Pressable>
+      </View>
     </View>
+  );
+}
+
+function PostAction({
+  icon,
+  label,
+  count,
+  onPress,
+  selected,
+  accessibilityLabel,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  count?: number;
+  onPress: () => void;
+  selected?: boolean;
+  accessibilityLabel: string;
+}) {
+  const { colors } = useNookaTheme();
+  const color = selected ? colors.accentInk : colors.textMuted;
+
+  return (
+    <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityState={selected === undefined ? undefined : { selected }}
+      hitSlop={4}
+      onPress={onPress}
+      style={({ pressed }) => [styles.postAction, { backgroundColor: pressed ? colors.surfacePressed : 'transparent' }]}>
+      <Ionicons color={color} name={icon} size={20} />
+      <Text numberOfLines={1} style={[styles.postActionLabel, { color }]}>{label}</Text>
+      {count === undefined ? null : (
+        <Text style={[styles.postActionCount, { color }]}>{String(count)}</Text>
+      )}
+    </Pressable>
   );
 }
 
@@ -262,11 +339,12 @@ function TagSheet() {
   const { colors } = useNookaTheme();
   const demo = useNookaDemo();
   const post = demo.feed.find((item) => item.id === demo.sheetPostId);
+  const asksToKeepForRevisit = Boolean(post && demo.visitIntentPromptSpot === post.spot);
 
   return (
     <Modal animationType="slide" onRequestClose={demo.commitSheetTags} transparent visible={Boolean(post)}>
       <View style={[styles.sheetScrim, { backgroundColor: colors.scrim }]}>
-        <View style={[styles.sheet, { backgroundColor: colors.surface }]}>
+        <View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: colors.surface }]}>
           <View style={[styles.sheetGrip, { backgroundColor: colors.border }]} />
           <Text style={[styles.sheetTitle, { color: colors.text }]}>{t('sheet.title')}</Text>
           <Text style={[styles.sheetBody, { color: colors.textMuted }]}>{t('sheet.body')}</Text>
@@ -280,6 +358,27 @@ function TagSheet() {
               />
             ))}
           </View>
+          {asksToKeepForRevisit ? (
+            <View style={[styles.revisitPrompt, { backgroundColor: colors.surfaceMuted, borderColor: colors.borderSubtle }]}>
+              <Text style={[styles.revisitTitle, { color: colors.text }]}>{t('sheet.revisitTitle')}</Text>
+              <Text style={[styles.revisitBody, { color: colors.textMuted }]}>
+                {t('sheet.revisitBody', { spot: spotName(post!.spot) })}
+              </Text>
+              <View style={styles.revisitActions}>
+                <Button
+                  label={t('sheet.keepForRevisit')}
+                  onPress={demo.keepWantToGoForRevisit}
+                  style={styles.revisitAction}
+                />
+                <Button
+                  label={t('sheet.removeWantToGo')}
+                  onPress={demo.removeCompletedWantToGo}
+                  style={styles.revisitAction}
+                  tone="outline"
+                />
+              </View>
+            </View>
+          ) : null}
           <View style={styles.sheetActions}>
             <Button label={t('common.done')} onPress={demo.commitSheetTags} style={styles.sheetPrimary} />
             <Button
@@ -351,7 +450,6 @@ const styles = StyleSheet.create({
   stripCircle: { width: 52, height: 52, borderRadius: 26 },
   stripAdd: { alignItems: 'center', justifyContent: 'center' },
   stripLabel: { fontSize: 11, lineHeight: 15, fontWeight: '600' },
-  stripToggleRow: { alignItems: 'center', paddingVertical: 4, zIndex: 25 },
   searchBarWrapper: { zIndex: 100 },
   feedWrapper: { flex: 1, position: 'relative', overflow: 'hidden', zIndex: 1 },
   inlineStripOverlay: {
@@ -362,47 +460,77 @@ const styles = StyleSheet.create({
     zIndex: 10,
     overflow: 'hidden',
   },
-  stripOverlayContainer: {
-    position: 'absolute',
-    top: 6,
-    left: 0,
-    right: 0,
-    zIndex: 20,
-    alignItems: 'center',
-    gap: 4,
-  },
-  stripOverlayCard: {
-    width: '100%',
-  },
   feedArea: { flex: 1, paddingHorizontal: 20 },
   empty: { paddingTop: 22 },
   emptyTitle: { fontSize: 19, lineHeight: 26, fontWeight: '800', letterSpacing: -0.4 },
   emptyBody: { marginTop: 8, fontSize: 14, lineHeight: 22, fontWeight: '500' },
   emptyCta: { marginTop: 16, alignSelf: 'flex-start' },
   card: { paddingTop: 12, paddingBottom: 6 },
-  cardAuthor: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  cardAuthor: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10 },
   cardAvatar: { width: 30, height: 30, borderRadius: 15 },
+  cardAuthorCopy: { flex: 1, minWidth: 0 },
   cardAuthorName: { fontSize: 14, lineHeight: 19, fontWeight: '700' },
   cardMeta: { fontSize: 12.5, lineHeight: 17, fontWeight: '500' },
-  cardDistance: { marginLeft: 'auto' },
+  cardDistance: { marginLeft: 8 },
   cardPhotoPress: { flex: 1, minHeight: 150, marginTop: 10 },
   cardPhoto: { flex: 1, borderRadius: 20 },
   photoBadge: { position: 'absolute', left: 12, top: 12, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
   photoBadgeText: { fontSize: 10, lineHeight: 14, letterSpacing: 1.4, textTransform: 'uppercase' },
   captionBand: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingVertical: 15 },
   captionText: { fontSize: 15, lineHeight: 21, fontWeight: '600' },
-  cardSpotRow: { marginTop: 14, flexDirection: 'row', alignItems: 'baseline', gap: 9 },
-  cardSpotName: { flex: 1, fontSize: 18, lineHeight: 24, fontWeight: '800', letterSpacing: -0.4 },
-  cardTags: { marginTop: 9, flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  cardSpotName: { flex: 1, fontSize: 15.5, lineHeight: 21, fontWeight: '700', letterSpacing: -0.3 },
   hashtags: { marginTop: 9, fontSize: 13, lineHeight: 18, fontWeight: '600' },
-  cardActions: { marginTop: 14, flexDirection: 'row', gap: 8 },
-  cardAction: { flex: 1 },
+  postActions: { marginTop: 8, minHeight: 48, flexDirection: 'row', borderBottomWidth: 1 },
+  postAction: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 12,
+    paddingHorizontal: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  postActionLabel: { fontSize: 12.5, lineHeight: 17, fontWeight: '600' },
+  postActionCount: { fontSize: 11.5, lineHeight: 16, fontWeight: '600' },
+  spotAttachment: {
+    marginTop: 10,
+    minHeight: 68,
+    borderRadius: 17,
+    borderWidth: 1,
+    paddingLeft: 14,
+    paddingRight: 8,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  spotAttachmentCopy: { flex: 1, minWidth: 0, minHeight: 48, justifyContent: 'center' },
+  spotAttachmentTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  spotAttachmentMeta: { marginTop: 2, fontSize: 12, lineHeight: 17, fontWeight: '500' },
+  wantButton: {
+    minHeight: 44,
+    maxWidth: 124,
+    borderRadius: 13,
+    borderWidth: 1,
+    paddingHorizontal: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  wantButtonLabel: { flexShrink: 1, fontSize: 12.5, lineHeight: 17, fontWeight: '700' },
   sheetScrim: { flex: 1, justifyContent: 'flex-end' },
   sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 22, paddingTop: 20, paddingBottom: 30 },
   sheetGrip: { width: 44, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
   sheetTitle: { fontSize: 20, lineHeight: 26, fontWeight: '800', letterSpacing: -0.4 },
   sheetBody: { marginTop: 7, fontSize: 14, lineHeight: 22, fontWeight: '500' },
   sheetTags: { marginTop: 14, flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  revisitPrompt: { marginTop: 16, borderRadius: 18, borderWidth: 1, padding: 14 },
+  revisitTitle: { fontSize: 15, lineHeight: 20, fontWeight: '800' },
+  revisitBody: { marginTop: 4, fontSize: 13, lineHeight: 19, fontWeight: '500' },
+  revisitActions: { marginTop: 12, flexDirection: 'row', gap: 8 },
+  revisitAction: { flex: 1 },
   sheetActions: { marginTop: 18, flexDirection: 'row', gap: 8 },
   sheetPrimary: { flex: 1, minHeight: 50 },
 });

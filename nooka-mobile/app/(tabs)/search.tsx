@@ -15,6 +15,7 @@ import {
   spotName,
   spotTagLine,
   tagLabel,
+  wantToGoLabel,
 } from '@/features/nooka/labels';
 import {
   SPOTS,
@@ -394,10 +395,11 @@ function SpotPreview({
 
       <View style={styles.previewActions}>
         <Button
-          label={demo.isSaved(spot) ? t('actions.saved') : t('actions.want')}
-          onPress={() => demo.toggleSave(spot)}
+          label={wantToGoLabel(demo.isBeen(spot), demo.wantsToGo(spot))}
+          onPress={() => demo.toggleWantToGo(spot)}
+          selected={demo.wantsToGo(spot)}
           style={styles.previewAction}
-          tone={demo.isSaved(spot) ? 'soft' : 'primary'}
+          tone={demo.wantsToGo(spot) ? 'soft' : 'primary'}
         />
         <Button
           label={t('spot.viewSpot')}

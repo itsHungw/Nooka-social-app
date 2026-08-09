@@ -113,9 +113,9 @@ node --test features/nooka/ranking.test.ts features/nooka/geo.test.ts features/n
 
 (Truyền cả thư mục thay vì từng file thì Node trên Windows báo `Cannot find module` — kể tên file ra.)
 
-**Danh sách kết quả chỉ có một component.** `ResultRow` ở `components/nooka/ui.tsx` dùng chung cho sheet của tab Tìm và kết quả Hỏi Nooka. §5 của spec chốt một loại card cho cả hai chế độ — dựng thêm hàng riêng cho một bề mặt là phá luật đó.
+**Danh sách kết quả Spot chỉ có một component.** `ResultRow` ở `components/nooka/ui.tsx` dùng chung cho sheet của tab Tìm và kết quả Hỏi Nooka. §5 của spec khóa Search và Hỏi Nooka vào cùng `SpotResultCard`; Home dùng `PostFeedCard` post-first riêng. Dựng thêm một hàng Spot khác cho Search hoặc Hỏi Nooka là phá luật đó.
 
-**Khớp từ khoá đi qua locale, không hardcode tiếng Việt trong logic.** `search.synonyms.<tagId>` ở `locales/` là danh sách từ đồng nghĩa; `ranking.ts` chỉ nhận danh sách đó chứ không biết mình đang khớp ngôn ngữ nào.
+**Tag của Spot là taxonomy do backend quản lý; user chỉ chọn/xác nhận, không tự tạo.** Bản production nhận tag ID, bản dịch và synonym từ API. Prototype chưa có OpenAPI nên tạm giữ `search.synonyms.<tagId>` trong `locales/`; `ranking.ts` chỉ nhận danh sách đó và không hardcode tiếng Việt. Hashtag tự do chỉ thuộc caption của Post, không tự trở thành tag Spot.
 
 Code trong scaffold (`hello-wave`, `parallax-scroll-view`...) là **demo của template**, không phải kiến trúc đã chốt. Xoá khi thay bằng màn hình thật; `npm run reset-project` dọn một lượt.
 

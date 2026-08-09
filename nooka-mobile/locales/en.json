@@ -17,7 +17,7 @@
     "search": "Search",
     "create": "Check in",
     "messages": "Messages",
-    "saved": "Saved",
+    "saved": "Want to go",
     "profile": "You",
     "settings": "Settings"
   },
@@ -49,8 +49,6 @@
     "location": "Binh Thanh",
     "askNooka": "Ask Nooka: where tonight?",
     "checkin": "Check in",
-    "journalOpen": "Journal ▴",
-    "journalClosed": "Journal ▾",
     "postedBy": "checked in · {{time}}",
     "photoBadge": "photo · spot",
     "emptyTitle": "No friends have checked in today.",
@@ -61,6 +59,10 @@
   "feed": {
     "you": "You",
     "myCaption": "At {{spot}}",
+    "openSpot": "Open {{spot}}",
+    "shareMessage": "{{author}} checked in at {{spot}} on Nooka: {{caption}}",
+    "reactionAccessibility": "React to this post, {{count}} reactions",
+    "commentAccessibility": "Open comments, {{count}} comments",
     "linh": {
       "caption": "A quiet corner for an afternoon of work.",
       "hashtags": "#coffeeDistrict1 #workcorner #quiet"
@@ -85,19 +87,24 @@
     "next": "Next"
   },
   "actions": {
+    "react": "React",
+    "comment": "Comment",
+    "share": "Share",
     "want": "Want to go",
-    "saved": "Saved",
-    "been": "Been",
-    "beenDone": "Been ✓",
-    "ask": "Ask"
+    "wantDone": "Want to go ✓",
+    "wantRemove": "Remove from Want to go",
+    "wantReturn": "Want to return",
+    "wantReturnDone": "Want to return ✓",
+    "wantReturnRemove": "Remove from Want to return"
   },
   "toast": {
-    "saved": "Saved to Want to go",
-    "unsaved": "Removed from Want to go",
-    "been": "Marked {{spot}} as visited",
-    "asked": "Question sent to {{name}}",
+    "wantAdded": "Added to Want to go",
+    "wantRemoved": "Removed from Want to go",
+    "commentOpened": "Comments on {{name}}'s post",
+    "postShared": "Post shared",
+    "shareFailed": "Couldn't open sharing. Try again.",
     "route": "Opening directions to {{spot}}",
-    "tagsAdded": "Your tags are on the spot page now",
+    "tagsAdded": "Your answers now contribute to the spot summary",
     "reviewSent": "Review sent · it feeds the spot page",
     "needPhoto": "Take a photo first",
     "noLocation": "No location — pick the spot on the map",
@@ -112,7 +119,7 @@
       "one": "{{count}} place near you",
       "other": "{{count}} places near you"
     },
-    "nearbySource": "from user tags",
+    "nearbySource": "from community tag confirmations",
     "dragForMore": "Drag up to see all",
     "googlePinLabel": "{{count}} places from Google",
     "googleError": "Google Places unavailable",
@@ -169,8 +176,8 @@
     "cta": "Find a spot",
     "noAnswer": "Nooka reads the tags and reviews people left behind — it does not rank by ads. Type a sentence or pick an idea above.",
     "answerLine": {
-      "one": "{{count}} closest match, filtered from user tags and reviews within 3 km.",
-      "other": "{{count}} closest matches, filtered from user tags and reviews within 3 km."
+      "one": "{{count}} closest match, filtered from community tag confirmations and reviews within 3 km.",
+      "other": "{{count}} closest matches, filtered from community tag confirmations and reviews within 3 km."
     },
     "reasonNew": "New on Nooka, no reviews yet — you could be the first",
     "reason": "{{count}} people say {{tag}}",
@@ -278,8 +285,8 @@
     "normalConditions": "Normal conditions · no live traffic"
   },
   "saved": {
-    "title": "Saved",
-    "empty": "Nothing saved yet. Tap “Want to go” on a post or a spot page and it lands here."
+    "title": "Want to go",
+    "empty": "No places here yet. Tap “Want to go” on a spot in Home, Search, or its detail page."
   },
   "profile": {
     "title": "You",
@@ -320,7 +327,7 @@
     "yourCheckins": "Your check-ins",
     "noCheckins": "No check-ins yet. Tap + to try the posting flow.",
     "beenPlaces": "Places you have been",
-    "noBeen": "Nothing marked as visited yet."
+    "noBeen": "No check-ins yet. A place appears here after you post from it."
   },
   "editProfile": {
     "title": "Edit profile",
@@ -400,8 +407,12 @@
   },
   "sheet": {
     "title": "It is on the feed",
-    "body": "How was this place? Pick tags so the next person knows. Skipping is fine.",
-    "writeReview": "Write a review"
+    "body": "What fits this spot? Choose from Nooka's categories. Your answers join the community summary; skipping is fine.",
+    "writeReview": "Write a review",
+    "revisitTitle": "Keep it for another visit?",
+    "revisitBody": "You just visited {{spot}}. Keep it in your list if you want to return.",
+    "keepForRevisit": "Keep for revisit",
+    "removeWantToGo": "Remove from list"
   },
   "review": {
     "title": "Review",
@@ -512,8 +523,8 @@
         "desc": "Feed from people you follow, not ads"
       },
       "saved": {
-        "title": "Save everything",
-        "desc": "Mark Want to go or Visited"
+        "title": "Plan the next place",
+        "desc": "Keep Want to go now; check-ins build your visited map"
       }
     },
     "cta": "Get started",

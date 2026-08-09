@@ -193,6 +193,24 @@ class ReviewTest {
     }
 
     @Test
+    @DisplayName("Đáp án phải thuộc đúng câu hỏi được trả lời")
+    void answerOptionMustBelongToTheQuestion() {
+        ReviewQuestion priceQuestion = ReviewQuestion.builder().slug("price-mismatch").sortOrder(2).build();
+        em.persist(priceQuestion);
+        ReviewQuestionOption cheap = ReviewQuestionOption.builder()
+                .questionId(priceQuestion.getId())
+                .value("cheap")
+                .build();
+        em.persist(cheap);
+        em.flush();
+
+        Review review = persistReview(author, "Không được ghép sai câu hỏi.");
+
+        assertThatThrownBy(() -> persistAnswer(review, stayQuestion, cheap))
+                .hasMessageContaining("review_answers_question_option_fkey");
+    }
+
+    @Test
     @DisplayName("Hai người trả lời cùng đáp án thì thành hai phiếu")
     void twoPeopleProduceTwoVotes() {
         User second = persistUser("secondreviewer");

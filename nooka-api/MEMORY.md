@@ -2,7 +2,7 @@
 
 > Snapshot kỹ thuật lâu dài cho `nooka-api`. Product spec, migration và source hiện tại vẫn là nguồn sự thật cao hơn.
 
-**Cập nhật gần nhất:** 2026-08-08
+**Cập nhật gần nhất:** 2026-08-09
 
 ## Repository
 
@@ -73,6 +73,9 @@ Quy tắc đang được test:
 - `V5_1`: giai đoạn 3 — selection, topic, shared link, `posts.from_selection_id`.
 - `V6_1`: giai đoạn 4 — claim của chủ quán.
 - `V7_1`: giai đoạn 5 — nhắn tin.
+- `V7_2`: Place chỉ chứa tọa độ khi có đủ cặp latitude/longitude.
+- `V7_3`: `review_answers.option_id` bắt buộc thuộc đúng `question_id` bằng composite foreign key.
+- `V7_4`: `want_to_go.source_post_id` giữ Post đã tạo intent, bắt buộc cùng Spot; Want to go và Been được phép cùng tồn tại.
 - Modulith JDBC schema initializer bị tắt tường minh; completion mode là `delete`.
 
 **Cả 5 giai đoạn của thiết kế database đã triển khai.** Flyway chuẩn hoá `_` thành `.` nên `V3_1` là version 3.1 và sắp giữa V3 và V4. Thiết kế gốc: `../docs/superpowers/specs/2026-08-08-nooka-database-design.md`.
@@ -133,5 +136,5 @@ Docker daemon phải chạy cho full suite Testcontainers; không được che p
 
 - Chưa có Account/Post/Feed/Spot business controller hoặc application service.
 - Chưa có media upload, server-side EXIF stripping hoặc Cloudflare R2 adapter.
-- Chưa có Want to go, Been, follow-up workflow, notification, report, comment, reaction, search hoặc Ask Nooka.
+- Schema đã có Want to go, Been và attribution; chưa có application service cho workflow này. Chưa có notification, report, comment, reaction, search hoặc Ask Nooka ở tầng nghiệp vụ.
 - Security dùng opaque access token + rotating refresh session; principal là internal user UUID.

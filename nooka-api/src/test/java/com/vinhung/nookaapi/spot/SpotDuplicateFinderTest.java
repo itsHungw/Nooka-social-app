@@ -1,6 +1,7 @@
 package com.vinhung.nookaapi.spot;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.vinhung.nookaapi.TestcontainersConfiguration;
 import com.vinhung.nookaapi.spot.api.DuplicateSpotCandidate;
@@ -150,6 +151,24 @@ class SpotDuplicateFinderTest {
                 .containsExactly(near.getId(), far.getId());
         assertThat(found.get(0).distanceMeters()).isBetween(20.0, 45.0);
         assertThat(found.get(1).distanceMeters()).isBetween(85.0, 115.0);
+    }
+
+    @Test
+    @DisplayName("Place không được chỉ có latitude")
+    void latitudeWithoutLongitudeIsRejected() {
+        assertThatThrownBy(() -> {
+            persistPlace("Half Coordinate Lat", LAT, null);
+            em.flush();
+        }).hasMessageContaining("places_coordinate_pair_check");
+    }
+
+    @Test
+    @DisplayName("Place không được chỉ có longitude")
+    void longitudeWithoutLatitudeIsRejected() {
+        assertThatThrownBy(() -> {
+            persistPlace("Half Coordinate Lng", null, LNG);
+            em.flush();
+        }).hasMessageContaining("places_coordinate_pair_check");
     }
 
     @Test

@@ -1,8 +1,6 @@
 package com.vinhung.nookaapi.shared.entity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import java.time.Instant;
@@ -12,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.proxy.HibernateProxy;
 
 /**
@@ -30,8 +29,26 @@ import org.hibernate.proxy.HibernateProxy;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class BaseEntity {
 
+    /**
+     * UUID v7 chứ không phải v4: mốc thời gian nằm ở 48 bit đầu nên bản ghi mới
+     * dồn về mép phải của B-tree thay vì rơi ngẫu nhiên khắp index. Với bảng ghi
+     * nhiều như {@code posts} và {@code messages}, khác biệt đó là index không
+     * phình và WAL không phồng vì ghi nguyên trang sau checkpoint.
+     *
+     * <p><b>KHÔNG dùng {@code Style.TIME}.</b> Tên nghe hợp lý nhưng nó là UUID
+     * v1 và nhúng địa chỉ IP/MAC của máy chủ vào id — trong một app lấy privacy
+     * làm ràng buộc sản phẩm thì đó là lỗi nghiêm trọng. {@code BaseEntityIdTest}
+     * khoá lại điều này.
+     *
+     * <p>{@code VERSION_7} đang là {@code @Incubating} trong Hibernate. Nếu API
+     * đổi khi nâng version, đây là chỗ duy nhất phải sửa.
+     *
+     * <p>Cột vẫn giữ {@code default gen_random_uuid()} ở database làm lưới an
+     * toàn cho seed script viết bằng SQL thuần; ở đó tính cục bộ của index không
+     * quan trọng nên v4 lẫn vào là chấp nhận được.
+     */
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
     private UUID id;
 
     @CreationTimestamp

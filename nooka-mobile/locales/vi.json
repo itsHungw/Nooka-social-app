@@ -17,7 +17,7 @@
     "search": "Tìm kiếm",
     "create": "Check-in",
     "messages": "Tin nhắn",
-    "saved": "Đã lưu",
+    "saved": "Muốn đi",
     "profile": "Bạn",
     "settings": "Cài đặt"
   },
@@ -49,8 +49,6 @@
     "location": "Bình Thạnh",
     "askNooka": "Hỏi Nooka: tối nay đi đâu?",
     "checkin": "Check-in",
-    "journalOpen": "Nhật ký ▴",
-    "journalClosed": "Nhật ký ▾",
     "postedBy": "check-in · {{time}}",
     "photoBadge": "ảnh · quán",
     "emptyTitle": "Hôm nay chưa có bạn nào check-in.",
@@ -61,6 +59,10 @@
   "feed": {
     "you": "Bạn",
     "myCaption": "Đang ở {{spot}}",
+    "openSpot": "Mở {{spot}}",
+    "shareMessage": "{{author}} vừa check-in tại {{spot}} trên Nooka: {{caption}}",
+    "reactionAccessibility": "Thả cảm xúc cho bài viết, hiện có {{count}} cảm xúc",
+    "commentAccessibility": "Mở bình luận, hiện có {{count}} bình luận",
     "linh": {
       "caption": "Một góc yên tĩnh cho buổi chiều làm việc.",
       "hashtags": "#caféquận1 #góclàmviệc #yên"
@@ -85,19 +87,24 @@
     "next": "Tiếp"
   },
   "actions": {
+    "react": "Cảm xúc",
+    "comment": "Bình luận",
+    "share": "Chia sẻ",
     "want": "Muốn đi",
-    "saved": "Đã lưu",
-    "been": "Đã đi",
-    "beenDone": "Đã đi ✓",
-    "ask": "Hỏi"
+    "wantDone": "Muốn đi ✓",
+    "wantRemove": "Bỏ khỏi Muốn đi",
+    "wantReturn": "Muốn quay lại",
+    "wantReturnDone": "Muốn quay lại ✓",
+    "wantReturnRemove": "Bỏ khỏi Muốn quay lại"
   },
   "toast": {
-    "saved": "Đã lưu vào Muốn đi",
-    "unsaved": "Đã bỏ khỏi Muốn đi",
-    "been": "Đánh dấu đã đi {{spot}}",
-    "asked": "Đã gửi câu hỏi cho {{name}}",
+    "wantAdded": "Đã thêm vào Muốn đi",
+    "wantRemoved": "Đã bỏ khỏi Muốn đi",
+    "commentOpened": "Bình luận dưới bài của {{name}}",
+    "postShared": "Đã chia sẻ bài viết",
+    "shareFailed": "Chưa mở được bảng chia sẻ. Thử lại nhé.",
     "route": "Mở chỉ đường tới {{spot}}",
-    "tagsAdded": "Tag của bạn đã vào trang địa điểm",
+    "tagsAdded": "Xác nhận của bạn đã góp vào tổng hợp địa điểm",
     "reviewSent": "Đã gửi review · dữ liệu vào trang địa điểm",
     "needPhoto": "Chụp một ảnh trước",
     "noLocation": "Không có vị trí — chọn chỗ bằng bản đồ",
@@ -112,7 +119,7 @@
       "one": "{{count}} chỗ quanh bạn",
       "other": "{{count}} chỗ quanh bạn"
     },
-    "nearbySource": "lọc từ tag người dùng",
+    "nearbySource": "lọc từ xác nhận tag của cộng đồng",
     "dragForMore": "Kéo lên để xem tất cả",
     "googlePinLabel": "{{count}} quán từ Google",
     "googleError": "Không tải được Google Places",
@@ -169,8 +176,8 @@
     "cta": "Tìm chỗ",
     "noAnswer": "Nooka đọc tag và review mà người dùng đã để lại, không xếp hạng theo quảng cáo. Gõ một câu hoặc chọn một ý ở trên.",
     "answerLine": {
-      "one": "{{count}} chỗ khớp nhất, lọc từ tag và review của người dùng trong 3 km.",
-      "other": "{{count}} chỗ khớp nhất, lọc từ tag và review của người dùng trong 3 km."
+      "one": "{{count}} chỗ khớp nhất, lọc từ xác nhận tag và review của cộng đồng trong 3 km.",
+      "other": "{{count}} chỗ khớp nhất, lọc từ xác nhận tag và review của cộng đồng trong 3 km."
     },
     "reasonNew": "Mới trên Nooka, chưa ai review — bạn có thể là người đầu tiên",
     "reason": "{{count}} người nói {{tag}}",
@@ -278,8 +285,8 @@
     "normalConditions": "Điều kiện thường · không có giao thông thực"
   },
   "saved": {
-    "title": "Đã lưu",
-    "empty": "Chưa lưu chỗ nào. Bấm “Muốn đi” ở một bài hoặc một trang địa điểm, nó sẽ nằm ở đây."
+    "title": "Muốn đi",
+    "empty": "Chưa có chỗ nào. Bấm “Muốn đi” trên khối địa điểm ở Trang chủ, Tìm kiếm hoặc trang chi tiết."
   },
   "profile": {
     "title": "Cá nhân",
@@ -320,7 +327,7 @@
     "yourCheckins": "Check-in của bạn",
     "noCheckins": "Chưa có check-in nào. Bấm + để thử luồng đăng bài.",
     "beenPlaces": "Chỗ đã đi",
-    "noBeen": "Chưa đánh dấu chỗ nào là “đã đi”."
+    "noBeen": "Chưa có check-in nào. Một chỗ sẽ xuất hiện ở đây sau khi bạn đăng bài tại đó."
   },
   "editProfile": {
     "title": "Sửa hồ sơ",
@@ -400,8 +407,12 @@
   },
   "sheet": {
     "title": "Đã lên feed",
-    "body": "Chỗ này thế nào? Chọn tag để người sau biết. Bỏ qua cũng được.",
-    "writeReview": "Viết review"
+    "body": "Điều gì đúng với chỗ này? Chọn từ danh mục của Nooka. Xác nhận của bạn sẽ góp vào tổng hợp cộng đồng; bỏ qua cũng được.",
+    "writeReview": "Viết review",
+    "revisitTitle": "Giữ lại cho lần sau?",
+    "revisitBody": "Bạn vừa ghé {{spot}}. Giữ chỗ này trong danh sách nếu bạn muốn quay lại.",
+    "keepForRevisit": "Giữ để quay lại",
+    "removeWantToGo": "Bỏ khỏi Muốn đi"
   },
   "review": {
     "title": "Review",
@@ -512,8 +523,8 @@
         "desc": "Feed từ người bạn theo dõi, không phải quảng cáo"
       },
       "saved": {
-        "title": "Lưu lại hết",
-        "desc": "Đánh dấu Muốn đi hoặc Đã đến"
+        "title": "Chọn chỗ sẽ ghé",
+        "desc": "Muốn đi cho kế hoạch tới; check-in tự tạo bản đồ đã ghé"
       }
     },
     "cta": "Bắt đầu",

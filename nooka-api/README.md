@@ -8,6 +8,14 @@ Backend của Nooka. Java 21, Spring Boot 4.1, PostgreSQL 17, Flyway, Spring Mod
 - Docker Desktop/Engine
 - Windows PowerShell 5.1+ để dùng `run.ps1`
 
+### PostgreSQL phải có PostGIS
+
+Từ migration `V3_1`, schema cần hai extension `postgis` và `pg_trgm`. Chúng phục vụ yêu cầu chống trùng địa điểm của product spec §7: so toạ độ trong bán kính (`ST_DWithin`) và so tên gần giống (`similarity`).
+
+Image `postgres:17-alpine` **không** có PostGIS, nên cả `infra/compose.yaml` lẫn Testcontainers đều dùng `postgis/postgis:17-3.5-alpine`.
+
+Nếu bạn chạy một PostgreSQL cài sẵn ngoài Docker, cài PostGIS 3.5 trước khi chạy migration — không có nó thì `V3_1` thất bại ngay dòng đầu.
+
 ## Cấu hình local
 
 Tạo file local từ template rồi tự điền giá trị cần thiết. `.env` bị Git và Docker build context bỏ qua; chỉ `.env.example` được commit.

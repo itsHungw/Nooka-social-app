@@ -17,7 +17,7 @@ type ProfileTab = 'map' | 'checkins' | 'wantToGo';
 export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useNookaTheme();
-  const { saved, been, myPosts } = useNookaDemo();
+  const { wantToGo, been, myPosts } = useNookaDemo();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('map');
   const [activeFilter, setActiveFilter] = useState<'all' | 'nearby' | 'openLate' | 'cheap'>('all');
@@ -25,7 +25,7 @@ export default function ProfileScreen() {
   // Thống kê người dùng (nếu có bài/chỗ thật thì hiển thị, giữ giá trị mặc định đẹp từ mockup)
   const checkinsCount = myPosts.length > 0 ? myPosts.length : 128;
   const beenCount = been.length > 0 ? been.length : 34;
-  const wantToGoCount = saved.length > 0 ? saved.length : 19;
+  const wantToGoCount = wantToGo.length > 0 ? wantToGo.length : 19;
 
   // Danh sách quán đã đi (từ been hoặc mặc định)
   const beenSpots: SpotId[] = been.length > 0 ? been : ['workshop', 'bloom', 'muoi43'];
@@ -50,7 +50,7 @@ export default function ProfileScreen() {
         ];
 
   // Danh sách Muốn đi
-  const wantToGoSpots: SpotId[] = saved.length > 0 ? saved : ['workshop', 'bloom', 'sansau', 'muoi43'];
+  const wantToGoSpots: SpotId[] = wantToGo.length > 0 ? wantToGo : ['workshop', 'bloom', 'sansau', 'muoi43'];
 
   return (
     <ScreenShell testID="profile-screen">

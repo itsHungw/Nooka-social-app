@@ -184,6 +184,8 @@ export type FeedPost = {
   caption?: string;
   hashtagsKey?: string;
   tags: TagId[];
+  reactionCount: number;
+  commentCount: number;
 };
 
 export const INITIAL_FEED: FeedPost[] = [
@@ -195,6 +197,8 @@ export const INITIAL_FEED: FeedPost[] = [
     captionKey: 'feed.linh.caption',
     hashtagsKey: 'feed.linh.hashtags',
     tags: ['quiet', 'workFriendly', 'outdoor'],
+    reactionCount: 18,
+    commentCount: 4,
   },
   {
     id: 'seed-nam',
@@ -204,6 +208,8 @@ export const INITIAL_FEED: FeedPost[] = [
     captionKey: 'feed.nam.caption',
     hashtagsKey: 'feed.nam.hashtags',
     tags: ['quietMusic', 'niceView'],
+    reactionCount: 11,
+    commentCount: 2,
   },
 ];
 

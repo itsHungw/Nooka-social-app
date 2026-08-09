@@ -24,8 +24,15 @@ class PostVisibilityRules {
             Predicate notDeleted = builder.isNull(root.get("deletedAt"));
             Path<UUID> authorId = root.get("authorId");
 
+            // R9: tài khoản đã đánh dấu xoá thì bài của họ biến mất với mọi
+            // người, kể cả chính họ. Phép kiểm nằm NGOÀI nhánh viewerId vì nó
+            // không phụ thuộc người xem — và vì nhánh khách chưa đăng nhập thoát
+            // sớm, quên nó ở đó là mở lỗ rò trên đúng đường ai cũng chạm được.
+            Predicate authorActive = builder.not(builder.exists(
+                    relationships.deletedAuthorExists(query, builder, authorId)));
+
             if (viewerId == null) {
-                return builder.and(notDeleted, isPublic(root, builder));
+                return builder.and(notDeleted, authorActive, isPublic(root, builder));
             }
 
             Predicate audience = builder.or(
@@ -40,7 +47,7 @@ class PostVisibilityRules {
                             builder.exists(relationships.closeFriendExists(
                                     query, builder, viewerId, authorId))));
 
-            return builder.and(notDeleted, audience,
+            return builder.and(notDeleted, authorActive, audience,
                     builder.not(builder.exists(relationships.blockExists(
                             query, builder, viewerId, authorId))));
         };

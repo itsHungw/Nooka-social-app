@@ -42,6 +42,17 @@ export const spotShortName = (id: SpotId) => t(`spots.${id}.shortName`);
 export const spotDistrict = (id: SpotId) => t(`spots.${id}.district`);
 export const tagLabel = (id: TagId) => t(`tags.${id}`);
 
+/** Been + Want to go là "muốn quay lại", không phải một trạng thái loại trừ nhau. */
+export function wantToGoLabel(hasBeen: boolean, wantsToGo: boolean): string {
+  if (hasBeen) return t(wantsToGo ? 'actions.wantReturnDone' : 'actions.wantReturn');
+  return t(wantsToGo ? 'actions.wantDone' : 'actions.want');
+}
+
+export function wantToGoAccessibilityLabel(hasBeen: boolean, wantsToGo: boolean): string {
+  if (!wantsToGo) return wantToGoLabel(hasBeen, false);
+  return t(hasBeen ? 'actions.wantReturnRemove' : 'actions.wantRemove');
+}
+
 /** Danh sách từ khoá theo locale, dùng cho khớp câu hỏi ở `ranking.ts`. */
 export function tagSynonyms(ids: readonly TagId[]): Partial<Record<TagId, string[]>> {
   return Object.fromEntries(

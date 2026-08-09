@@ -14,7 +14,7 @@ import {
 import { t } from '@/lib/i18n';
 
 /**
- * Toàn bộ trạng thái của prototype: feed, Muốn đi / Đã đi, tag người dùng thêm,
+ * Toàn bộ trạng thái của prototype: feed, Muốn đi / Đã đi, xác nhận tag có kiểm soát,
  * bản nháp check-in và câu hỏi cho Nooka.
  *
  * Chưa có API contract (xem luật "API" trong `AGENTS.md`) nên mọi thứ sống
@@ -23,8 +23,9 @@ import { t } from '@/lib/i18n';
  */
 type DemoState = {
   feed: FeedPost[];
-  saved: SpotId[];
+  wantToGo: SpotId[];
   been: SpotId[];
+  reactedPostIds: string[];
   extraTags: ExtraTagCounts;
   draftSpot: SpotId;
   shots: number;
@@ -32,6 +33,8 @@ type DemoState = {
   /** Bài vừa đăng, đang chờ chọn tag ở bottom sheet. */
   sheetPostId: string | null;
   sheetTags: TagId[];
+  /** Chỉ có khi Spot vừa đăng vốn đã nằm trong Want to go. */
+  visitIntentPromptSpot: SpotId | null;
   reviewSpot: SpotId;
   reviewAnswers: Partial<Record<ReviewQuestionId, string>>;
   query: string;
@@ -43,14 +46,16 @@ type DemoState = {
 
 const INITIAL: DemoState = {
   feed: INITIAL_FEED,
-  saved: [],
+  wantToGo: [],
   been: [],
+  reactedPostIds: [],
   extraTags: {},
   draftSpot: 'workshop',
   shots: 0,
   caption: '',
   sheetPostId: null,
   sheetTags: [],
+  visitIntentPromptSpot: null,
   reviewSpot: 'workshop',
   reviewAnswers: {},
   query: '',
@@ -92,20 +97,16 @@ function useDemoValue() {
     () => ({
       flash,
 
-      toggleSave(spot: SpotId) {
+      toggleWantToGo(spot: SpotId) {
         setState((prev) => {
-          const saved = toggle(prev.saved, spot);
-          flash(t(saved.includes(spot) ? 'toast.saved' : 'toast.unsaved'));
-          return { ...prev, saved };
+          const wantToGo = toggle(prev.wantToGo, spot);
+          flash(t(wantToGo.includes(spot) ? 'toast.wantAdded' : 'toast.wantRemoved'));
+          return { ...prev, wantToGo };
         });
       },
 
-      toggleBeen(spot: SpotId) {
-        setState((prev) => {
-          const been = toggle(prev.been, spot);
-          if (been.includes(spot)) flash(t('toast.been', { spot: spotName(spot) }));
-          return { ...prev, been };
-        });
+      togglePostReaction(postId: string) {
+        setState((prev) => ({ ...prev, reactedPostIds: toggle(prev.reactedPostIds, postId) }));
       },
 
       /** Luồng check-in: camera → (đổi chỗ) → caption → đăng. */
@@ -114,7 +115,13 @@ function useDemoValue() {
         setState((prev) => ({ ...prev, locationAsked: true }));
         flash(t('toast.noLocation'));
       },
-      startDraft: () => setState((prev) => ({ ...prev, shots: 0, caption: '', sheetPostId: null })),
+      startDraft: () => setState((prev) => ({
+        ...prev,
+        shots: 0,
+        caption: '',
+        sheetPostId: null,
+        visitIntentPromptSpot: null,
+      })),
       shoot: () => setState((prev) => ({ ...prev, shots: Math.min(prev.shots + 1, 5) })),
       setDraftSpot: (draftSpot: SpotId) => setState((prev) => ({ ...prev, draftSpot })),
       setCaption: (caption: string) => setState((prev) => ({ ...prev, caption })),
@@ -131,6 +138,8 @@ function useDemoValue() {
               timeKey: 'time.justNow',
               caption: prev.caption.trim() || t('feed.myCaption', { spot: spotName(prev.draftSpot) }),
               tags: [],
+              reactionCount: 0,
+              commentCount: 0,
             },
             ...prev.feed,
           ],
@@ -140,7 +149,24 @@ function useDemoValue() {
           caption: '',
           sheetPostId: id,
           sheetTags: [],
+          visitIntentPromptSpot: prev.wantToGo.includes(prev.draftSpot) ? prev.draftSpot : null,
         }));
+      },
+
+      keepWantToGoForRevisit() {
+        // Backend sẽ clear source_post_id sau khi đã copy attribution sang Post mới.
+        setState((prev) => ({ ...prev, visitIntentPromptSpot: null }));
+      },
+
+      removeCompletedWantToGo() {
+        setState((prev) => ({
+          ...prev,
+          wantToGo: prev.visitIntentPromptSpot
+            ? prev.wantToGo.filter((spot) => spot !== prev.visitIntentPromptSpot)
+            : prev.wantToGo,
+          visitIntentPromptSpot: null,
+        }));
+        flash(t('toast.wantRemoved'));
       },
 
       toggleSheetTag: (tag: TagId) =>
@@ -159,6 +185,8 @@ function useDemoValue() {
             ),
             extraTags: addTags(prev.extraTags, post.spot, prev.sheetTags),
             sheetPostId: null,
+            // Đóng sheet/Back mặc định giữ Spot để quay lại.
+            visitIntentPromptSpot: null,
           };
         });
       },
@@ -200,8 +228,9 @@ function useDemoValue() {
     () => ({
       ...state,
       ...actions,
-      isSaved: (spot: SpotId) => state.saved.includes(spot),
+      wantsToGo: (spot: SpotId) => state.wantToGo.includes(spot),
       isBeen: (spot: SpotId) => state.been.includes(spot),
+      isPostReacted: (postId: string) => state.reactedPostIds.includes(postId),
       myPosts: state.feed.filter((post) => post.friend === null),
       draft: SPOTS[state.draftSpot],
     }),

@@ -11,7 +11,7 @@ import {
   type TravelMode,
 } from '@/features/nooka/directions-api';
 import type { Coordinate } from '@/features/nooka/geo';
-import { formatDistance, spotDistrict, spotName, tagLabel } from '@/features/nooka/labels';
+import { formatDistance, spotDistrict, spotName, tagLabel, wantToGoLabel } from '@/features/nooka/labels';
 import { spotTags } from '@/features/nooka/ranking';
 import { SPOTS, SPOT_IDS, type SpotId } from '@/features/nooka/spots';
 import { getForegroundLocation } from '@/features/nooka/use-user-location';
@@ -30,7 +30,7 @@ export default function SpotScreen() {
   const id = (SPOT_IDS as readonly string[]).includes(params.id) ? (params.id as SpotId) : 'workshop';
   const spot = SPOTS[id];
   const tags = spotTags(id, demo.extraTags);
-  const saved = demo.isSaved(id);
+  const wantsToGo = demo.wantsToGo(id);
   const [routeMode, setRouteMode] = useState<TravelMode>('DRIVE');
   const [route, setRoute] = useState<RoutePreview | null>(null);
   const [routeOrigin, setRouteOrigin] = useState<Coordinate | null>(null);
@@ -104,10 +104,11 @@ export default function SpotScreen() {
 
         <View style={styles.actions}>
           <Button
-            label={saved ? t('actions.saved') : t('actions.want')}
-            onPress={() => demo.toggleSave(id)}
+            label={wantToGoLabel(demo.isBeen(id), wantsToGo)}
+            onPress={() => demo.toggleWantToGo(id)}
+            selected={wantsToGo}
             style={styles.action}
-            tone={saved ? 'soft' : 'primary'}
+            tone={wantsToGo ? 'soft' : 'primary'}
           />
           <Button
             label={t('spot.directions')}

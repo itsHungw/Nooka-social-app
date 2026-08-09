@@ -218,6 +218,52 @@ class PostVisibilityRulesTest {
         assertThat(visibleTo(stranger)).doesNotContain(post.getId());
     }
 
+    @Test
+    @DisplayName("R9: bài của tài khoản đã xoá biến mất với mọi người, kể cả chính tác giả")
+    void postsOfDeletedAuthorAreInvisibleToEveryone() {
+        Post post = persistPost(Visibility.PUBLIC);
+
+        em.find(User.class, author.getId()).setDeletedAt(java.time.Instant.now());
+        em.flush();
+        em.clear();
+
+        assertThat(visibleTo(author)).doesNotContain(post.getId());
+        assertThat(visibleTo(follower)).doesNotContain(post.getId());
+        assertThat(visibleTo(stranger)).doesNotContain(post.getId());
+        // Nhánh khách chưa đăng nhập thoát sớm khỏi visibleTo, nên nó là chỗ
+        // dễ quên áp R9 nhất — và là chỗ ai cũng chạm được.
+        assertThat(visibleTo(null)).doesNotContain(post.getId());
+    }
+
+    @Test
+    @DisplayName("R9: bỏ đánh dấu xoá thì bài hiện lại")
+    void postsReappearWhenAuthorDeletionIsUndone() {
+        Post post = persistPost(Visibility.PUBLIC);
+
+        em.find(User.class, author.getId()).setDeletedAt(java.time.Instant.now());
+        em.flush();
+        em.clear();
+        assertThat(visibleTo(stranger)).doesNotContain(post.getId());
+
+        em.find(User.class, author.getId()).setDeletedAt(null);
+        em.flush();
+        em.clear();
+
+        assertThat(visibleTo(stranger)).contains(post.getId());
+    }
+
+    @Test
+    @DisplayName("R9: xoá tài khoản người khác không làm mất bài của tác giả")
+    void deletingAnotherAccountDoesNotHideThisAuthorsPosts() {
+        Post post = persistPost(Visibility.PUBLIC);
+
+        em.find(User.class, stranger.getId()).setDeletedAt(java.time.Instant.now());
+        em.flush();
+        em.clear();
+
+        assertThat(visibleTo(follower)).contains(post.getId());
+    }
+
     // ---- fixtures -------------------------------------------------------
 
     private java.util.List<UUID> visibleTo(User viewer) {

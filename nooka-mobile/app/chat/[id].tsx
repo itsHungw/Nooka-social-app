@@ -16,7 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, CircleButton, Photo, ScreenShell } from '@/components/nooka/ui';
-import { spotDistrict, spotName } from '@/features/nooka/labels';
+import { spotDistrict, spotName, wantToGoLabel } from '@/features/nooka/labels';
 import { FRIENDS, SPOTS, type FriendId, type SpotId } from '@/features/nooka/spots';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
@@ -132,10 +132,11 @@ export default function ChatThreadScreen() {
           <Text style={[styles.pinnedSubtext, { color: colors.textMuted }]}>{t('chat.pinnedSpotDesc')}</Text>
         </View>
         <Button
-          label={demo.isSaved('workshop') ? t('actions.saved') : t('actions.want')}
-          onPress={() => demo.toggleSave('workshop')}
+          label={wantToGoLabel(demo.isBeen('workshop'), demo.wantsToGo('workshop'))}
+          onPress={() => demo.toggleWantToGo('workshop')}
+          selected={demo.wantsToGo('workshop')}
           style={styles.pinnedBtn}
-          tone={demo.isSaved('workshop') ? 'soft' : 'primary'}
+          tone={demo.wantsToGo('workshop') ? 'soft' : 'primary'}
         />
       </View>
 

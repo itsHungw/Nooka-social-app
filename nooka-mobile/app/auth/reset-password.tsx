@@ -1,6 +1,7 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,16 +14,20 @@ import {
 
 import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
+import { AuthApiError, resetPassword } from '@/lib/auth-api';
 import { t } from '@/lib/i18n';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ email?: string; code?: string }>();
   const { colors } = useNookaTheme();
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState<'password' | 'confirm' | null>('password');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // Password strength logic
   const hasMinLength = password.length >= 8;
@@ -38,9 +43,23 @@ export default function ResetPasswordScreen() {
 
   const isValid = hasMinLength && password === confirmPassword;
 
-  const handleSave = () => {
-    if (!isValid) return;
-    router.push('/auth/reset-success');
+  const handleSave = async () => {
+    if (!isValid || isSubmitting) return;
+    if (!params.email || !params.code) {
+      setHasError(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setHasError(false);
+    try {
+      await resetPassword({ email: params.email, code: params.code, newPassword: password });
+      router.replace('/auth/reset-success');
+    } catch (error) {
+      setHasError(error instanceof AuthApiError || error instanceof Error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getSegmentColor = (index: number) => {
@@ -134,24 +153,31 @@ export default function ResetPasswordScreen() {
           </View>
 
           {/* Ghi chú đăng xuất thiết bị khác */}
+          {hasError && (
+            <Text style={[styles.errorText, { color: colors.mascotMouth }]}>{t('auth.resetPasswordError')}</Text>
+          )}
+
           <Text style={[styles.disclaimerText, { color: colors.textMuted }]}>
             {t('auth.resetPasswordDisclaimer')}
           </Text>
 
           {/* Nút Lưu mật khẩu ở đáy */}
           <View style={styles.bottomSection}>
+            {isSubmitting && (
+              <ActivityIndicator color={colors.accentInk} size="small" style={styles.loadingIndicator} />
+            )}
             <Button
               accessibilityLabel={t('auth.savePasswordBtn')}
-              label={t('auth.savePasswordBtn')}
+              label={isSubmitting ? t('auth.resetPasswordSubmitting') : t('auth.savePasswordBtn')}
               onPress={handleSave}
               style={[
                 styles.saveButton,
                 {
                   backgroundColor: isValid ? colors.accent : colors.surfaceMuted,
-                  opacity: isValid ? 1 : 0.6,
+                  opacity: isValid && !isSubmitting ? 1 : 0.6,
                 },
               ]}
-              tone={isValid ? 'accent' : 'outline'}
+              tone={isValid && !isSubmitting ? 'accent' : 'outline'}
             />
           </View>
         </ScrollView>
@@ -227,6 +253,12 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     fontWeight: '500',
   },
+  errorText: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginTop: 18,
+  },
   disclaimerText: {
     fontSize: 13,
     lineHeight: 18,
@@ -239,6 +271,10 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
     paddingTop: 32,
     alignItems: 'center',
+    gap: 10,
+  },
+  loadingIndicator: {
+    marginBottom: 2,
   },
   saveButton: {
     width: '100%',

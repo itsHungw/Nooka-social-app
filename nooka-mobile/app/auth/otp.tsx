@@ -13,13 +13,13 @@ import {
 
 import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
+import { AuthApiError, requestPasswordReset, resendVerification, verifyEmail } from '@/lib/auth-api';
 import { t } from '@/lib/i18n';
 
 export default function OtpVerificationScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ email?: string; password?: string; purpose?: string }>();
+  const params = useLocalSearchParams<{ email?: string; purpose?: string }>();
   const { colors } = useNookaTheme();
-
   const email = params.email || 'ban@gmail.com';
   const purpose = params.purpose || 'signup'; // 'signup' | 'reset_password'
 
@@ -77,32 +77,42 @@ export default function OtpVerificationScreen() {
     }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
+    if (isSubmitting) return;
     setTimer(60);
     setIsError(false);
     setOtp(['', '', '', '', '', '']);
     inputRefs.current[0]?.focus();
+    try {
+      if (purpose === 'reset_password') {
+        await requestPasswordReset(email);
+      } else {
+        await resendVerification(email);
+      }
+    } catch (error) {
+      setIsError(error instanceof AuthApiError || error instanceof Error);
+    }
   };
 
-  const handleVerify = () => {
-    if (!isComplete) return;
-
-    // Simulation: Code '000000' triggers error state for UI demonstration
-    if (otpCode === '000000') {
-      setIsError(true);
-      return;
-    }
-
+  const handleVerify = async () => {
+    if (!isComplete || isSubmitting) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-
+    setIsError(false);
+    try {
       if (purpose === 'reset_password') {
-        router.push({ pathname: '/auth/reset-password', params: { email } });
+        router.push({ pathname: '/auth/reset-password', params: { email, code: otpCode } });
       } else {
-        router.push({ pathname: '/auth/name', params: { email, password: params.password } });
+        const verification = await verifyEmail({ email, code: otpCode });
+        router.push({
+          pathname: '/auth/name',
+          params: { email: verification.email, registrationToken: verification.registrationToken },
+        });
       }
-    }, 600);
+    } catch (error) {
+      setIsError(error instanceof AuthApiError || error instanceof Error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

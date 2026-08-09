@@ -1,3 +1,6 @@
+import { refreshAuthSession } from '@/lib/auth-api';
+import { getAuthTokens } from '@/lib/auth-session';
+
 import type { Coordinate } from './geo.ts';
 
 export type TravelMode = 'DRIVE' | 'WALK';
@@ -18,17 +21,32 @@ type RoutePreviewRequest = {
 const API_BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080').replace(/\/$/, '');
 
 export async function fetchRoutePreview(request: RoutePreviewRequest): Promise<RoutePreview> {
-  const response = await fetch(`${API_BASE_URL}/v1/directions/preview`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
-  });
+  const tokens = await getAuthTokens();
+  let response = await requestRoutePreview(request, tokens?.accessToken);
+
+  if (response.status === 401) {
+    const refreshed = await refreshAuthSession();
+    if (refreshed) {
+      response = await requestRoutePreview(request, refreshed.accessToken);
+    }
+  }
 
   if (!response.ok) {
     throw new Error(`Route preview failed with status ${response.status}`);
   }
 
   return (await response.json()) as RoutePreview;
+}
+
+async function requestRoutePreview(request: RoutePreviewRequest, accessToken?: string) {
+  return fetch(`${API_BASE_URL}/v1/directions/preview`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+    body: JSON.stringify(request),
+  });
 }
 
 export function externalDirectionsUrl(

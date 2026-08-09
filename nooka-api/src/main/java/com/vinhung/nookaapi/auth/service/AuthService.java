@@ -3,9 +3,11 @@ package com.vinhung.nookaapi.auth.service;
 import com.vinhung.nookaapi.auth.config.AuthProperties;
 import com.vinhung.nookaapi.shared.error.AuthException;
 import com.vinhung.nookaapi.auth.model.dto.AuthResponse;
+import com.vinhung.nookaapi.auth.model.dto.CompleteRegistrationRequest;
 import com.vinhung.nookaapi.auth.model.dto.ForgotPasswordRequest;
 import com.vinhung.nookaapi.auth.model.dto.LoginRequest;
 import com.vinhung.nookaapi.auth.model.dto.RefreshTokenRequest;
+import com.vinhung.nookaapi.auth.model.dto.RegistrationVerificationResponse;
 import com.vinhung.nookaapi.auth.model.dto.RegisterRequest;
 import com.vinhung.nookaapi.auth.model.dto.ResetPasswordRequest;
 import com.vinhung.nookaapi.auth.model.dto.UserResponse;
@@ -14,11 +16,13 @@ import com.vinhung.nookaapi.auth.model.entity.AuthSession;
 import com.vinhung.nookaapi.auth.model.entity.EmailVerificationCode;
 import com.vinhung.nookaapi.auth.model.entity.PasswordResetToken;
 import com.vinhung.nookaapi.auth.model.entity.OAuthAccount;
+import com.vinhung.nookaapi.auth.model.entity.PendingRegistration;
 import com.vinhung.nookaapi.auth.model.enums.OAuthProvider;
 import com.vinhung.nookaapi.auth.repository.AuthSessionRepository;
 import com.vinhung.nookaapi.auth.repository.EmailVerificationCodeRepository;
 import com.vinhung.nookaapi.auth.repository.PasswordResetTokenRepository;
 import com.vinhung.nookaapi.auth.repository.OAuthAccountRepository;
+import com.vinhung.nookaapi.auth.repository.PendingRegistrationRepository;
 import com.vinhung.nookaapi.auth.spi.EmailSender;
 import com.vinhung.nookaapi.auth.integration.OAuthIdentity;
 import com.vinhung.nookaapi.auth.integration.OAuthIdentityVerifier;
@@ -40,12 +44,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private static final String INVALID_CREDENTIALS = "Invalid email or password";
-    private static final String GENERIC_RECOVERY_MESSAGE = "If the account exists, a recovery code has been sent";
 
     private final UserRepository users;
     private final AuthSessionRepository sessions;
     private final EmailVerificationCodeRepository verificationCodes;
     private final PasswordResetTokenRepository resetTokens;
+    private final PendingRegistrationRepository pendingRegistrations;
     private final OAuthAccountRepository oauthAccounts;
     private final PasswordEncoder passwordEncoder;
     private final AuthTokenSupport tokenSupport;
@@ -57,8 +61,56 @@ public class AuthService {
     @Transactional
     public VerificationRequiredResponse register(RegisterRequest request) {
         String email = normalizeEmail(request.email());
-        String username = request.username().trim();
         if (users.existsByEmailIgnoreCase(email)) {
+            throw new AuthException(HttpStatus.CONFLICT, "An account already exists for this email");
+        }
+
+        PendingRegistration pending = pendingRegistrations.findByEmailIgnoreCase(email)
+                .orElseGet(() -> PendingRegistration.builder()
+                        .email(email)
+                        .passwordHash("")
+                        .codeHash("")
+                        .codeExpiresAt(Instant.now(clock))
+                        .build());
+        pending.updatePasswordHash(passwordEncoder.encode(request.password()));
+        sendVerificationCode(pending);
+        return new VerificationRequiredResponse("Verification code sent", email);
+    }
+
+    @Transactional
+    public RegistrationVerificationResponse verifyEmail(String email, String code) {
+        PendingRegistration pending = pendingRegistrations.findByEmailIgnoreCase(normalizeEmail(email))
+                .orElseThrow(() -> invalidCode("Verification code is invalid or expired"));
+        Instant now = Instant.now(clock);
+        if (!pending.isCodeUsableAt(now, properties.maxCodeAttempts())) {
+            throw invalidCode("Verification code is invalid or expired");
+        }
+        if (!tokenSupport.hash(code).equals(pending.getCodeHash())) {
+            pending.incrementAttempts();
+            throw invalidCode("Verification code is invalid or expired");
+        }
+
+        String registrationToken = tokenSupport.newToken();
+        pending.markVerified(
+                now,
+                tokenSupport.hash(registrationToken),
+                now.plus(properties.registrationCompletionTtl()));
+        return new RegistrationVerificationResponse(registrationToken, pending.getEmail());
+    }
+
+    @Transactional
+    public AuthResponse completeRegistration(CompleteRegistrationRequest request) {
+        Instant now = Instant.now(clock);
+        PendingRegistration pending = pendingRegistrations.findByCompletionTokenHash(
+                        tokenSupport.hash(request.registrationToken()))
+                .orElseThrow(() -> invalidCode("Registration session is invalid or expired"));
+        if (!pending.isCompletableAt(now)) {
+            throw invalidCode("Registration session is invalid or expired");
+        }
+
+        String username = request.username().trim();
+        String displayName = request.displayName().trim();
+        if (users.existsByEmailIgnoreCase(pending.getEmail())) {
             throw new AuthException(HttpStatus.CONFLICT, "An account already exists for this email");
         }
         if (users.existsByUsernameIgnoreCase(username)) {
@@ -66,41 +118,37 @@ public class AuthService {
         }
 
         User user = users.save(User.builder()
-                .email(email)
-                .passwordHash(passwordEncoder.encode(request.password()))
+                .email(pending.getEmail())
+                .passwordHash(pending.getPasswordHash())
+                .emailVerifiedAt(pending.getVerifiedAt())
                 .username(username)
-                .displayName(request.displayName().trim())
+                .displayName(displayName)
                 .build());
-        sendVerificationCode(user);
-        return new VerificationRequiredResponse("Verification code sent", email);
+        pending.markCompleted(now);
+        return createSession(user);
     }
 
-    @Transactional
-    public void verifyEmail(String email, String code) {
-        User user = findUser(email);
-        if (user.isEmailVerified()) {
-            return;
+    @Transactional(readOnly = true)
+    public boolean isUsernameAvailable(String username) {
+        if (username == null) {
+            return false;
         }
-        EmailVerificationCode verificationCode = verificationCodes.findTopByUserIdOrderByCreatedAtDesc(user.getId())
-                .orElseThrow(() -> invalidCode("Verification code is invalid or expired"));
-        Instant now = Instant.now(clock);
-        if (!verificationCode.isUsableAt(now, properties.maxCodeAttempts())) {
-            throw invalidCode("Verification code is invalid or expired");
-        }
-        if (!tokenSupport.hash(code).equals(verificationCode.getCodeHash())) {
-            verificationCode.incrementAttempts();
-            throw invalidCode("Verification code is invalid or expired");
-        }
-        verificationCode.consume(now);
-        user.verifyEmail(now);
+        String normalizedUsername = username.trim();
+        return normalizedUsername.length() >= 3
+                && normalizedUsername.length() <= 30
+                && !users.existsByUsernameIgnoreCase(normalizedUsername);
     }
 
     @Transactional
     public void resendVerification(String email) {
-        User user = findUser(email);
-        if (!user.isEmailVerified()) {
-            sendVerificationCode(user);
-        }
+        String normalizedEmail = normalizeEmail(email);
+        pendingRegistrations.findByEmailIgnoreCase(normalizedEmail).ifPresentOrElse(
+                this::sendVerificationCode,
+                () -> users.findByEmailIgnoreCase(normalizedEmail).ifPresent(user -> {
+                    if (!user.isEmailVerified()) {
+                        sendVerificationCode(user);
+                    }
+                }));
     }
 
     @Transactional
@@ -146,16 +194,16 @@ public class AuthService {
 
     @Transactional
     public String requestPasswordReset(String email) {
-        users.findByEmailIgnoreCase(normalizeEmail(email)).ifPresent(user -> {
-            String code = tokenSupport.newCode();
-            resetTokens.save(PasswordResetToken.builder()
-                    .user(user)
-                    .tokenHash(tokenSupport.hash(code))
-                    .expiresAt(Instant.now(clock).plus(properties.resetCodeTtl()))
-                    .build());
-            emailSender.sendPasswordResetCode(user.getEmail(), code);
-        });
-        return GENERIC_RECOVERY_MESSAGE;
+        User user = users.findByEmailIgnoreCase(normalizeEmail(email))
+                .orElseThrow(() -> new AuthException(HttpStatus.NOT_FOUND, "Account not found"));
+        String code = tokenSupport.newCode();
+        resetTokens.save(PasswordResetToken.builder()
+                .user(user)
+                .tokenHash(tokenSupport.hash(code))
+                .expiresAt(Instant.now(clock).plus(properties.resetCodeTtl()))
+                .build());
+        emailSender.sendPasswordResetCode(user.getEmail(), code);
+        return "Reset code sent";
     }
 
     @Transactional
@@ -223,6 +271,15 @@ public class AuthService {
                 .expiresAt(Instant.now(clock).plus(properties.verificationCodeTtl()))
                 .build());
         emailSender.sendVerificationCode(user.getEmail(), code);
+    }
+
+    private void sendVerificationCode(PendingRegistration pending) {
+        String code = tokenSupport.newCode();
+        pending.issueCode(
+                tokenSupport.hash(code),
+                Instant.now(clock).plus(properties.verificationCodeTtl()));
+        pendingRegistrations.save(pending);
+        emailSender.sendVerificationCode(pending.getEmail(), code);
     }
 
     private AuthResponse createSession(User user) {

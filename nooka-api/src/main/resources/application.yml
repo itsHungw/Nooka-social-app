@@ -47,6 +47,7 @@ nooka:
     access-token-ttl: ${AUTH_ACCESS_TOKEN_TTL:PT15M}
     refresh-token-ttl: ${AUTH_REFRESH_TOKEN_TTL:P30D}
     verification-code-ttl: ${AUTH_VERIFICATION_CODE_TTL:PT10M}
+    registration-completion-ttl: ${AUTH_REGISTRATION_COMPLETION_TTL:PT15M}
     reset-code-ttl: ${AUTH_RESET_CODE_TTL:PT10M}
     max-code-attempts: ${AUTH_MAX_CODE_ATTEMPTS:5}
     email:

@@ -35,8 +35,8 @@ export default function LoginScreen() {
       setStatus('loading');
       setActiveProvider('google');
       setTimeout(() => {
-        flash(t('auth.toastLoggedIn'));
-        router.replace('/(tabs)');
+        setStatus('error');
+        setActiveProvider(null);
       }, 1200);
     }
   };
@@ -50,8 +50,8 @@ export default function LoginScreen() {
     setStatus('loading');
     setActiveProvider(provider);
     setTimeout(() => {
-      flash(t('auth.toastLoggedIn'));
-      router.replace('/(tabs)');
+      setStatus('error');
+      setActiveProvider(null);
     }, 1200);
   };
 

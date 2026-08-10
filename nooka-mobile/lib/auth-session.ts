@@ -1,12 +1,9 @@
-import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
-export type AuthTokens = {
-  accessToken: string;
-  refreshToken: string;
-  accessTokenExpiresAt: string;
-  refreshTokenExpiresAt: string;
-};
+import type { AuthTokens } from './auth-api-core.ts';
+
+export type { AuthTokens };
 
 const STORAGE_KEY = 'nooka.auth.tokens';
 

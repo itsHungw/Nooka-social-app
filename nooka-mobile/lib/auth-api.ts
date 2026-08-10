@@ -1,4 +1,11 @@
-import { AuthTokens, getAuthTokens, saveAuthTokens } from '@/lib/auth-session';
+import { clearAuthTokens, getAuthTokens, saveAuthTokens } from '@/lib/auth-session';
+import {
+  AuthApiError,
+  getCurrentUserWithDependencies,
+  logoutWithDependencies,
+  refreshAuthSessionWithDependencies,
+  type AuthTokens,
+} from './auth-api-core.ts';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080';
 
@@ -11,13 +18,9 @@ export type AuthUser = {
   emailVerified: boolean;
 };
 
-type AuthResponse = AuthTokens & { user: AuthUser };
+export type AuthResponse = AuthTokens & { user: AuthUser };
 
-export class AuthApiError extends Error {
-  constructor(public readonly status: number, message: string) {
-    super(message);
-  }
-}
+export { AuthApiError };
 
 async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -38,6 +41,13 @@ async function request<T>(path: string, body: unknown): Promise<T> {
 
 async function getRequest<T>(path: string): Promise<T> {
   const response = await fetch(API_BASE_URL + path);
+  return parseResponse<T>(response);
+}
+
+async function authorizedGetRequest<T>(path: string, accessToken: string): Promise<T> {
+  const response = await fetch(API_BASE_URL + path, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
   return parseResponse<T>(response);
 }
 
@@ -103,9 +113,27 @@ export async function oauthLogin(provider: 'google' | 'apple' | 'facebook', toke
 }
 
 export async function refreshAuthSession() {
-  const stored = await getAuthTokens();
-  if (!stored) return null;
-  const response = await request<AuthResponse>('/auth/refresh', { refreshToken: stored.refreshToken });
-  await saveAuthTokens(response);
-  return response;
+  return refreshAuthSessionWithDependencies<AuthResponse>({
+    getTokens: getAuthTokens,
+    saveTokens: saveAuthTokens,
+    clearTokens: clearAuthTokens,
+    postJson: request,
+  });
+}
+
+export async function getCurrentUser() {
+  return getCurrentUserWithDependencies<AuthUser, AuthTokens>({
+    getTokens: getAuthTokens,
+    refreshSession: refreshAuthSession,
+    clearTokens: clearAuthTokens,
+    getJsonWithAccessToken: authorizedGetRequest,
+  });
+}
+
+export async function logout() {
+  return logoutWithDependencies({
+    getTokens: getAuthTokens,
+    clearTokens: clearAuthTokens,
+    postJson: request,
+  });
 }

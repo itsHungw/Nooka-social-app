@@ -5,12 +5,20 @@ import { ThemeOption } from '@/components/nooka/theme-option';
 import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
+import { useAuthSession } from '@/providers/auth-session-provider';
 import { useNookaDemo } from '@/providers/nooka-demo-provider';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { colors } = useNookaTheme();
   const { flash } = useNookaDemo();
+  const { signOut } = useAuthSession();
+
+  const confirmLogout = async () => {
+    await signOut();
+    flash(t('settings.logoutToast'));
+    router.replace('/welcome');
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -24,10 +32,7 @@ export default function SettingsScreen() {
         {
           text: t('settings.logout'),
           style: 'destructive',
-          onPress: () => {
-            flash(t('settings.logoutToast'));
-            router.replace('/welcome');
-          },
+          onPress: () => { void confirmLogout(); },
         },
       ],
       { cancelable: true }

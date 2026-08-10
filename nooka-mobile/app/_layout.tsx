@@ -9,6 +9,7 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
+import { AuthSessionProvider } from '@/providers/auth-session-provider';
 import { NookaDemoProvider } from '@/providers/nooka-demo-provider';
 import { NookaThemeProvider } from '@/providers/nooka-theme-provider';
 
@@ -27,9 +28,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <NookaThemeProvider>
-          <NookaDemoProvider>
-            <RootNavigator />
-          </NookaDemoProvider>
+          <AuthSessionProvider>
+            <NookaDemoProvider>
+              <RootNavigator />
+            </NookaDemoProvider>
+          </AuthSessionProvider>
         </NookaThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -18,6 +18,7 @@ import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { AuthApiError, login } from '@/lib/auth-api';
 import { t } from '@/lib/i18n';
+import { useAuthSession } from '@/providers/auth-session-provider';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_UNTIL_KEY = '@nooka/login-lockout-until';
@@ -41,6 +42,7 @@ export default function EmailLoginScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ email?: string }>();
   const { colors } = useNookaTheme();
+  const { completeAuth } = useAuthSession();
 
   const [email, setEmail] = useState(params.email || '');
   const [password, setPassword] = useState('');
@@ -126,7 +128,8 @@ export default function EmailLoginScreen() {
     setIsSubmitting(true);
     setShowError(false);
     try {
-      await login({ email: email.trim(), password });
+      const response = await login({ email: email.trim(), password });
+      completeAuth(response);
       setFailedAttempts(0);
       setLockoutLevel(0);
       void Promise.all([

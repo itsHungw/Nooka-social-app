@@ -5,16 +5,13 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
-import { useNookaDemo } from '@/providers/nooka-demo-provider';
 
 export default function ResetSuccessScreen() {
   const router = useRouter();
   const { colors } = useNookaTheme();
-  const { flash } = useNookaDemo();
 
   const handleEnter = () => {
-    flash(t('auth.toastLoggedIn'));
-    router.replace('/(tabs)');
+    router.replace('/auth/email-login');
   };
 
   return (
@@ -37,8 +34,8 @@ export default function ResetSuccessScreen() {
         {/* Nút "Vào Nooka" ở đáy */}
         <View style={styles.bottomSection}>
           <Button
-            accessibilityLabel={t('auth.enterNookaBtn')}
-            label={t('auth.enterNookaBtn')}
+            accessibilityLabel={t('auth.backToLogin')}
+            label={t('auth.backToLogin')}
             onPress={handleEnter}
             style={[styles.enterButton, { backgroundColor: colors.inverseSurface }]}
             tone="primary"

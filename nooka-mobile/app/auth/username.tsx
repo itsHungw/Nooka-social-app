@@ -17,6 +17,7 @@ import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { AuthApiError, checkUsernameAvailability, completeRegistration } from '@/lib/auth-api';
 import { t } from '@/lib/i18n';
+import { useAuthSession } from '@/providers/auth-session-provider';
 
 type UsernameStatus = 'idle' | 'invalid' | 'checking' | 'available' | 'taken' | 'error';
 
@@ -24,6 +25,7 @@ export default function UsernameInputScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ email?: string; registrationToken?: string; name?: string }>();
   const { colors } = useNookaTheme();
+  const { completeAuth } = useAuthSession();
 
   const [username, setUsername] = useState('');
   const [isFocused, setIsFocused] = useState(true);
@@ -92,11 +94,12 @@ export default function UsernameInputScreen() {
     setIsSubmitting(true);
     setHasError(false);
     try {
-      await completeRegistration({
+      const response = await completeRegistration({
         registrationToken: params.registrationToken,
         displayName: params.name,
         username: username.trim(),
       });
+      completeAuth(response);
       router.replace('/(tabs)');
     } catch (error) {
       if (error instanceof AuthApiError && error.status === 409) {

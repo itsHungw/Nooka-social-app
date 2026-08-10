@@ -1,12 +1,23 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
 
 import { spotName } from '@/features/nooka/labels';
+import {
+  draftDaysRemaining,
+  limitHashtagText,
+  parseHashtags,
+  readCheckinDraft,
+  removeCheckinDraft,
+  writeCheckinDraft,
+  type CheckinDraft,
+} from '@/features/nooka/checkin-draft';
 import type { ExtraTagCounts } from '@/features/nooka/ranking';
 import {
   INITIAL_FEED,
   SPOTS,
   type FeedPost,
   type IntentId,
+  type PhotoTint,
+  type PostVisibility,
   type ReviewQuestionId,
   type SpotId,
   type TagId,
@@ -19,17 +30,23 @@ import { t } from '@/lib/i18n';
  *
  * Chưa có API contract (xem luật "API" trong `AGENTS.md`) nên mọi thứ sống
  * trong bộ nhớ và mất khi mở lại app — đúng phạm vi của một prototype. Khi có
- * contract thật, thay ruột của provider này chứ không phải từng màn hình.
+ * contract thật, thay ruột của provider này chứ không phải từng màn hình. Draft là ngoại lệ
+ * duy nhất được lưu local để prototype kiểm thử đúng vòng đời 7 ngày.
  */
 type DemoState = {
   feed: FeedPost[];
   wantToGo: SpotId[];
   been: SpotId[];
   reactedPostIds: string[];
+  commentsByPostId: Partial<Record<string, string[]>>;
   extraTags: ExtraTagCounts;
   draftSpot: SpotId;
-  shots: number;
+  draftPhotos: PhotoTint[];
   caption: string;
+  hashtagText: string;
+  draftVisibility: PostVisibility;
+  lastPostVisibility: PostVisibility;
+  savedDraft: CheckinDraft | null;
   /** Bài vừa đăng, đang chờ chọn tag ở bottom sheet. */
   sheetPostId: string | null;
   sheetTags: TagId[];
@@ -46,13 +63,18 @@ type DemoState = {
 
 const INITIAL: DemoState = {
   feed: INITIAL_FEED,
-  wantToGo: [],
-  been: [],
+  wantToGo: ['bloom'],
+  been: ['muoi43'],
   reactedPostIds: [],
+  commentsByPostId: {},
   extraTags: {},
   draftSpot: 'workshop',
-  shots: 0,
+  draftPhotos: [],
   caption: '',
+  hashtagText: '',
+  draftVisibility: 'FOLLOWERS',
+  lastPostVisibility: 'FOLLOWERS',
+  savedDraft: null,
   sheetPostId: null,
   sheetTags: [],
   visitIntentPromptSpot: null,
@@ -81,7 +103,18 @@ const DemoContext = createContext<NookaDemo | null>(null);
 
 function useDemoValue() {
   const [state, setState] = useState(INITIAL);
+  const stateRef = useRef(state);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  stateRef.current = state;
+
+  useEffect(() => {
+    let active = true;
+    void readCheckinDraft().then((savedDraft) => {
+      if (active) setState((prev) => ({ ...prev, savedDraft }));
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => () => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -109,6 +142,18 @@ function useDemoValue() {
         setState((prev) => ({ ...prev, reactedPostIds: toggle(prev.reactedPostIds, postId) }));
       },
 
+      addPostComment(postId: string, body: string) {
+        const comment = body.trim();
+        if (!comment) return;
+        setState((prev) => ({
+          ...prev,
+          commentsByPostId: {
+            ...prev.commentsByPostId,
+            [postId]: [...(prev.commentsByPostId[postId] ?? []), comment],
+          },
+        }));
+      },
+
       /** Luồng check-in: camera → (đổi chỗ) → caption → đăng. */
       allowLocation: () => setState((prev) => ({ ...prev, locationAsked: true })),
       denyLocation() {
@@ -117,14 +162,69 @@ function useDemoValue() {
       },
       startDraft: () => setState((prev) => ({
         ...prev,
-        shots: 0,
+        draftPhotos: [],
         caption: '',
+        hashtagText: '',
+        draftVisibility: prev.feed.some((post) => post.friend === null) ? prev.lastPostVisibility : 'PUBLIC',
         sheetPostId: null,
         visitIntentPromptSpot: null,
       })),
-      shoot: () => setState((prev) => ({ ...prev, shots: Math.min(prev.shots + 1, 5) })),
+      shoot: () => setState((prev) => {
+        if (prev.draftPhotos.length >= 5) return prev;
+        const palette: PhotoTint[] = ['photoWarm', 'photoSand', 'photoSage', 'photoClay'];
+        return { ...prev, draftPhotos: [...prev.draftPhotos, palette[prev.draftPhotos.length % palette.length]] };
+      }),
+      addFromLibrary: () => setState((prev) => {
+        if (prev.draftPhotos.length >= 5) return prev;
+        const palette: PhotoTint[] = ['photoSage', 'photoClay', 'photoWarm', 'photoSand'];
+        return { ...prev, draftPhotos: [...prev.draftPhotos, palette[prev.draftPhotos.length % palette.length]] };
+      }),
+      removeDraftPhoto: (index: number) => setState((prev) => ({
+        ...prev,
+        draftPhotos: prev.draftPhotos.filter((_, photoIndex) => photoIndex !== index),
+      })),
       setDraftSpot: (draftSpot: SpotId) => setState((prev) => ({ ...prev, draftSpot })),
       setCaption: (caption: string) => setState((prev) => ({ ...prev, caption })),
+      setHashtagText: (hashtagText: string) =>
+        setState((prev) => ({ ...prev, hashtagText: limitHashtagText(hashtagText) })),
+      setDraftVisibility: (draftVisibility: PostVisibility) =>
+        setState((prev) => ({ ...prev, draftVisibility })),
+
+      async saveDraft() {
+        const current = stateRef.current;
+        const savedDraft: CheckinDraft = {
+          spot: current.draftSpot,
+          photos: current.draftPhotos,
+          caption: current.caption,
+          hashtagText: current.hashtagText,
+          visibility: current.draftVisibility,
+          updatedAt: Date.now(),
+        };
+        await writeCheckinDraft(savedDraft);
+        setState((prev) => ({ ...prev, savedDraft }));
+      },
+
+      resumeSavedDraft() {
+        setState((prev) => prev.savedDraft ? ({
+          ...prev,
+          draftSpot: prev.savedDraft.spot,
+          draftPhotos: prev.savedDraft.photos,
+          caption: prev.savedDraft.caption,
+          hashtagText: prev.savedDraft.hashtagText,
+          draftVisibility: prev.savedDraft.visibility,
+        }) : prev);
+      },
+
+      discardDraft() {
+        void removeCheckinDraft();
+        setState((prev) => ({
+          ...prev,
+          draftPhotos: [],
+          caption: '',
+          hashtagText: '',
+          savedDraft: null,
+        }));
+      },
 
       post() {
         const id = `mine-${Date.now()}`;
@@ -137,20 +237,28 @@ function useDemoValue() {
               spot: prev.draftSpot,
               timeKey: 'time.justNow',
               caption: prev.caption.trim() || t('feed.myCaption', { spot: spotName(prev.draftSpot) }),
+              hashtags: parseHashtags(prev.hashtagText),
+              photoTints: prev.draftPhotos.length ? prev.draftPhotos : [SPOTS[prev.draftSpot].photoTint],
               tags: [],
               reactionCount: 0,
               commentCount: 0,
+              visibility: prev.draftVisibility,
             },
             ...prev.feed,
           ],
           been: prev.been.includes(prev.draftSpot) ? prev.been : [...prev.been, prev.draftSpot],
           reviewSpot: prev.draftSpot,
-          shots: 0,
+          draftPhotos: [],
           caption: '',
+          hashtagText: '',
+          lastPostVisibility: prev.draftVisibility,
+          draftVisibility: prev.draftVisibility,
+          savedDraft: null,
           sheetPostId: id,
           sheetTags: [],
           visitIntentPromptSpot: prev.wantToGo.includes(prev.draftSpot) ? prev.draftSpot : null,
         }));
+        void removeCheckinDraft();
       },
 
       keepWantToGoForRevisit() {
@@ -228,9 +336,14 @@ function useDemoValue() {
     () => ({
       ...state,
       ...actions,
+      shots: state.draftPhotos.length,
+      hasDraftChanges: state.draftPhotos.length > 0 || Boolean(state.caption.trim()) || Boolean(state.hashtagText.trim()),
+      savedDraftDaysRemaining: state.savedDraft ? draftDaysRemaining(state.savedDraft) : 0,
       wantsToGo: (spot: SpotId) => state.wantToGo.includes(spot),
       isBeen: (spot: SpotId) => state.been.includes(spot),
       isPostReacted: (postId: string) => state.reactedPostIds.includes(postId),
+      postComments: (postId: string) => state.commentsByPostId[postId] ?? [],
+      postCommentCount: (post: FeedPost) => post.commentCount + (state.commentsByPostId[post.id]?.length ?? 0),
       myPosts: state.feed.filter((post) => post.friend === null),
       draft: SPOTS[state.draftSpot],
     }),

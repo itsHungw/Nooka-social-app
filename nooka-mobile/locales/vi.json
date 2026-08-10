@@ -54,12 +54,21 @@
     "emptyTitle": "Hôm nay chưa có bạn nào check-in.",
     "emptyBody": "Bạn check-in trước, hoặc để Nooka gợi ý từ những gì người khác đã review.",
     "emptyCta": "Hỏi Nooka",
-    "avatarLabel": "Trang cá nhân"
+    "avatarLabel": "Trang cá nhân",
+    "caughtUp": {
+      "title": "Bạn đã xem hết rồi",
+      "body": "Không còn bài mới phù hợp quanh bạn. Kết nối thêm người cùng gu để feed thú vị hơn.",
+      "sameCity": "Cùng TP.HCM",
+      "seePeople": "Xem người phù hợp"
+    }
   },
   "feed": {
     "you": "Bạn",
     "myCaption": "Đang ở {{spot}}",
     "openSpot": "Mở {{spot}}",
+    "openAlbum": "Mở album check-in",
+    "openAlbumPhoto": "Mở ảnh {{count}} trên {{total}} của album check-in",
+    "searchHashtag": "Tìm theo hashtag này",
     "shareMessage": "{{author}} vừa check-in tại {{spot}} trên Nooka: {{caption}}",
     "reactionAccessibility": "Thả cảm xúc cho bài viết, hiện có {{count}} cảm xúc",
     "commentAccessibility": "Mở bình luận, hiện có {{count}} bình luận",
@@ -70,7 +79,27 @@
     "nam": {
       "caption": "Sau 20h thì vắng, bàn góc trái yên nhất.",
       "hashtags": "#rooftopq3 #hẹnlầnđầu"
+    },
+    "me": {
+      "caption": "Giá ổn, mở khuya và đủ yên để ngồi trò chuyện."
     }
+  },
+  "comments": {
+    "title": "Bình luận",
+    "context": "Bài của {{author}} tại {{spot}}",
+    "sample": {
+      "one": {
+        "author": "Trang",
+        "body": "Góc đó đúng là yên nhất thật."
+      },
+      "two": {
+        "author": "Huy",
+        "body": "Khoảng 19h còn dễ tìm chỗ ngồi không?"
+      }
+    },
+    "empty": "Chưa có bình luận. Hãy bắt đầu câu chuyện.",
+    "placeholder": "Viết bình luận…",
+    "send": "Gửi bình luận"
   },
   "friends": {
     "linh": "Linh",
@@ -262,6 +291,14 @@
     "newOnNooka": "Mới trên Nooka",
     "newNoReview": "Mới trên Nooka — chưa ai check-in",
     "viewSpot": "Xem chỗ này",
+    "communityTitle": "Check-in từ cộng đồng",
+    "publicOnly": "Chỉ bài công khai",
+    "publicPostCount": {
+      "one": "{{count}} bài công khai",
+      "other": "{{count}} bài công khai"
+    },
+    "communityEmpty": "Chưa có check-in công khai. Hãy là người đầu tiên cho mọi người thấy không khí ở đây.",
+    "privatePostNote": "{{count}} check-in không công khai của bạn vẫn được tính vào bản đồ Đã đi, nhưng không xuất hiện trong thư viện này.",
     "whatPeopleSay": "Mọi người nói gì",
     "moreReviews": "Xem {{count}} review khác",
     "noReview": "Chưa có review nào. Một câu của bạn lúc này có giá trị hơn mười câu lúc quán đông khách.",
@@ -286,7 +323,14 @@
   },
   "saved": {
     "title": "Muốn đi",
-    "empty": "Chưa có chỗ nào. Bấm “Muốn đi” trên khối địa điểm ở Trang chủ, Tìm kiếm hoặc trang chi tiết."
+    "empty": "Chưa có chỗ nào. Bấm “Muốn đi” trên khối địa điểm ở Trang chủ, Tìm kiếm hoặc trang chi tiết.",
+    "explore": "Khám phá địa điểm",
+    "firstVisitTitle": "Dành cho lần đầu",
+    "firstVisitBody": "Những chỗ bạn đã lưu nhưng chưa từng check-in.",
+    "returnTitle": "Muốn quay lại",
+    "returnBody": "Những chỗ bạn đã ghé và chủ động giữ lại cho lần sau.",
+    "firstVisitBadge": "Lần đầu",
+    "returnBadge": "Quay lại"
   },
   "profile": {
     "title": "Cá nhân",
@@ -324,6 +368,9 @@
       "cheap": "Giá rẻ"
     },
     "assistantBanner": "3 chỗ đang mở cửa quanh bạn lúc này.\nHỏi Nooka để thu hẹp danh sách",
+    "emptyBeen": "Chưa có chỗ nào. Địa điểm sẽ chuyển vào đây sau khi bạn đăng một check-in.",
+    "emptyCheckins": "Chưa có bài check-in. Bấm + để thử luồng đăng bài.",
+    "emptyWantToGo": "Chưa lưu chỗ nào. Mở một địa điểm và bấm Muốn đi.",
     "yourCheckins": "Check-in của bạn",
     "noCheckins": "Chưa có check-in nào. Bấm + để thử luồng đăng bài.",
     "beenPlaces": "Chỗ đã đi",
@@ -385,7 +432,8 @@
     "viewfinder": "khung ngắm",
     "library": "Thư viện",
     "shootFirst": "Chụp một ảnh để tiếp tục",
-    "shutter": "Chụp ảnh"
+    "shutter": "Chụp ảnh",
+    "removePhoto": "Xóa ảnh {{count}}"
   },
   "pin": {
     "hint": "Kéo bản đồ để đặt đúng chỗ",
@@ -400,10 +448,36 @@
   "caption": {
     "title": "Đăng vào…",
     "placeholder": "Thêm một câu",
+    "hashtags": {
+      "title": "Hashtag",
+      "placeholder": "#goclamviec #yentinh",
+      "count": "{{count}}/10"
+    },
+    "visibility": {
+      "title": "Ai có thể xem bài này?",
+      "hint": "Chỉ bài công khai mới xuất hiện trong thư viện cộng đồng của địa điểm.",
+      "options": {
+        "PUBLIC": "Công khai",
+        "FOLLOWERS": "Người theo dõi",
+        "CLOSE_FRIENDS": "Bạn thân",
+        "PRIVATE": "Chỉ mình tôi"
+      }
+    },
     "mapDestination": "Bản đồ",
     "toggleFont": "Đổi kiểu chữ",
     "fontLabel": "Aa",
     "post": "Đăng"
+  },
+  "draft": {
+    "exitTitle": "Lưu lại check-in này?",
+    "exitBody": "Bản nháp được giữ trên thiết bị trong 7 ngày kể từ lần chỉnh sửa gần nhất.",
+    "save": "Lưu bản nháp",
+    "discard": "Bỏ",
+    "continueEditing": "Tiếp tục chỉnh sửa",
+    "resumeTitle": "Bạn đang có một bản nháp",
+    "resumeBody": "Bản nháp còn {{days}} ngày trước khi tự xóa.",
+    "resume": "Tiếp tục bản nháp",
+    "newDraft": "Bỏ và tạo mới"
   },
   "sheet": {
     "title": "Đã lên feed",

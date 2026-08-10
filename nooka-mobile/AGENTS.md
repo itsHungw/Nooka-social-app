@@ -230,7 +230,7 @@ Không viết chuỗi hiển thị thẳng vào JSX, kể cả tiếng Anh, kể
 ## Privacy — không được lười ở đây
 
 - **R1: EXIF strip nằm ở server.** Client không được coi là đã sạch. Không viết code giả định ảnh gửi lên đã hết metadata, và không quảng cáo với user rằng đã xoá.
-- **Location privacy:** foreground GPS chỉ chạy khi tab Search đang mở và user đã cấp quyền. Không thêm background location, không gửi tọa độ định kỳ lên backend, không log tọa độ, không lưu lịch sử di chuyển. Khi rời tab, subscription phải được remove.
+- **Location privacy:** Search được phép cập nhật GPS foreground khi màn đang mở. Home và flow Create chỉ được lấy **một snapshot foreground** khi mở phiên/mở composer để chọn nội dung gần hoặc gợi ý Spot; không subscribe liên tục ở hai bề mặt này. Không thêm background location, không gửi tọa độ định kỳ lên backend, không log tọa độ, không lưu lịch sử di chuyển. Khi rời Search, subscription phải được remove.
 - Nội dung `PRIVATE` không vào log, analytics, crash report hay context gửi cho AI.
 - Không log token, không log toạ độ, không log nội dung bài viết.
 

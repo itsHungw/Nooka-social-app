@@ -165,6 +165,9 @@ export const SPOTS: Record<SpotId, Spot> = Object.fromEntries(
 
 export type FriendId = 'linh' | 'nam' | 'trang' | 'huy';
 
+export const POST_VISIBILITIES = ['PUBLIC', 'FOLLOWERS', 'CLOSE_FRIENDS', 'PRIVATE'] as const;
+export type PostVisibility = (typeof POST_VISIBILITIES)[number];
+
 /** Dải check-in trên đầu feed. `live` = còn đang ở đó. */
 export const FRIENDS: { id: FriendId; spot: SpotId; tint: PhotoTint; live: boolean }[] = [
   { id: 'linh', spot: 'workshop', tint: 'photoWarm', live: true },
@@ -183,9 +186,12 @@ export type FeedPost = {
   captionKey?: string;
   caption?: string;
   hashtagsKey?: string;
+  hashtags?: string[];
+  photoTints: PhotoTint[];
   tags: TagId[];
   reactionCount: number;
   commentCount: number;
+  visibility: PostVisibility;
 };
 
 export const INITIAL_FEED: FeedPost[] = [
@@ -196,9 +202,11 @@ export const INITIAL_FEED: FeedPost[] = [
     timeKey: 'time.justNow',
     captionKey: 'feed.linh.caption',
     hashtagsKey: 'feed.linh.hashtags',
+    photoTints: ['photoWarm', 'photoSand', 'photoSage'],
     tags: ['quiet', 'workFriendly', 'outdoor'],
     reactionCount: 18,
     commentCount: 4,
+    visibility: 'PUBLIC',
   },
   {
     id: 'seed-nam',
@@ -207,9 +215,23 @@ export const INITIAL_FEED: FeedPost[] = [
     timeKey: 'time.twoHours',
     captionKey: 'feed.nam.caption',
     hashtagsKey: 'feed.nam.hashtags',
+    photoTints: ['photoSand', 'photoClay'],
     tags: ['quietMusic', 'niceView'],
     reactionCount: 11,
     commentCount: 2,
+    visibility: 'PUBLIC',
+  },
+  {
+    id: 'seed-me',
+    friend: null,
+    spot: 'muoi43',
+    timeKey: 'time.threeDaysAgo',
+    captionKey: 'feed.me.caption',
+    photoTints: ['photoClay'],
+    tags: ['openLate', 'goodPrice'],
+    reactionCount: 3,
+    commentCount: 1,
+    visibility: 'FOLLOWERS',
   },
 ];
 

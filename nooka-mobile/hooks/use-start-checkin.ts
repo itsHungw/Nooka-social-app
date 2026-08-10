@@ -17,22 +17,52 @@ import { t } from '@/lib/i18n';
  */
 export function useStartCheckin() {
   const router = useRouter();
-  const { locationAsked, allowLocation, denyLocation, startDraft } = useNookaDemo();
+  const demo = useNookaDemo();
 
   return useCallback(() => {
     const open = () => {
-      startDraft();
+      demo.startDraft();
       router.push('/create');
     };
 
-    if (locationAsked) {
-      open();
+    const chooseDraft = () => {
+      if (!demo.savedDraft) {
+        open();
+        return;
+      }
+
+      Alert.alert(
+        t('draft.resumeTitle'),
+        t('draft.resumeBody', { days: demo.savedDraftDaysRemaining }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('draft.newDraft'),
+            style: 'destructive',
+            onPress: () => {
+              demo.discardDraft();
+              open();
+            },
+          },
+          {
+            text: t('draft.resume'),
+            onPress: () => {
+              demo.resumeSavedDraft();
+              router.push('/create');
+            },
+          },
+        ],
+      );
+    };
+
+    if (demo.locationAsked) {
+      chooseDraft();
       return;
     }
 
     Alert.alert(t('permission.title'), t('permission.body'), [
-      { text: t('permission.deny'), style: 'cancel', onPress: () => { denyLocation(); open(); } },
-      { text: t('permission.allow'), onPress: () => { allowLocation(); open(); } },
+      { text: t('permission.deny'), style: 'cancel', onPress: () => { demo.denyLocation(); chooseDraft(); } },
+      { text: t('permission.allow'), onPress: () => { demo.allowLocation(); chooseDraft(); } },
     ]);
-  }, [allowLocation, denyLocation, locationAsked, router, startDraft]);
+  }, [demo, router]);
 }

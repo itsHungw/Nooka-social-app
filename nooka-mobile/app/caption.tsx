@@ -3,9 +3,11 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { DarkScreen, Photo } from '@/components/nooka/ui';
+import { parseHashtags } from '@/features/nooka/checkin-draft';
 import { spotShortName } from '@/features/nooka/labels';
-import { SPOTS, SPOT_IDS } from '@/features/nooka/spots';
+import { POST_VISIBILITIES, SPOTS, SPOT_IDS } from '@/features/nooka/spots';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
+import { useExitCheckin } from '@/hooks/use-exit-checkin';
 import { t } from '@/lib/i18n';
 import { useNookaDemo } from '@/providers/nooka-demo-provider';
 
@@ -14,6 +16,7 @@ export default function CaptionScreen() {
   const router = useRouter();
   const { colors } = useNookaTheme();
   const demo = useNookaDemo();
+  const exitCheckin = useExitCheckin();
 
   const post = () => {
     demo.post();
@@ -30,7 +33,7 @@ export default function CaptionScreen() {
       </View>
 
       <View style={styles.stage}>
-        <View style={[styles.preview, { backgroundColor: colors.cameraSurface }]}>
+        <Photo style={styles.preview} tint={demo.draftPhotos[0] ?? demo.draft.photoTint}>
           <View style={styles.captionAnchor}>
             <TextInput
               accessibilityLabel={t('caption.placeholder')}
@@ -41,7 +44,7 @@ export default function CaptionScreen() {
               value={demo.caption}
             />
           </View>
-        </View>
+        </Photo>
         <View style={styles.dots}>
           {Array.from({ length: Math.max(demo.shots, 1) }, (_, index) => (
             <View
@@ -57,7 +60,7 @@ export default function CaptionScreen() {
           accessibilityLabel={t('common.close')}
           accessibilityRole="button"
           hitSlop={10}
-          onPress={() => router.back()}
+          onPress={exitCheckin}
           style={styles.roundControl}>
           <Ionicons color={colors.cameraText} name="close" size={24} />
         </Pressable>
@@ -76,6 +79,60 @@ export default function CaptionScreen() {
           style={styles.roundControl}>
           <Text style={[styles.fontToggle, { color: colors.cameraText }]}>{t('caption.fontLabel')}</Text>
         </Pressable>
+      </View>
+
+      <View style={styles.hashtagBlock}>
+        <View style={styles.hashtagHeading}>
+          <Text style={[styles.hashtagTitle, { color: colors.cameraText }]}>{t('caption.hashtags.title')}</Text>
+          <Text style={[styles.hashtagCount, { color: colors.cameraTextMuted }]}>
+            {t('caption.hashtags.count', { count: parseHashtags(demo.hashtagText).length })}
+          </Text>
+        </View>
+        <TextInput
+          accessibilityLabel={t('caption.hashtags.title')}
+          autoCapitalize="none"
+          onChangeText={demo.setHashtagText}
+          placeholder={t('caption.hashtags.placeholder')}
+          placeholderTextColor={colors.cameraTextMuted}
+          style={[styles.hashtagInput, { backgroundColor: colors.cameraChip, borderColor: colors.cameraBorder, color: colors.cameraText }]}
+          value={demo.hashtagText}
+        />
+      </View>
+
+      <View style={styles.visibilityBlock}>
+        <View style={styles.visibilityHeading}>
+          <Ionicons color={colors.cameraTextMuted} name="people-outline" size={16} />
+          <Text style={[styles.visibilityTitle, { color: colors.cameraText }]}>{t('caption.visibility.title')}</Text>
+        </View>
+        <Text style={[styles.visibilityHint, { color: colors.cameraTextMuted }]}>{t('caption.visibility.hint')}</Text>
+        <ScrollView
+          contentContainerStyle={styles.visibilityOptions}
+          horizontal
+          showsHorizontalScrollIndicator={false}>
+          {POST_VISIBILITIES.map((visibility) => {
+            const selected = demo.draftVisibility === visibility;
+            return (
+              <Pressable
+                accessibilityLabel={t(`caption.visibility.options.${visibility}`)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                key={visibility}
+                onPress={() => demo.setDraftVisibility(visibility)}
+                style={({ pressed }) => [
+                  styles.visibilityOption,
+                  {
+                    backgroundColor: selected ? colors.accent : colors.cameraChip,
+                    borderColor: selected ? colors.accent : colors.cameraBorder,
+                    opacity: pressed ? 0.78 : 1,
+                  },
+                ]}>
+                <Text style={[styles.visibilityOptionText, { color: selected ? colors.onAccent : colors.cameraTextMuted }]}>
+                  {t(`caption.visibility.options.${visibility}`)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
       </View>
 
       <ScrollView
@@ -149,6 +206,25 @@ const styles = StyleSheet.create({
   roundControl: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   fontToggle: { fontSize: 15, lineHeight: 20, fontWeight: '700' },
   postButton: { width: 74, height: 74, borderRadius: 37, alignItems: 'center', justifyContent: 'center' },
+  visibilityBlock: { paddingTop: 12 },
+  hashtagBlock: { paddingHorizontal: 20, paddingTop: 14 },
+  hashtagHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  hashtagTitle: { fontSize: 13, lineHeight: 18, fontWeight: '700' },
+  hashtagCount: { fontSize: 11.5, lineHeight: 16, fontWeight: '600' },
+  hashtagInput: { minHeight: 42, marginTop: 8, borderRadius: 14, borderWidth: 1, paddingHorizontal: 14, fontSize: 13, fontWeight: '600' },
+  visibilityHeading: { paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', gap: 7 },
+  visibilityTitle: { fontSize: 13, lineHeight: 18, fontWeight: '700' },
+  visibilityHint: { paddingHorizontal: 20, marginTop: 4, fontSize: 11.5, lineHeight: 16, fontWeight: '500' },
+  visibilityOptions: { paddingHorizontal: 20, paddingTop: 9, gap: 8 },
+  visibilityOption: {
+    minHeight: 38,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  visibilityOptionText: { fontSize: 12.5, lineHeight: 17, fontWeight: '700' },
   destinations: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 26, gap: 14 },
   destination: { width: 74, alignItems: 'center', gap: 7 },
   destinationCircle: { width: 52, height: 52, borderRadius: 26 },

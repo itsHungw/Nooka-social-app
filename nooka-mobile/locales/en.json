@@ -54,12 +54,21 @@
     "emptyTitle": "No friends have checked in today.",
     "emptyBody": "Check in first, or let Nooka suggest something from what others already reviewed.",
     "emptyCta": "Ask Nooka",
-    "avatarLabel": "Your profile"
+    "avatarLabel": "Your profile",
+    "caughtUp": {
+      "title": "You're all caught up",
+      "body": "There are no more relevant posts nearby. Connect with people who share your taste to make the feed better.",
+      "sameCity": "Also in HCMC",
+      "seePeople": "See people for you"
+    }
   },
   "feed": {
     "you": "You",
     "myCaption": "At {{spot}}",
     "openSpot": "Open {{spot}}",
+    "openAlbum": "Open check-in album",
+    "openAlbumPhoto": "Open photo {{count}} of {{total}} in the check-in album",
+    "searchHashtag": "Search this hashtag",
     "shareMessage": "{{author}} checked in at {{spot}} on Nooka: {{caption}}",
     "reactionAccessibility": "React to this post, {{count}} reactions",
     "commentAccessibility": "Open comments, {{count}} comments",
@@ -70,7 +79,27 @@
     "nam": {
       "caption": "After 8pm it empties out — the left corner table is quietest.",
       "hashtags": "#rooftopD3 #firstdate"
+    },
+    "me": {
+      "caption": "Good prices, open late, and calm enough to catch up."
     }
+  },
+  "comments": {
+    "title": "Comments",
+    "context": "{{author}} at {{spot}}",
+    "sample": {
+      "one": {
+        "author": "Trang",
+        "body": "That corner really is the quietest one."
+      },
+      "two": {
+        "author": "Huy",
+        "body": "Is it still easy to find a seat around 7pm?"
+      }
+    },
+    "empty": "No comments yet. Start the conversation.",
+    "placeholder": "Write a comment…",
+    "send": "Send comment"
   },
   "friends": {
     "linh": "Linh",
@@ -262,6 +291,14 @@
     "newOnNooka": "New on Nooka",
     "newNoReview": "New on Nooka — nobody has checked in yet",
     "viewSpot": "View this spot",
+    "communityTitle": "Community check-ins",
+    "publicOnly": "Public posts only",
+    "publicPostCount": {
+      "one": "{{count}} public post",
+      "other": "{{count}} public posts"
+    },
+    "communityEmpty": "No public check-ins yet. Be the first to show what this place feels like.",
+    "privatePostNote": "Your {{count}} non-public check-in still builds your Been map, but is not shown in this public gallery.",
     "whatPeopleSay": "What people say",
     "moreReviews": "See {{count}} more reviews",
     "noReview": "No reviews yet. One sentence from you right now is worth more than ten once the place is packed.",
@@ -286,7 +323,14 @@
   },
   "saved": {
     "title": "Want to go",
-    "empty": "No places here yet. Tap “Want to go” on a spot in Home, Search, or its detail page."
+    "empty": "No places here yet. Tap “Want to go” on a spot in Home, Search, or its detail page.",
+    "explore": "Explore spots",
+    "firstVisitTitle": "For a first visit",
+    "firstVisitBody": "Places you saved but have not checked in at yet.",
+    "returnTitle": "Worth returning to",
+    "returnBody": "Places you have visited and deliberately kept for another time.",
+    "firstVisitBadge": "First visit",
+    "returnBadge": "Return"
   },
   "profile": {
     "title": "You",
@@ -324,6 +368,9 @@
       "cheap": "Cheap"
     },
     "assistantBanner": "3 of these are open right now near you.\nAsk Nooka to narrow it down",
+    "emptyBeen": "No places yet. A spot moves here after you publish a check-in.",
+    "emptyCheckins": "No check-in posts yet. Tap + to try the posting flow.",
+    "emptyWantToGo": "Nothing saved yet. Open a spot and tap Want to go.",
     "yourCheckins": "Your check-ins",
     "noCheckins": "No check-ins yet. Tap + to try the posting flow.",
     "beenPlaces": "Places you have been",
@@ -385,7 +432,8 @@
     "viewfinder": "viewfinder",
     "library": "Library",
     "shootFirst": "Take a photo to continue",
-    "shutter": "Take photo"
+    "shutter": "Take photo",
+    "removePhoto": "Remove photo {{count}}"
   },
   "pin": {
     "hint": "Drag the map to the right spot",
@@ -400,10 +448,36 @@
   "caption": {
     "title": "Post to…",
     "placeholder": "Add a line",
+    "hashtags": {
+      "title": "Hashtags",
+      "placeholder": "#workcorner #quiet",
+      "count": "{{count}}/10"
+    },
+    "visibility": {
+      "title": "Who can see this post?",
+      "hint": "Only public posts appear in a spot's community gallery.",
+      "options": {
+        "PUBLIC": "Public",
+        "FOLLOWERS": "Followers",
+        "CLOSE_FRIENDS": "Close friends",
+        "PRIVATE": "Only me"
+      }
+    },
     "mapDestination": "Map",
     "toggleFont": "Change caption font",
     "fontLabel": "Aa",
     "post": "Post"
+  },
+  "draft": {
+    "exitTitle": "Save this check-in?",
+    "exitBody": "The draft stays on this device for 7 days after your latest edit.",
+    "save": "Save draft",
+    "discard": "Discard",
+    "continueEditing": "Keep editing",
+    "resumeTitle": "You have a draft",
+    "resumeBody": "This draft has {{days}} days left before it is deleted.",
+    "resume": "Continue draft",
+    "newDraft": "Discard and start new"
   },
   "sheet": {
     "title": "It is on the feed",

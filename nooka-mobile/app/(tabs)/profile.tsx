@@ -7,7 +7,7 @@ import { NookaMap } from '@/components/nooka/nooka-map';
 import { NookaMascot } from '@/components/nooka/nooka-mascot';
 import { Photo, ResultRow, ScreenShell, SectionLabel, SpotRow } from '@/components/nooka/ui';
 import { formatDistance, spotDistrict, spotName, spotTagLine } from '@/features/nooka/labels';
-import { SPOTS, SPOT_IDS, type SpotId } from '@/features/nooka/spots';
+import { SPOTS, type SpotId } from '@/features/nooka/spots';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
 import { useNookaDemo } from '@/providers/nooka-demo-provider';
@@ -22,35 +22,21 @@ export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('map');
   const [activeFilter, setActiveFilter] = useState<'all' | 'nearby' | 'openLate' | 'cheap'>('all');
 
-  // Thống kê người dùng (nếu có bài/chỗ thật thì hiển thị, giữ giá trị mặc định đẹp từ mockup)
-  const checkinsCount = myPosts.length > 0 ? myPosts.length : 128;
-  const beenCount = been.length > 0 ? been.length : 34;
-  const wantToGoCount = wantToGo.length > 0 ? wantToGo.length : 19;
-
-  // Danh sách quán đã đi (từ been hoặc mặc định)
-  const beenSpots: SpotId[] = been.length > 0 ? been : ['workshop', 'bloom', 'muoi43'];
-
-  // Danh sách check-in: ưu tiên bài của người dùng, hoặc dùng mẫu kèm ngày đăng
-  const checkinItems =
-    myPosts.length > 0
-      ? myPosts.map((post, idx) => ({
-          id: post.id,
-          spot: post.spot,
-          label: spotDistrict(post.spot),
-          date: t(post.timeKey ?? 'time.justNow'),
-          latest: idx === 0,
-        }))
-      : [
-          { id: '1', spot: 'workshop', label: 'District 1', date: t('time.justNow'), latest: true },
-          { id: '2', spot: 'sansau', label: 'Binh Thanh', date: t('time.twoHours'), latest: false },
-          { id: '3', spot: 'bloom', label: 'District 3', date: t('time.yesterday'), latest: false },
-          { id: '4', spot: 'workshop', label: 'District 1', date: t('time.twoDaysAgo'), latest: false },
-          { id: '5', spot: 'sansau', label: 'Binh Thanh', date: t('time.threeDaysAgo'), latest: false },
-          { id: '6', spot: 'muoi43', label: 'Binh Thanh', date: '08/03', latest: false },
-        ];
-
-  // Danh sách Muốn đi
-  const wantToGoSpots: SpotId[] = wantToGo.length > 0 ? wantToGo : ['workshop', 'bloom', 'sansau', 'muoi43'];
+  const checkinsCount = myPosts.length;
+  const beenCount = been.length;
+  const wantToGoCount = wantToGo.length;
+  const beenSpots = been;
+  const wantToGoSpots = wantToGo;
+  const mapSpots = [...new Set<SpotId>([...been, ...wantToGo])];
+  const mapDistricts = new Set(mapSpots.map(spotDistrict)).size;
+  const checkinPlaces = new Set(myPosts.map((post) => post.spot)).size;
+  const checkinItems = myPosts.map((post, idx) => ({
+    id: post.id,
+    spot: post.spot,
+    label: spotDistrict(post.spot),
+    date: t(post.timeKey ?? 'time.justNow'),
+    latest: idx === 0,
+  }));
 
   return (
     <ScreenShell testID="profile-screen">
@@ -223,12 +209,12 @@ export default function ProfileScreen() {
           <View style={styles.tabContent}>
             {/* Embedded Map Container */}
             <View style={[styles.mapCardContainer, { borderColor: colors.borderSubtle, backgroundColor: colors.surfaceMuted }]}>
-              <NookaMap spots={SPOT_IDS} style={styles.mapView} />
+              <NookaMap spots={mapSpots} style={styles.mapView} />
 
               {/* Map Top Floating Pill Overlay */}
               <View style={[styles.mapSummaryPill, { backgroundColor: colors.surface, borderColor: colors.borderSubtle }]}>
                 <Text style={[styles.mapSummaryText, { color: colors.text }]}>
-                  {t('profile.mapOverlay.summary', { places: 34, districts: 3 })}
+                  {t('profile.mapOverlay.summary', { places: mapSpots.length, districts: mapDistricts })}
                 </Text>
               </View>
 
@@ -257,15 +243,19 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.spotsList}>
-              {beenSpots.map((id) => (
-                <SpotRow
-                  key={id}
-                  line={`${spotDistrict(id)} · ${SPOTS[id].checkins} check-ins · ${formatDistance(SPOTS[id].distanceM)}`}
-                  onPress={() => router.push({ pathname: '/spot/[id]', params: { id } })}
-                  tint={SPOTS[id].photoTint}
-                  title={spotName(id)}
-                />
-              ))}
+              {beenSpots.length > 0 ? (
+                beenSpots.map((id) => (
+                  <SpotRow
+                    key={id}
+                    line={`${spotDistrict(id)} · ${SPOTS[id].checkins} check-ins · ${formatDistance(SPOTS[id].distanceM)}`}
+                    onPress={() => router.push({ pathname: '/spot/[id]', params: { id } })}
+                    tint={SPOTS[id].photoTint}
+                    title={spotName(id)}
+                  />
+                ))
+              ) : (
+                <Text style={[styles.emptyState, { color: colors.textMuted }]}>{t('profile.emptyBeen')}</Text>
+              )}
             </View>
           </View>
         )}
@@ -275,7 +265,7 @@ export default function ProfileScreen() {
             {/* Check-ins Subheader */}
             <View style={styles.checkinsHeaderRow}>
               <Text style={[styles.checkinsCountText, { color: colors.textMuted }]}>
-                {t('profile.checkinsSubheader', { checkins: checkinsCount, places: 34 })}
+                {t('profile.checkinsSubheader', { checkins: checkinsCount, places: checkinPlaces })}
               </Text>
               <Pressable
                 accessibilityLabel={t('profile.newest')}
@@ -291,7 +281,7 @@ export default function ProfileScreen() {
 
             {/* 3-Column Photo Grid */}
             <View style={styles.photoGrid}>
-              {checkinItems.map((item) => (
+              {checkinItems.length > 0 ? checkinItems.map((item) => (
                 <Pressable
                   accessibilityLabel={spotName(item.spot as SpotId)}
                   accessibilityRole="button"
@@ -316,7 +306,9 @@ export default function ProfileScreen() {
                     </View>
                   </Photo>
                 </Pressable>
-              ))}
+              )) : (
+                <Text style={[styles.emptyState, { color: colors.textMuted }]}>{t('profile.emptyCheckins')}</Text>
+              )}
             </View>
           </View>
         )}
@@ -408,7 +400,7 @@ export default function ProfileScreen() {
 
             {/* Want to go Places List */}
             <View style={styles.wantToGoList}>
-              {wantToGoSpots.map((id) => (
+              {wantToGoSpots.length > 0 ? wantToGoSpots.map((id) => (
                 <ResultRow
                   badge={SPOTS[id].isNew ? t('spots.sansau.busy') : undefined}
                   distance={formatDistance(SPOTS[id].distanceM)}
@@ -419,7 +411,9 @@ export default function ProfileScreen() {
                   tint={SPOTS[id].photoTint}
                   title={spotName(id)}
                 />
-              ))}
+              )) : (
+                <Text style={[styles.emptyState, { color: colors.textMuted }]}>{t('profile.emptyWantToGo')}</Text>
+              )}
             </View>
           </View>
         )}
@@ -786,4 +780,5 @@ const styles = StyleSheet.create({
     gap: 6,
     marginTop: 4,
   },
+  emptyState: { width: '100%', paddingVertical: 28, textAlign: 'center', fontSize: 13.5, lineHeight: 20, fontWeight: '500' },
 });

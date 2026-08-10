@@ -5,7 +5,6 @@ import {
   FlatList,
   Modal,
   Pressable,
-  Share,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +14,8 @@ import {
 } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { CommentSheet, PostSocialActions, PostVisibilityBadge } from '@/components/nooka/post-social';
+import { PostAlbum } from '@/components/nooka/post-album';
 import { AskNookaBar, Button, Chip, Photo, ScreenShell } from '@/components/nooka/ui';
 import {
   formatDistance,
@@ -39,6 +40,8 @@ export default function HomeScreen() {
   const [scrolled, setScrolled] = useState(false);
   const [journalVisible, setJournalVisible] = useState(true);
   const [cardHeight, setCardHeight] = useState(0);
+  const [commentPostId, setCommentPostId] = useState<string | null>(null);
+  const commentPost = demo.feed.find((post) => post.id === commentPostId) ?? null;
 
   const flatListRef = useRef<FlatList>(null);
   const lastY = useRef(0);
@@ -153,7 +156,10 @@ export default function HomeScreen() {
               onScroll={handleScroll}
               onScrollBeginDrag={handleScrollBeginDrag}
               ref={flatListRef}
-              renderItem={({ item }) => <FeedCard height={cardHeight} post={item} />}
+              renderItem={({ item }) => (
+                <FeedCard height={cardHeight} onComment={() => setCommentPostId(item.id)} post={item} />
+              )}
+              ListFooterComponent={<CaughtUp height={cardHeight} />}
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={false}
               snapToAlignment="start"
@@ -164,38 +170,21 @@ export default function HomeScreen() {
       </View>
 
       <TagSheet />
+      <CommentSheet post={commentPost} visible={Boolean(commentPost)} onClose={() => setCommentPostId(null)} />
     </ScreenShell>
   );
 }
 
-function FeedCard({ post, height }: { post: FeedPost; height: number }) {
+function FeedCard({ post, height, onComment }: { post: FeedPost; height: number; onComment: () => void }) {
   const router = useRouter();
   const { colors } = useNookaTheme();
   const demo = useNookaDemo();
   const spot = SPOTS[post.spot];
   const author = post.friend ? t(`friends.${post.friend}`) : t('feed.you');
   const caption = post.captionKey ? t(post.captionKey) : (post.caption ?? '');
-  const reacted = demo.isPostReacted(post.id);
-  const reactionCount = post.reactionCount + (reacted ? 1 : 0);
   const wantsToGo = demo.wantsToGo(post.spot);
   const hasBeen = demo.isBeen(post.spot);
   const openSpot = () => router.push({ pathname: '/spot/[id]', params: { id: post.spot } });
-  const sharePost = async () => {
-    try {
-      const result = await Share.share({
-        message: String(
-          t('feed.shareMessage', {
-            author,
-            spot: spotName(post.spot),
-            caption,
-          }),
-        ),
-      });
-      if (result.action === Share.sharedAction) demo.flash(t('toast.postShared'));
-    } catch {
-      demo.flash(t('toast.shareFailed'));
-    }
-  };
 
   return (
     <View style={[styles.card, height ? { height } : null]}>
@@ -207,52 +196,31 @@ function FeedCard({ post, height }: { post: FeedPost; height: number }) {
             {t('home.postedBy', { time: t(post.timeKey) })}
           </Text>
         </View>
-        <Text style={[styles.cardMeta, styles.cardDistance, { color: colors.textMuted }]}>
-          {formatDistance(spot.distanceM)}
-        </Text>
+        {post.friend === null ? <PostVisibilityBadge visibility={post.visibility} /> : null}
+        <Text style={[styles.cardMeta, styles.cardDistance, { color: colors.textMuted }]}>{formatDistance(spot.distanceM)}</Text>
       </View>
 
-      <Pressable
-        accessibilityLabel={t('feed.openSpot', { spot: spotName(post.spot) })}
-        accessibilityRole="button"
-        onPress={openSpot}
-        style={({ pressed }) => [styles.cardPhotoPress, { opacity: pressed ? 0.92 : 1 }]}>
-        <Photo style={styles.cardPhoto} tint={spot.photoTint}>
-          <View style={[styles.photoBadge, { backgroundColor: colors.background }]}>
-            <Text style={[styles.photoBadgeText, { color: colors.textMuted }]}>{t('home.photoBadge')}</Text>
-          </View>
-          <View style={[styles.captionBand, { backgroundColor: colors.photoScrim }]}>
-            <Text style={[styles.captionText, { color: colors.captionText }]}>{caption}</Text>
-          </View>
-        </Photo>
-      </Pressable>
+      <View style={styles.cardPhotoPress}>
+        <PostAlbum photos={post.photoTints} caption={caption} onOpenSpot={openSpot} />
+      </View>
 
-      {post.hashtagsKey ? (
-        <Text style={[styles.hashtags, { color: colors.accentInk }]}>{t(post.hashtagsKey)}</Text>
+      {post.hashtagsKey || post.hashtags?.length ? (
+        <Pressable
+          accessibilityLabel={t('feed.searchHashtag')}
+          accessibilityRole="button"
+          onPress={() => {
+            const firstHashtag = post.hashtags?.[0];
+            demo.setQuery(firstHashtag ? `#${firstHashtag}` : t(post.hashtagsKey!));
+            router.push('/(tabs)/search');
+          }}>
+          <Text numberOfLines={1} style={[styles.hashtags, { color: colors.accentInk }]}>
+            {post.hashtags?.length ? post.hashtags.map((hashtag) => `#${hashtag}`).join(' ') : t(post.hashtagsKey!)}
+          </Text>
+        </Pressable>
       ) : null}
 
       <View style={[styles.postActions, { borderColor: colors.borderSubtle }]}>
-        <PostAction
-          accessibilityLabel={t('feed.reactionAccessibility', { count: reactionCount })}
-          count={reactionCount}
-          icon={reacted ? 'heart' : 'heart-outline'}
-          label={t('actions.react')}
-          onPress={() => demo.togglePostReaction(post.id)}
-          selected={reacted}
-        />
-        <PostAction
-          accessibilityLabel={t('feed.commentAccessibility', { count: post.commentCount })}
-          count={post.commentCount}
-          icon="chatbubble-outline"
-          label={t('actions.comment')}
-          onPress={() => demo.flash(t('toast.commentOpened', { name: author }))}
-        />
-        <PostAction
-          accessibilityLabel={t('actions.share')}
-          icon="arrow-redo-outline"
-          label={t('actions.share')}
-          onPress={() => void sharePost()}
-        />
+        <PostSocialActions onComment={onComment} post={post} />
       </View>
 
       <View style={[styles.spotAttachment, { backgroundColor: colors.surfaceMuted, borderColor: colors.borderSubtle }]}>
@@ -298,38 +266,30 @@ function FeedCard({ post, height }: { post: FeedPost; height: number }) {
   );
 }
 
-function PostAction({
-  icon,
-  label,
-  count,
-  onPress,
-  selected,
-  accessibilityLabel,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  count?: number;
-  onPress: () => void;
-  selected?: boolean;
-  accessibilityLabel: string;
-}) {
+function CaughtUp({ height }: { height: number }) {
+  const router = useRouter();
   const { colors } = useNookaTheme();
-  const color = selected ? colors.accentInk : colors.textMuted;
 
   return (
-    <Pressable
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
-      accessibilityState={selected === undefined ? undefined : { selected }}
-      hitSlop={4}
-      onPress={onPress}
-      style={({ pressed }) => [styles.postAction, { backgroundColor: pressed ? colors.surfacePressed : 'transparent' }]}>
-      <Ionicons color={color} name={icon} size={20} />
-      <Text numberOfLines={1} style={[styles.postActionLabel, { color }]}>{label}</Text>
-      {count === undefined ? null : (
-        <Text style={[styles.postActionCount, { color }]}>{String(count)}</Text>
-      )}
-    </Pressable>
+    <View style={[styles.caughtUp, height ? { height } : null]}>
+      <View style={[styles.caughtIcon, { backgroundColor: colors.accentSoft }]}>
+        <Ionicons color={colors.accentInk} name="checkmark" size={24} />
+      </View>
+      <Text style={[styles.caughtTitle, { color: colors.text }]}>{t('home.caughtUp.title')}</Text>
+      <Text style={[styles.caughtBody, { color: colors.textMuted }]}>{t('home.caughtUp.body')}</Text>
+      <View style={styles.suggestionRow}>
+        {FRIENDS.slice(0, 3).map((friend) => (
+          <View key={friend.id} style={styles.suggestion}>
+            <Photo style={styles.suggestionAvatar} tint={friend.tint} />
+            <Text numberOfLines={1} style={[styles.suggestionName, { color: colors.text }]}>{t(`friends.${friend.id}`)}</Text>
+            <Text numberOfLines={1} style={[styles.suggestionReason, { color: colors.textMuted }]}>
+              {t('home.caughtUp.sameCity')}
+            </Text>
+          </View>
+        ))}
+      </View>
+      <Button label={t('home.caughtUp.seePeople')} onPress={() => router.push('/add-friends')} style={styles.caughtButton} />
+    </View>
   );
 }
 
@@ -473,26 +433,19 @@ const styles = StyleSheet.create({
   cardMeta: { fontSize: 12.5, lineHeight: 17, fontWeight: '500' },
   cardDistance: { marginLeft: 8 },
   cardPhotoPress: { flex: 1, minHeight: 150, marginTop: 10 },
-  cardPhoto: { flex: 1, borderRadius: 20 },
-  photoBadge: { position: 'absolute', left: 12, top: 12, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
-  photoBadgeText: { fontSize: 10, lineHeight: 14, letterSpacing: 1.4, textTransform: 'uppercase' },
-  captionBand: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingVertical: 15 },
-  captionText: { fontSize: 15, lineHeight: 21, fontWeight: '600' },
   cardSpotName: { flex: 1, fontSize: 15.5, lineHeight: 21, fontWeight: '700', letterSpacing: -0.3 },
   hashtags: { marginTop: 9, fontSize: 13, lineHeight: 18, fontWeight: '600' },
+  caughtUp: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, paddingVertical: 30 },
+  caughtIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  caughtTitle: { marginTop: 14, fontSize: 20, lineHeight: 27, fontWeight: '800', letterSpacing: -0.4 },
+  caughtBody: { maxWidth: 300, marginTop: 7, textAlign: 'center', fontSize: 13.5, lineHeight: 20, fontWeight: '500' },
+  suggestionRow: { width: '100%', marginTop: 24, flexDirection: 'row', justifyContent: 'center', gap: 18 },
+  suggestion: { width: 82, alignItems: 'center' },
+  suggestionAvatar: { width: 52, height: 52, borderRadius: 26 },
+  suggestionName: { width: '100%', marginTop: 7, textAlign: 'center', fontSize: 12.5, lineHeight: 17, fontWeight: '700' },
+  suggestionReason: { width: '100%', marginTop: 1, textAlign: 'center', fontSize: 10.5, lineHeight: 14, fontWeight: '500' },
+  caughtButton: { marginTop: 22, minWidth: 180 },
   postActions: { marginTop: 8, minHeight: 48, flexDirection: 'row', borderBottomWidth: 1 },
-  postAction: {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: 12,
-    paddingHorizontal: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-  },
-  postActionLabel: { fontSize: 12.5, lineHeight: 17, fontWeight: '600' },
-  postActionCount: { fontSize: 11.5, lineHeight: 16, fontWeight: '600' },
   spotAttachment: {
     marginTop: 10,
     minHeight: 68,

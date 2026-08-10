@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { DarkScreen } from '@/components/nooka/ui';
 import { formatDistance, spotName } from '@/features/nooka/labels';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
+import { useExitCheckin } from '@/hooks/use-exit-checkin';
 import { t } from '@/lib/i18n';
 import { useNookaDemo } from '@/providers/nooka-demo-provider';
 
@@ -17,6 +18,7 @@ export default function CameraScreen() {
   const router = useRouter();
   const { colors } = useNookaTheme();
   const demo = useNookaDemo();
+  const exitCheckin = useExitCheckin();
 
   const next = () => {
     if (demo.shots === 0) {
@@ -29,7 +31,7 @@ export default function CameraScreen() {
   return (
     <DarkScreen testID="camera-screen">
       <View style={styles.header}>
-        <Pressable accessibilityRole="button" hitSlop={10} onPress={() => router.back()}>
+        <Pressable accessibilityRole="button" hitSlop={10} onPress={exitCheckin}>
           <Text style={[styles.headerAction, { color: colors.cameraTextMuted }]}>{t('common.cancel')}</Text>
         </Pressable>
         <Text style={[styles.title, { color: colors.cameraText }]}>{t('camera.title')}</Text>
@@ -63,26 +65,36 @@ export default function CameraScreen() {
           {demo.shots === 0 ? (
             <Text style={[styles.filmstripHint, { color: colors.cameraTextMuted }]}>{t('camera.shootFirst')}</Text>
           ) : (
-            Array.from({ length: demo.shots }, (_, index) => (
-              <View
+            demo.draftPhotos.map((tint, index) => (
+              <Pressable
+                accessibilityLabel={t('camera.removePhoto', { count: index + 1 })}
+                accessibilityRole="button"
                 key={index}
+                onPress={() => demo.removeDraftPhoto(index)}
                 style={[
                   styles.thumb,
                   {
-                    backgroundColor: index === demo.shots - 1 ? colors.cameraChipActive : colors.cameraChip,
+                    backgroundColor: colors[tint],
                     borderColor: index === demo.shots - 1 ? colors.accent : 'transparent',
                   },
                 ]}
-              />
+              >
+                <Text style={[styles.removePhoto, { color: colors.cameraText }]}>×</Text>
+              </Pressable>
             ))
           )}
         </View>
       </View>
 
       <View style={styles.controls}>
-        <View style={[styles.library, { backgroundColor: colors.cameraChip }]}>
+        <Pressable
+          accessibilityLabel={t('camera.library')}
+          accessibilityRole="button"
+          disabled={demo.shots >= 5}
+          onPress={demo.addFromLibrary}
+          style={({ pressed }) => [styles.library, { backgroundColor: colors.cameraChip, opacity: pressed ? 0.75 : 1 }]}>
           <Text style={[styles.libraryText, { color: colors.cameraTextMuted }]}>{t('camera.library')}</Text>
-        </View>
+        </Pressable>
         <Pressable
           accessibilityLabel={t('camera.shutter')}
           accessibilityRole="button"
@@ -137,6 +149,7 @@ const styles = StyleSheet.create({
   filmstrip: { minHeight: 59, paddingTop: 13, flexDirection: 'row', alignItems: 'center', gap: 8 },
   filmstripHint: { fontSize: 12.5, lineHeight: 17, fontWeight: '600' },
   thumb: { width: 46, height: 46, borderRadius: 11, borderWidth: 2 },
+  removePhoto: { position: 'absolute', right: 5, top: 1, fontSize: 16, lineHeight: 18, fontWeight: '800' },
   controls: { paddingHorizontal: 30, paddingTop: 14, paddingBottom: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   library: { width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   libraryText: { fontSize: 11, lineHeight: 14, fontWeight: '700', textAlign: 'center' },

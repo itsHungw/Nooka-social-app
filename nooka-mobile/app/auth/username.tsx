@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -153,7 +154,10 @@ export default function UsernameInputScreen() {
             />
             {availability === 'checking' && <ActivityIndicator color={colors.accentInk} size="small" />}
             {isAvailable && (
-              <Text style={[styles.availableTag, { color: colors.online }]}>{t('auth.usernameAvailable')}</Text>
+              <View style={styles.availableBadge}>
+                <Ionicons color={colors.online} name="checkmark-circle" size={18} />
+                <Text style={[styles.availableTag, { color: colors.online }]}>{t('auth.usernameAvailable')}</Text>
+              </View>
             )}
           </View>
 
@@ -175,12 +179,10 @@ export default function UsernameInputScreen() {
           )}
 
           <View style={styles.bottomSection}>
-            {isSubmitting && (
-              <ActivityIndicator color={colors.accentInk} size="small" style={styles.loadingIndicator} />
-            )}
             <Button
               accessibilityLabel={t('auth.continueArrow')}
               label={isSubmitting ? t('auth.registerSubmitting') : t('auth.continueArrow')}
+              loading={isSubmitting}
               onPress={handleComplete}
               style={[styles.continueButton, { opacity: isAvailable && !isSubmitting ? 1 : 0.5 }]}
               tone={isAvailable && !isSubmitting ? 'accent' : 'outline'}
@@ -234,10 +236,15 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontWeight: '600',
   },
+  availableBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingLeft: 6,
+  },
   availableTag: {
     fontSize: 13,
     fontWeight: '700',
-    paddingLeft: 8,
   },
   subtext: {
     fontSize: 13,
@@ -280,9 +287,6 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     alignItems: 'center',
     gap: 10,
-  },
-  loadingIndicator: {
-    marginBottom: 2,
   },
   continueButton: {
     width: '100%',

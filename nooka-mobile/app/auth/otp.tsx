@@ -226,6 +226,7 @@ export default function OtpVerificationScreen() {
                     ? t('auth.retryOtpBtn')
                     : t('auth.confirmOtpBtn')
               }
+              loading={isSubmitting}
               onPress={handleVerify}
               style={[
                 styles.confirmButton,

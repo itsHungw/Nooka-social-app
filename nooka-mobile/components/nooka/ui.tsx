@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { PropsWithChildren, ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { NookaMascot } from '@/components/nooka/nooka-mascot';
@@ -101,9 +101,20 @@ type ButtonProps = {
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
   selected?: boolean;
+  loading?: boolean;
+  disabled?: boolean;
 };
 
-export function Button({ label, onPress, tone = 'primary', style, accessibilityLabel, selected }: ButtonProps) {
+export function Button({
+  label,
+  onPress,
+  tone = 'primary',
+  style,
+  accessibilityLabel,
+  selected,
+  loading,
+  disabled,
+}: ButtonProps) {
   const { colors } = useNookaTheme();
   const palette: Record<ButtonTone, { background: string; text: string; border: string }> = {
     primary: { background: colors.inverseSurface, text: colors.onInverse, border: colors.inverseSurface },
@@ -112,19 +123,26 @@ export function Button({ label, onPress, tone = 'primary', style, accessibilityL
     outline: { background: 'transparent', text: colors.text, border: colors.border },
   };
   const { background, text, border } = palette[tone];
+  const isDisabled = disabled || loading;
 
   return (
     <Pressable
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityRole="button"
-      accessibilityState={selected === undefined ? undefined : { selected }}
+      accessibilityState={selected === undefined ? (loading ? { busy: true } : undefined) : { selected, busy: loading }}
+      disabled={isDisabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: background, borderColor: border, opacity: pressed ? 0.75 : 1 },
+        { backgroundColor: background, borderColor: border, opacity: pressed || isDisabled ? 0.75 : 1 },
         style,
       ]}>
-      <Text numberOfLines={1} style={[styles.buttonLabel, { color: text }]}>{label}</Text>
+      <View style={styles.buttonContent}>
+        {loading && <ActivityIndicator color={text} size="small" />}
+        <Text numberOfLines={1} style={[styles.buttonLabel, { color: text }]}>
+          {label}
+        </Text>
+      </View>
     </Pressable>
   );
 }
@@ -352,6 +370,12 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   buttonLabel: { fontSize: 14, lineHeight: 19, fontWeight: '700' },
   chip: {

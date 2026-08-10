@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ThemeOption } from '@/components/nooka/theme-option';
 import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
@@ -13,8 +13,25 @@ export default function SettingsScreen() {
   const { flash } = useNookaDemo();
 
   const handleLogout = () => {
-    flash(t('settings.logoutToast'));
-    router.replace('/welcome');
+    Alert.alert(
+      t('settings.logoutConfirmTitle'),
+      t('settings.logoutConfirmMessage'),
+      [
+        {
+          text: t('common.cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('settings.logout'),
+          style: 'destructive',
+          onPress: () => {
+            flash(t('settings.logoutToast'));
+            router.replace('/welcome');
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   return (

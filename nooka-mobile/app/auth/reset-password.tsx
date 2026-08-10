@@ -1,7 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -163,12 +162,10 @@ export default function ResetPasswordScreen() {
 
           {/* Nút Lưu mật khẩu ở đáy */}
           <View style={styles.bottomSection}>
-            {isSubmitting && (
-              <ActivityIndicator color={colors.accentInk} size="small" style={styles.loadingIndicator} />
-            )}
             <Button
               accessibilityLabel={t('auth.savePasswordBtn')}
               label={isSubmitting ? t('auth.resetPasswordSubmitting') : t('auth.savePasswordBtn')}
+              loading={isSubmitting}
               onPress={handleSave}
               style={[
                 styles.saveButton,
@@ -272,9 +269,6 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     alignItems: 'center',
     gap: 10,
-  },
-  loadingIndicator: {
-    marginBottom: 2,
   },
   saveButton: {
     width: '100%',

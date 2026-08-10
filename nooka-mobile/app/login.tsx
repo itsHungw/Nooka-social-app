@@ -146,9 +146,13 @@ export default function LoginScreen() {
                   opacity: pressed || status === 'loading' ? 0.6 : 1,
                 },
               ]}>
-              <View style={[styles.badgeIconCircleSmall, { backgroundColor: colors.surfaceMuted }]}>
-                <Ionicons color={colors.text} name="logo-apple" size={13} />
-              </View>
+              {status === 'loading' && activeProvider === 'apple' ? (
+                <ActivityIndicator color={colors.text} size="small" style={styles.spinner} />
+              ) : (
+                <View style={[styles.badgeIconCircleSmall, { backgroundColor: colors.surfaceMuted }]}>
+                  <Ionicons color={colors.text} name="logo-apple" size={13} />
+                </View>
+              )}
               <Text style={[styles.socialButtonText, { color: colors.text }]}>{t('auth.continueApple')}</Text>
             </Pressable>
 
@@ -165,9 +169,13 @@ export default function LoginScreen() {
                   opacity: pressed || status === 'loading' ? 0.6 : 1,
                 },
               ]}>
-              <View style={[styles.badgeIconCircleSmall, { backgroundColor: colors.surfaceMuted }]}>
-                <Ionicons color={colors.text} name="logo-facebook" size={13} />
-              </View>
+              {status === 'loading' && activeProvider === 'facebook' ? (
+                <ActivityIndicator color={colors.text} size="small" style={styles.spinner} />
+              ) : (
+                <View style={[styles.badgeIconCircleSmall, { backgroundColor: colors.surfaceMuted }]}>
+                  <Ionicons color={colors.text} name="logo-facebook" size={13} />
+                </View>
+              )}
               <Text style={[styles.socialButtonText, { color: colors.text }]}>{t('auth.continueFacebook')}</Text>
             </Pressable>
           </View>
@@ -193,9 +201,13 @@ export default function LoginScreen() {
                 opacity: pressed || status === 'loading' ? 0.6 : 1,
               },
             ]}>
-            <View style={[styles.badgeIconCircle, { backgroundColor: colors.surfaceMuted }]}>
-              <Ionicons color={colors.text} name="mail-outline" size={15} />
-            </View>
+            {status === 'loading' && activeProvider === 'email' ? (
+              <ActivityIndicator color={colors.text} size="small" style={styles.spinner} />
+            ) : (
+              <View style={[styles.badgeIconCircle, { backgroundColor: colors.surfaceMuted }]}>
+                <Ionicons color={colors.text} name="mail-outline" size={15} />
+              </View>
+            )}
             <Text style={[styles.socialButtonText, { color: colors.text }]}>{t('auth.continueEmail')}</Text>
           </Pressable>
         </View>

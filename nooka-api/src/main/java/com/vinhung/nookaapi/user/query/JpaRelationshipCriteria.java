@@ -26,13 +26,42 @@ class JpaRelationshipCriteria implements RelationshipCriteria {
     }
 
     @Override
+    public Subquery<Integer> mutualFollowExists(CriteriaQuery<?> query,
+            CriteriaBuilder builder, UUID viewerId, Path<UUID> authorId) {
+        Subquery<Integer> subquery = query.subquery(Integer.class);
+        Root<Follow> viewerFollowsAuthor = subquery.from(Follow.class);
+        Root<Follow> authorFollowsViewer = subquery.from(Follow.class);
+        return subquery.select(builder.literal(1))
+                .where(builder.equal(viewerFollowsAuthor.get("followerId"), viewerId),
+                        builder.equal(viewerFollowsAuthor.get("followeeId"), authorId),
+                        builder.equal(authorFollowsViewer.get("followerId"), authorId),
+                        builder.equal(authorFollowsViewer.get("followeeId"), viewerId));
+    }
+
+    @Override
     public Subquery<Integer> closeFriendExists(CriteriaQuery<?> query, CriteriaBuilder builder,
             UUID viewerId, Path<UUID> authorId) {
         Subquery<Integer> subquery = query.subquery(Integer.class);
         Root<CloseFriend> closeFriend = subquery.from(CloseFriend.class);
+        Root<Follow> viewerFollowsAuthor = subquery.from(Follow.class);
+        Root<Follow> authorFollowsViewer = subquery.from(Follow.class);
         return subquery.select(builder.literal(1))
                 .where(builder.equal(closeFriend.get("ownerId"), authorId),
-                        builder.equal(closeFriend.get("friendId"), viewerId));
+                        builder.equal(closeFriend.get("friendId"), viewerId),
+                        builder.equal(viewerFollowsAuthor.get("followerId"), viewerId),
+                        builder.equal(viewerFollowsAuthor.get("followeeId"), authorId),
+                        builder.equal(authorFollowsViewer.get("followerId"), authorId),
+                        builder.equal(authorFollowsViewer.get("followeeId"), viewerId));
+    }
+
+    @Override
+    public Subquery<Integer> privateAuthorExists(CriteriaQuery<?> query, CriteriaBuilder builder,
+            Path<UUID> authorId) {
+        Subquery<Integer> subquery = query.subquery(Integer.class);
+        Root<User> user = subquery.from(User.class);
+        return subquery.select(builder.literal(1))
+                .where(builder.equal(user.get("id"), authorId),
+                        builder.isTrue(user.get("privateProfile")));
     }
 
     @Override

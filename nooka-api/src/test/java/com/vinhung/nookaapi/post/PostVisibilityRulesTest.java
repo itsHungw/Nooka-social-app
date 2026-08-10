@@ -69,6 +69,14 @@ class PostVisibilityRulesTest {
                 .followerId(follower.getId())
                 .followeeId(author.getId())
                 .build());
+        em.persist(Follow.builder()
+                .followerId(closeFriend.getId())
+                .followeeId(author.getId())
+                .build());
+        em.persist(Follow.builder()
+                .followerId(author.getId())
+                .followeeId(closeFriend.getId())
+                .build());
         em.persist(CloseFriend.builder()
                 .ownerId(author.getId())
                 .friendId(closeFriend.getId())
@@ -145,6 +153,32 @@ class PostVisibilityRulesTest {
     }
 
     @Test
+    @DisplayName("Close Friends mất hiệu lực ngay khi không còn mutual follow")
+    void closeFriendsPostRequiresMutualFollow() {
+        em.remove(em.find(Follow.class,
+                new Follow.Key(author.getId(), closeFriend.getId())));
+        em.flush();
+        em.clear();
+        Post post = persistPost(Visibility.CLOSE_FRIENDS);
+
+        assertThat(visibleTo(closeFriend)).doesNotContain(post.getId());
+    }
+
+    @Test
+    @DisplayName("Private profile ẩn cả bài Public với người chưa được accept")
+    void privateProfileOverridesPublicPostVisibility() {
+        author.setPrivateProfile(true);
+        em.flush();
+        em.clear();
+        Post post = persistPost(Visibility.PUBLIC);
+
+        assertThat(visibleTo(author)).contains(post.getId());
+        assertThat(visibleTo(follower)).contains(post.getId());
+        assertThat(visibleTo(stranger)).doesNotContain(post.getId());
+        assertThat(visibleTo(null)).doesNotContain(post.getId());
+    }
+
+    @Test
     @DisplayName("Close Friends không phải tập con của Followers")
     void closeFriendsPostIsHiddenFromPlainFollower() {
         Post post = persistPost(Visibility.CLOSE_FRIENDS);
@@ -152,6 +186,46 @@ class PostVisibilityRulesTest {
         // follower đang follow tác giả nhưng không nằm trong danh sách close
         // friends, nên không được xem.
         assertThat(visibleTo(follower)).doesNotContain(post.getId());
+    }
+
+    @Test
+    @DisplayName("Bài Selected Friends chỉ hiện với đúng người được tác giả chọn")
+    void selectedFriendsPostIsVisibleOnlyToSelectedViewers() {
+        Post post = persistPost(Visibility.SELECTED_FRIENDS);
+        em.createNativeQuery("""
+                insert into post_audience(post_id, viewer_id)
+                values (:postId, :viewerId)
+                """)
+                .setParameter("postId", post.getId())
+                .setParameter("viewerId", closeFriend.getId())
+                .executeUpdate();
+        em.flush();
+        em.clear();
+
+        assertThat(visibleTo(author)).contains(post.getId());
+        assertThat(visibleTo(closeFriend)).contains(post.getId());
+        assertThat(visibleTo(follower)).doesNotContain(post.getId());
+        assertThat(visibleTo(stranger)).doesNotContain(post.getId());
+        assertThat(visibleTo(null)).doesNotContain(post.getId());
+    }
+
+    @Test
+    @DisplayName("Selected Friends mất quyền ngay khi tình bạn kết thúc")
+    void selectedFriendsPostRequiresCurrentMutualFollow() {
+        Post post = persistPost(Visibility.SELECTED_FRIENDS);
+        em.createNativeQuery("""
+                insert into post_audience(post_id, viewer_id)
+                values (:postId, :viewerId)
+                """)
+                .setParameter("postId", post.getId())
+                .setParameter("viewerId", closeFriend.getId())
+                .executeUpdate();
+        em.remove(em.find(Follow.class,
+                new Follow.Key(author.getId(), closeFriend.getId())));
+        em.flush();
+        em.clear();
+
+        assertThat(visibleTo(closeFriend)).doesNotContain(post.getId());
     }
 
     @Test

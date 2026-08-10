@@ -76,10 +76,13 @@ public class Post extends BaseEntity {
 
     @Column(name = "hide_time", nullable = false)
     @lombok.Builder.Default
-    private boolean hideTime = false;
+    private boolean hideTime = true;
 
     @Column(name = "inspired_by_post_id")
     private UUID inspiredByPostId;
+
+    @Column(name = "idempotency_key")
+    private UUID idempotencyKey;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)

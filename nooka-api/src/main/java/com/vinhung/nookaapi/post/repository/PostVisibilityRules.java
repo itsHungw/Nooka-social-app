@@ -1,12 +1,14 @@
 package com.vinhung.nookaapi.post.repository;
 
 import com.vinhung.nookaapi.post.entity.Post;
+import com.vinhung.nookaapi.post.entity.PostAudience;
 import com.vinhung.nookaapi.shared.model.Visibility;
 import com.vinhung.nookaapi.user.query.RelationshipCriteria;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -32,8 +34,18 @@ class PostVisibilityRules {
                     relationships.deletedAuthorExists(query, builder, authorId)));
 
             if (viewerId == null) {
-                return builder.and(notDeleted, authorActive, isPublic(root, builder));
+                Predicate authorPublic = builder.not(builder.exists(
+                        relationships.privateAuthorExists(query, builder, authorId)));
+                return builder.and(notDeleted, authorActive, authorPublic,
+                        isPublic(root, builder));
             }
+
+            Predicate profileGate = builder.or(
+                    builder.equal(authorId, viewerId),
+                    builder.not(builder.exists(
+                            relationships.privateAuthorExists(query, builder, authorId))),
+                    builder.exists(relationships.followExists(
+                            query, builder, viewerId, authorId)));
 
             Predicate audience = builder.or(
                     builder.equal(authorId, viewerId),
@@ -45,9 +57,16 @@ class PostVisibilityRules {
                     builder.and(
                             builder.equal(root.get("visibility"), Visibility.CLOSE_FRIENDS),
                             builder.exists(relationships.closeFriendExists(
+                                    query, builder, viewerId, authorId))),
+                    builder.and(
+                            builder.equal(root.get("visibility"), Visibility.SELECTED_FRIENDS),
+                            // Membership alone is insufficient: access ends when the friendship ends.
+                            builder.exists(selectedAudienceExists(
+                                    query, builder, root.get("id"), viewerId)),
+                            builder.exists(relationships.mutualFollowExists(
                                     query, builder, viewerId, authorId))));
 
-            return builder.and(notDeleted, authorActive, audience,
+            return builder.and(notDeleted, authorActive, profileGate, audience,
                     builder.not(builder.exists(relationships.blockExists(
                             query, builder, viewerId, authorId))));
         };
@@ -55,5 +74,17 @@ class PostVisibilityRules {
 
     private static Predicate isPublic(Root<Post> root, CriteriaBuilder builder) {
         return builder.equal(root.get("visibility"), Visibility.PUBLIC);
+    }
+
+    private static Subquery<Integer> selectedAudienceExists(
+            jakarta.persistence.criteria.CriteriaQuery<?> query,
+            CriteriaBuilder builder,
+            Path<UUID> postId,
+            UUID viewerId) {
+        Subquery<Integer> subquery = query.subquery(Integer.class);
+        Root<PostAudience> audience = subquery.from(PostAudience.class);
+        return subquery.select(builder.literal(1)).where(
+                builder.equal(audience.get("postId"), postId),
+                builder.equal(audience.get("viewerId"), viewerId));
     }
 }

@@ -25,6 +25,7 @@ class AuthTokenVerifier implements TokenVerifier {
         }
         return sessions.findByAccessTokenHash(tokenSupport.hash(token))
                 .filter(session -> session.isAccessValidAt(Instant.now(clock)))
+                .filter(session -> session.getUser().getDeletedAt() == null)
                 .map(session -> session.getUser().getId())
                 .orElseThrow(() -> new TokenVerificationException(new IllegalArgumentException("Token is invalid")));
     }

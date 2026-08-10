@@ -11,8 +11,14 @@ public interface RelationshipCriteria {
     Subquery<Integer> followExists(CriteriaQuery<?> query, CriteriaBuilder builder,
             UUID viewerId, Path<UUID> authorId);
 
+    Subquery<Integer> mutualFollowExists(CriteriaQuery<?> query, CriteriaBuilder builder,
+            UUID viewerId, Path<UUID> authorId);
+
     Subquery<Integer> closeFriendExists(CriteriaQuery<?> query, CriteriaBuilder builder,
             UUID viewerId, Path<UUID> authorId);
+
+    Subquery<Integer> privateAuthorExists(CriteriaQuery<?> query, CriteriaBuilder builder,
+            Path<UUID> authorId);
 
     Subquery<Integer> blockExists(CriteriaQuery<?> query, CriteriaBuilder builder,
             UUID viewerId, Path<UUID> authorId);

@@ -70,6 +70,11 @@ public class User extends BaseEntity {
     @lombok.Builder.Default
     private boolean showActivityStatus = true;
 
+    /** §3/§13: cổng ngoài cùng, override cả Post mang audience PUBLIC. */
+    @Column(name = "private_profile", nullable = false)
+    @lombok.Builder.Default
+    private boolean privateProfile = false;
+
     /**
      * Bước 1 của xoá tài khoản: ẩn khỏi mọi bề mặt ngay lập tức.
      *
@@ -107,4 +112,3 @@ public class User extends BaseEntity {
         passwordHash = newPasswordHash;
     }
 }
-

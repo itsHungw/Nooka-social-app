@@ -10,5 +10,6 @@ public enum Visibility {
     PUBLIC,
     FOLLOWERS,
     CLOSE_FRIENDS,
+    SELECTED_FRIENDS,
     PRIVATE
 }

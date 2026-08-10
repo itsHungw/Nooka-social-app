@@ -123,12 +123,14 @@ Business rule phải nằm ở domain/service hoặc query policy có tên rõ r
 - Guest chỉ thấy `PUBLIC`.
 - Tác giả thấy bài của chính mình ở mọi visibility nếu chưa bị soft-delete.
 - `FOLLOWERS` kiểm tra chiều viewer follow author.
-- `CLOSE_FRIENDS` kiểm tra viewer nằm trong danh sách do author sở hữu; nó không phải tập con của followers.
+- `CLOSE_FRIENDS` chỉ có hiệu lực khi viewer nằm trong danh sách do author sở hữu **và hai account đang mutual follow**. Unfollow ở một trong hai chiều làm mất quyền ngay ở lần query kế tiếp.
+- `SELECTED_FRIENDS` dùng membership theo từng Post và cũng bắt buộc mutual follow ở thời điểm đọc. Chỉ lưu danh sách khi publish; client gửi tối đa 50 viewer UUID, không gửi author trong danh sách.
 - `PRIVATE` chỉ tác giả thấy.
+- Private profile là cổng ngoài cùng: người chưa được accept follow không xem được cả Post `PUBLIC` của account đó.
 - Block chặn khả năng xem theo cả hai chiều.
 - **R9:** bài của tài khoản có `users.deleted_at` khác null không hiển thị với bất kỳ ai, kể cả chính tác giả. Phép kiểm đi qua `user.query.RelationshipCriteria.deletedAuthorExists` và phải có mặt ở **cả hai** nhánh của `visibleTo` — quên nhánh khách chưa đăng nhập là lỗ rò lớn nhất vì đó là nhánh ai cũng chạm được.
 - **R3a:** mọi con số về Post **phụ thuộc người xem** cũng phải đi qua `PostAccess`, không chỉ phép đọc. `count(*) from posts` viết ra rất tự nhiên và rất dễ lọt review, nhưng nó rò nội dung riêng tư qua con số: §8 chốt `Been` tự bật khi đăng bài kể cả bài `PRIVATE`, nên "mấy bạn của tôi đã tới đây" đếm sai là bạn bè biết mình vừa ở đâu.
-- **R3b:** con số **toàn cục** đếm tầng cố định `PUBLIC` + `FOLLOWERS`, không bao giờ đếm `CLOSE_FRIENDS` hay `PRIVATE`, và **không nhận `viewerId`**. Phụ thuộc người xem là tự chặn đường cache về sau.
+- **R3b:** con số **toàn cục** đếm tầng cố định `PUBLIC` + `FOLLOWERS`, không bao giờ đếm `CLOSE_FRIENDS`, `SELECTED_FRIENDS` hay `PRIVATE`, và **không nhận `viewerId`**. Phụ thuộc người xem là tự chặn đường cache về sau.
 - Module `insight` là nơi duy nhất trả lời "địa điểm này có bao nhiêu…". Không module nào khác được tự đếm.
 - Không phân biệt “không tồn tại” và “không có quyền xem” trong response công khai nếu việc phân biệt làm lộ nội dung.
 

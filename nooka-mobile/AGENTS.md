@@ -230,6 +230,8 @@ Không viết chuỗi hiển thị thẳng vào JSX, kể cả tiếng Anh, kể
 ## Privacy — không được lười ở đây
 
 - **R1: EXIF strip nằm ở server.** Client không được coi là đã sạch. Không viết code giả định ảnh gửi lên đã hết metadata, và không quảng cáo với user rằng đã xoá.
+- **Check-in media:** camera chụp thật và gallery có thể trộn tối đa 5 ảnh. Mỗi ảnh có crop 4:5 độc lập bằng zoom + offset chuẩn hoá; draft phải giữ URI bền vững cùng crop để resume và Feed phải dựng lại đúng khung. Live Photo MVP chỉ dùng still image, không giữ paired MOV.
+- **Selected Friends:** composer chỉ có `PUBLIC`, `FOLLOWERS`, `SELECTED_FRIENDS`; không hiện `PRIVATE/Only me`. Hàng avatar là friend (mutual follow), không phải Spot. Client chặn đăng khi chưa chọn ai nhưng backend vẫn là nơi quyết định quyền xem.
 - **Location privacy:** Search được phép cập nhật GPS foreground khi màn đang mở. Home và flow Create chỉ được lấy **một snapshot foreground** khi mở phiên/mở composer để chọn nội dung gần hoặc gợi ý Spot; không subscribe liên tục ở hai bề mặt này. Không thêm background location, không gửi tọa độ định kỳ lên backend, không log tọa độ, không lưu lịch sử di chuyển. Khi rời Search, subscription phải được remove.
 - Nội dung `PRIVATE` không vào log, analytics, crash report hay context gửi cho AI.
 - Không log token, không log toạ độ, không log nội dung bài viết.

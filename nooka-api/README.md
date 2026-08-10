@@ -133,7 +133,7 @@ Production/default là secure-by-default: AUTH_ENABLED=true. Cấu hình SMTP kh
 | `/v3/api-docs` | `OPENAPI_ENABLED=true` |
 | `/swagger-ui.html` | `OPENAPI_ENABLED=true` |
 
-Foundation hiện chưa có business endpoint.
+Create check-in dùng `POST /v1/posts/check-ins` (`multipart/form-data`) với part JSON `post`, 1–5 part `photos` và header UUID `Idempotency-Key`. Part JSON chứa crop 4:5 riêng theo đúng thứ tự ảnh; `SELECTED_FRIENDS` nhận tối đa 50 mutual-friend UUID và bị PostAccess kiểm lại lúc đọc. Ảnh chỉ được công bố sau khi server decode/re-encode và lưu bản đã strip metadata.
 
 ## Chạy test
 
@@ -183,6 +183,13 @@ Test repository/Flyway dùng PostgreSQL thật qua Testcontainers nên Docker ph
 | `DIRECTIONS_CACHE_DESTINATION_GRID_DECIMALS` | `5` | giữ destination chính xác hơn |
 | `GOOGLE_ROUTES_API_KEY` | rỗng | fallback; không commit |
 | `GOOGLE_ROUTES_BASE_URL` | `https://routes.googleapis.com` | override nếu cần |
+| `NOOKA_MEDIA_PROVIDER` | `local` | `local` cho dev/test hoặc `r2` cho production |
+| `NOOKA_MEDIA_LOCAL_ROOT` | thư mục temp | nơi giữ ảnh private khi chạy local |
+| `NOOKA_R2_ENDPOINT` | rỗng | endpoint S3-compatible của Cloudflare R2 |
+| `NOOKA_R2_REGION` | `auto` | signing region của R2 |
+| `NOOKA_R2_BUCKET` | rỗng | bucket private; không bật public access |
+| `NOOKA_R2_ACCESS_KEY` | rỗng | backend-only; không commit |
+| `NOOKA_R2_SECRET_KEY` | rỗng | backend-only; không commit |
 
 Không commit credential custom auth, R2, database production hoặc token.
 
@@ -194,6 +201,7 @@ com.vinhung.nookaapi
 ├── user/        account và relationship graph
 ├── spot/        City, Area, Spot, Place, Experience
 ├── post/        Post, visibility policy, PostAccess
+├── media/       decode/re-encode, EXIF strip và storage port
 └── platform/    security và OpenAPI adapter
 ```
 

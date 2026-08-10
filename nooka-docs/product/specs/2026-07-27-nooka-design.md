@@ -450,6 +450,8 @@ Một check-in Post:
 - Có **một caption chung** cho cả album; không có caption riêng từng ảnh.
 - Có **1–5 ảnh** có thứ tự; ảnh đầu tiên là cover trên Feed/Spot detail.
 - Có thể trộn ảnh chụp trực tiếp và ảnh từ gallery, miễn tổng số ảnh không quá 5.
+- Camera trên thiết bị chụp ảnh thật; gallery được chọn nhiều ảnh trong giới hạn còn lại. Live Photo ở MVP chỉ lấy ảnh tĩnh, không upload paired MOV.
+- Mỗi ảnh giữ tỉ lệ gốc nhưng có một khung cắt 4:5 riêng cho Post. User được kéo và pinch-to-zoom từng ảnh; backend lưu zoom + offset chuẩn hoá để Feed/Spot detail dựng lại đúng khung đã chọn.
 - Không có `Verified Visit` public. Check-in là soft signal rằng user nói họ đã ghé; hệ thống không bảo đảm tuyệt đối.
 
 Entry point:
@@ -471,7 +473,7 @@ Màn Review Post:
 - Caption optional.
 - Hashtag optional, field riêng với giới hạn 10; một caption chung và một bộ hashtag chung cho toàn album.
 - `Place: {spot} ›`.
-- `Audience: Public / Followers / Close Friends / Private ›`.
+- `Audience: Public / Followers / Selected friends ›`. Composer không có lựa chọn `Only me`; khi chọn `Selected friends`, hàng avatar bên dưới là các account đang mutual follow và user phải chọn ít nhất một người.
 - `Visit time: Hidden ›` mặc định, user có thể đổi để hiển thị.
 - Primary CTA có chữ rõ: `Post check-in`.
 
@@ -589,6 +591,7 @@ Số 2 là lý do bài đăng phải có tag và chip, không chỉ có ảnh. �
 | `Public` | Mọi người, xuất hiện trong discovery |
 | `Followers` | Người follow |
 | `Close Friends` | Danh sách được chọn |
+| `Selected Friends` | Chỉ các bạn được chọn riêng cho Post đó và vẫn đang mutual follow |
 | `Private` | Chỉ chủ sở hữu |
 
 - Bài đầu của tài khoản mới mặc định `Public` để feed cộng đồng có supply; từ bài thứ hai trở đi composer nhớ lựa chọn audience gần nhất của user.
@@ -599,6 +602,7 @@ Số 2 là lý do bài đăng phải có tag và chip, không chỉ có ảnh. �
 - Không public địa chỉ nhà riêng.
 - Nội dung Private không được dùng cho public insight.
 - Audience `Close Friends` chỉ nhận các account hiện đang mutual follow và được chủ bài thêm vào danh sách. Unfollow ở bất kỳ phía nào lập tức làm account đó mất quyền Close Friends cho các lần kiểm tra visibility tiếp theo.
+- Audience `Selected Friends` lưu danh sách theo từng Post, không dùng avatar Spot hay một danh sách giả ở client. Backend kiểm tra membership và mutual follow trong mọi query Post; unfollow ở bất kỳ phía nào làm mất quyền ngay. Create composer chỉ đưa các account đang là bạn vào hàng avatar, tối đa 50 người được chọn.
 - Xóa Post không xóa row `Been` đã tạo từ check-in đó; hai object có vòng đời độc lập. Tuy nhiên không được dùng Been còn lại để làm lộ nội dung/visit vốn chỉ xuất hiện trong Post không công khai.
 
 Visibility và thời gian hiển thị là hai control riêng:

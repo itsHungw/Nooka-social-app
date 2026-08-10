@@ -2,7 +2,7 @@
 
 > Snapshot kỹ thuật lâu dài cho `nooka-api`. Product spec, migration và source hiện tại vẫn là nguồn sự thật cao hơn.
 
-**Cập nhật gần nhất:** 2026-08-09
+**Cập nhật gần nhất:** 2026-08-10
 
 ## Repository
 
@@ -34,6 +34,7 @@ Các application module cấp một:
 - `review`: review có cấu trúc, bộ câu hỏi dạng dữ liệu; `ReviewAccess` là cổng đọc.
 - `insight`: `SpotStats` — cửa duy nhất đọc số liệu tổng hợp. Không sở hữu bảng nào; phụ thuộc `post :: api`, `review :: api`, `tag :: api`.
 - `platform`: security/OpenAPI/auth integration packages.
+- `media`: decode/re-encode JPEG/PNG, strip metadata ở server và private storage port; local filesystem cho dev/test, Cloudflare R2 adapter cho production.
 
 Quy tắc đang được test:
 
@@ -50,7 +51,7 @@ Quy tắc đang được test:
 - Mọi đường đọc Post đi qua `post.api.PostAccess`.
 - `JpaPostAccess` và `PostRepository` package-private trong `post.repository`.
 - `PostVisibilityRules` ghép `user.query.RelationshipCriteria` vào cùng SQL.
-- Guest chỉ thấy Public; author thấy bài của mình; Followers/Close Friends đúng chiều; block hai chiều; soft-delete ẩn với mọi người.
+- Guest chỉ thấy Public của public profile; private profile override cả Post Public. Close Friends cần membership do author sở hữu và mutual follow; block hai chiều; soft-delete ẩn với mọi người.
 - R9: tác giả có `users.deleted_at` thì bài của họ ẩn với mọi người. Áp ở **cả hai** nhánh của `visibleTo`, gồm nhánh khách chưa đăng nhập.
 - Không phân biệt bài không tồn tại và bài không được phép xem ở public API.
 
@@ -76,6 +77,8 @@ Quy tắc đang được test:
 - `V7_2`: Place chỉ chứa tọa độ khi có đủ cặp latitude/longitude.
 - `V7_3`: `review_answers.option_id` bắt buộc thuộc đúng `question_id` bằng composite foreign key.
 - `V7_4`: `want_to_go.source_post_id` giữ Post đã tạo intent, bắt buộc cùng Spot; Want to go và Been được phép cùng tồn tại.
+- `V8_1`: private profile và nền schema follow request; visibility ép private-profile gate và mutual Close Friends trong SQL.
+- `V8_2`: Create Check-in — idempotency key, ordered private media public ID, hashtag tự do và visit time mặc định Hidden.
 - Modulith JDBC schema initializer bị tắt tường minh; completion mode là `delete`.
 
 **Cả 5 giai đoạn của thiết kế database đã triển khai.** Flyway chuẩn hoá `_` thành `.` nên `V3_1` là version 3.1 và sắp giữa V3 và V4. Thiết kế gốc: `../docs/superpowers/specs/2026-08-08-nooka-database-design.md`.
@@ -132,9 +135,17 @@ Full test cần Docker:
 
 Docker daemon phải chạy cho full suite Testcontainers; không được che prerequisite này bằng H2 hoặc skip test.
 
+## Capability Create Check-in đã triển khai
+
+- `POST /v1/posts/check-ins` nhận JSON + 1–5 JPEG/PNG, tối đa 10 MB/ảnh và 40 MB/request; author chỉ lấy từ authenticated principal.
+- `Idempotency-Key` unique theo author; retry trả lại cùng Post. `inspired_by_post_id` copy từ Want to go source trong transaction.
+- Ảnh được decode/re-encode ở server để strip EXIF/XMP/IPTC trước khi lưu. Object nằm private; media route kiểm visibility mỗi lần đọc.
+- `PostCreated` dùng durable Modulith listener; `Been` được upsert idempotently sau commit và response báo `PENDING`.
+- Live Photo MVP dùng phần ảnh tĩnh; paired MOV không upload vì video ngoài scope.
+- Composer lưu crop 4:5 riêng cho từng ảnh dưới dạng `crop_zoom` + offset chuẩn hoá; media response trả lại các giá trị này để mọi bề mặt dựng cùng một khung.
+- `SELECTED_FRIENDS` lưu audience theo từng Post. Create chỉ nhận tối đa 50 mutual friends; PostAccess kiểm tra cả membership và mutual follow tại thời điểm đọc nên unfollow thu hồi quyền ngay.
+
 ## Chưa triển khai
 
-- Chưa có Account/Post/Feed/Spot business controller hoặc application service.
-- Chưa có media upload, server-side EXIF stripping hoặc Cloudflare R2 adapter.
-- Schema đã có Want to go, Been và attribution; chưa có application service cho workflow này. Chưa có notification, report, comment, reaction, search hoặc Ask Nooka ở tầng nghiệp vụ.
+- Chưa có Follow Request use case/controller dù schema foundation đã có. Chưa có Feed/Spot suggestion lifecycle, notification, report, comment, reaction, search hoặc Ask Nooka ở tầng nghiệp vụ.
 - Security dùng opaque access token + rotating refresh session; principal là internal user UUID.

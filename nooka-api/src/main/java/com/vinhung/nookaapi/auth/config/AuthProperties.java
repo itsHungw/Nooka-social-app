@@ -8,6 +8,7 @@ public record AuthProperties(
         Duration accessTokenTtl,
         Duration refreshTokenTtl,
         Duration verificationCodeTtl,
+        Duration registrationCompletionTtl,
         Duration resetCodeTtl,
         int maxCodeAttempts,
         Email email) {

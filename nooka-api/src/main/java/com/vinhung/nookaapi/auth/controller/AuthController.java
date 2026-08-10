@@ -1,16 +1,19 @@
 package com.vinhung.nookaapi.auth.controller;
 
 import com.vinhung.nookaapi.auth.model.dto.AuthResponse;
+import com.vinhung.nookaapi.auth.model.dto.CompleteRegistrationRequest;
 import com.vinhung.nookaapi.auth.model.dto.ForgotPasswordRequest;
 import com.vinhung.nookaapi.auth.model.dto.LoginRequest;
 import com.vinhung.nookaapi.auth.model.dto.OAuthLoginRequest;
 import com.vinhung.nookaapi.auth.model.dto.LogoutRequest;
 import com.vinhung.nookaapi.auth.model.dto.MessageResponse;
 import com.vinhung.nookaapi.auth.model.dto.RefreshTokenRequest;
+import com.vinhung.nookaapi.auth.model.dto.RegistrationVerificationResponse;
 import com.vinhung.nookaapi.auth.model.dto.RegisterRequest;
 import com.vinhung.nookaapi.auth.model.dto.ResendVerificationRequest;
 import com.vinhung.nookaapi.auth.model.dto.ResetPasswordRequest;
 import com.vinhung.nookaapi.auth.model.dto.UserResponse;
+import com.vinhung.nookaapi.auth.model.dto.UsernameAvailabilityResponse;
 import com.vinhung.nookaapi.auth.model.dto.VerificationRequiredResponse;
 import com.vinhung.nookaapi.auth.model.dto.VerifyEmailRequest;
 import com.vinhung.nookaapi.auth.service.AuthService;
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,10 +44,19 @@ public class AuthController {
         return authService.register(request);
     }
 
+    @GetMapping("/username-availability")
+    UsernameAvailabilityResponse usernameAvailability(@RequestParam("username") String username) {
+        return new UsernameAvailabilityResponse(authService.isUsernameAvailable(username));
+    }
+
     @PostMapping("/verify-email")
-    MessageResponse verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
-        authService.verifyEmail(request.email(), request.code());
-        return new MessageResponse("Email verified");
+    RegistrationVerificationResponse verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        return authService.verifyEmail(request.email(), request.code());
+    }
+
+    @PostMapping("/register/complete")
+    AuthResponse completeRegistration(@Valid @RequestBody CompleteRegistrationRequest request) {
+        return authService.completeRegistration(request);
     }
 
     @PostMapping("/resend-verification")

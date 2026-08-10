@@ -8,7 +8,7 @@ import { t } from '@/lib/i18n';
 
 export default function NameInputScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ email?: string; password?: string }>();
+  const params = useLocalSearchParams<{ email?: string; registrationToken?: string }>();
   const { colors } = useNookaTheme();
 
   const [firstName, setFirstName] = useState('');

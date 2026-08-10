@@ -19,12 +19,7 @@ export class AuthApiError extends Error {
   }
 }
 
-async function request<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(API_BASE_URL + path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const payload = await response.json().catch(() => null) as { detail?: string } | null;
     throw new AuthApiError(response.status, payload?.detail ?? 'Request failed');
@@ -32,8 +27,38 @@ async function request<T>(path: string, body: unknown): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function register(input: { email: string; password: string; displayName: string; username: string }) {
-  return request<{ email: string }>('/auth/register', input);
+async function request<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(API_BASE_URL + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return parseResponse<T>(response);
+}
+
+async function getRequest<T>(path: string): Promise<T> {
+  const response = await fetch(API_BASE_URL + path);
+  return parseResponse<T>(response);
+}
+
+export type RegistrationVerificationResponse = {
+  registrationToken: string;
+  email: string;
+};
+
+export async function register(input: { email: string; password: string }) {
+  return request<{ message: string; email: string }>('/auth/register', input);
+}
+
+export async function checkUsernameAvailability(username: string) {
+  const response = await getRequest<{ available: boolean }>(
+    `/auth/username-availability?username=${encodeURIComponent(username.trim())}`,
+  );
+  return response.available;
+}
+
+export async function resendVerification(email: string) {
+  return request<{ message: string }>('/auth/resend-verification', { email });
 }
 
 export async function requestPasswordReset(email: string) {
@@ -45,7 +70,17 @@ export async function resetPassword(input: { email: string; code: string; newPas
 }
 
 export async function verifyEmail(input: { email: string; code: string }) {
-  return request<{ message: string }>('/auth/verify-email', input);
+  return request<RegistrationVerificationResponse>('/auth/verify-email', input);
+}
+
+export async function completeRegistration(input: {
+  registrationToken: string;
+  displayName: string;
+  username: string;
+}) {
+  const response = await request<AuthResponse>('/auth/register/complete', input);
+  await saveAuthTokens(response);
+  return response;
 }
 
 export async function login(input: { email: string; password: string }) {

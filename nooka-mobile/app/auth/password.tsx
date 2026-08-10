@@ -1,9 +1,20 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
+import { AuthApiError, register } from '@/lib/auth-api';
 import { t } from '@/lib/i18n';
 
 export default function PasswordInputScreen() {
@@ -14,12 +25,24 @@ export default function PasswordInputScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   const isValid = password.length >= 8;
 
-  const handleNext = () => {
-    if (!isValid) return;
-    router.push({ pathname: '/auth/otp', params: { email: params.email, password, purpose: 'signup' } });
+  const handleNext = async () => {
+    if (!isValid || isSubmitting || !params.email) return;
+
+    setIsSubmitting(true);
+    setHasError(false);
+    try {
+      await register({ email: params.email, password });
+      router.push({ pathname: '/auth/otp', params: { email: params.email, purpose: 'signup' } });
+    } catch (error) {
+      setHasError(error instanceof AuthApiError || error instanceof Error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -74,20 +97,25 @@ export default function PasswordInputScreen() {
           </Text>
 
           {/* Nút Tiếp tục ở đáy màn hình */}
+          {hasError && (
+            <Text style={[styles.errorText, { color: colors.accentInk }]}>{t('auth.registerError')}</Text>
+          )}
+
           <View style={styles.bottomSection}>
             <Button
               accessibilityLabel={t('auth.continueArrow')}
-              label={t('auth.continueArrow')}
+              label={isSubmitting ? t('auth.registerSubmitting') : t('auth.continueArrow')}
               onPress={handleNext}
               style={[
                 styles.continueButton,
                 {
                   backgroundColor: isValid ? colors.accent : colors.surfaceMuted,
-                  opacity: isValid ? 1 : 0.6,
+                  opacity: isValid && !isSubmitting ? 1 : 0.6,
                 },
               ]}
-              tone={isValid ? 'accent' : 'outline'}
+              tone={isValid && !isSubmitting ? 'accent' : 'outline'}
             />
+            {isSubmitting && <ActivityIndicator color={colors.accentInk} />}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -139,6 +167,12 @@ const styles = StyleSheet.create({
   toggleText: {
     fontSize: 13.5,
     fontWeight: '700',
+  },
+  errorText: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginTop: 18,
   },
   subtext: {
     fontSize: 13,

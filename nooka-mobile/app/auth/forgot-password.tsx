@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,20 +14,33 @@ import {
 
 import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
+import { AuthApiError, requestPasswordReset } from '@/lib/auth-api';
 import { t } from '@/lib/i18n';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const { colors } = useNookaTheme();
 
-  const [email, setEmail] = useState('ban@gmail.com');
+  const [email, setEmail] = useState('');
   const [isFocused, setIsFocused] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorKey, setErrorKey] = useState<'accountNotFound' | 'resetRequestError' | null>(null);
 
   const isValid = email.trim().length > 3 && email.includes('@');
 
-  const handleSendOtp = () => {
-    if (!isValid) return;
-    router.push({ pathname: '/auth/otp', params: { email, purpose: 'reset_password' } });
+  const handleSendOtp = async () => {
+    if (!isValid || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setErrorKey(null);
+    try {
+      await requestPasswordReset(email.trim());
+      router.push({ pathname: '/auth/otp', params: { email: email.trim(), purpose: 'reset_password' } });
+    } catch (error) {
+      setErrorKey(error instanceof AuthApiError && error.status === 404 ? 'accountNotFound' : 'resetRequestError');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -53,7 +67,11 @@ export default function ForgotPasswordScreen() {
               styles.inputBox,
               {
                 backgroundColor: colors.surfaceMuted,
-                borderColor: isFocused ? colors.accent : colors.borderSubtle,
+                borderColor: errorKey
+                  ? colors.mascotMouth
+                  : isFocused
+                    ? colors.accent
+                    : colors.borderSubtle,
               },
             ]}>
             <TextInput
@@ -73,19 +91,26 @@ export default function ForgotPasswordScreen() {
           </View>
 
           {/* Nút Gửi mã OTP & Link Quay lại đăng nhập */}
+          {errorKey && (
+            <Text style={[styles.errorText, { color: colors.mascotMouth }]}>{t(`auth.${errorKey}`)}</Text>
+          )}
+
           <View style={styles.bottomSection}>
+            {isSubmitting && (
+              <ActivityIndicator color={colors.accentInk} size="small" style={styles.loadingIndicator} />
+            )}
             <Button
               accessibilityLabel={t('auth.sendOtpBtn')}
-              label={t('auth.sendOtpBtn')}
+              label={isSubmitting ? t('auth.sendingResetCode') : t('auth.sendOtpBtn')}
               onPress={handleSendOtp}
               style={[
                 styles.sendButton,
                 {
                   backgroundColor: isValid ? colors.accent : colors.surfaceMuted,
-                  opacity: isValid ? 1 : 0.6,
+                  opacity: isValid && !isSubmitting ? 1 : 0.6,
                 },
               ]}
-              tone={isValid ? 'accent' : 'outline'}
+              tone={isValid && !isSubmitting ? 'accent' : 'outline'}
             />
 
             <Pressable
@@ -147,11 +172,20 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontWeight: '600',
   },
+  errorText: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginTop: 16,
+  },
   bottomSection: {
     marginTop: 'auto',
     paddingTop: 32,
     alignItems: 'center',
-    gap: 16,
+    gap: 10,
+  },
+  loadingIndicator: {
+    marginBottom: 2,
   },
   sendButton: {
     width: '100%',

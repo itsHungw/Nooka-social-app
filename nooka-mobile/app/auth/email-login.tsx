@@ -4,31 +4,36 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 
 import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
+import { AuthApiError, login } from '@/lib/auth-api';
 import { t } from '@/lib/i18n';
-import { useNookaDemo } from '@/providers/nooka-demo-provider';
 
 export default function EmailLoginScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ email?: string }>();
   const { colors } = useNookaTheme();
-  const { flash } = useNookaDemo();
 
   const [email, setEmail] = useState(params.email || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState<'email' | 'password' | null>('email');
   const [showError, setShowError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isValid = email.trim().length > 3 && password.length >= 6;
+  const isValid = email.trim().length > 3 && password.length >= 1;
 
-  const handleLogin = () => {
-    if (!isValid) return;
-    if (!showError && email.toLowerCase().includes('fail')) {
-      setShowError(true);
-      return;
+  const handleLogin = async () => {
+    if (!isValid || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setShowError(false);
+    try {
+      await login({ email: email.trim(), password });
+      router.replace('/(tabs)');
+    } catch (error) {
+      setShowError(error instanceof AuthApiError || error instanceof Error);
+    } finally {
+      setIsSubmitting(false);
     }
-    flash(t('auth.toastLoggedIn'));
-    router.replace('/(tabs)');
   };
 
   return (
@@ -126,10 +131,10 @@ export default function EmailLoginScreen() {
           <View style={styles.bottomSection}>
             <Button
               accessibilityLabel={t('auth.logInArrow')}
-              label={t('auth.logInArrow')}
+              label={isSubmitting ? t('auth.verifyingOtp') : t('auth.logInArrow')}
               onPress={handleLogin}
-              style={[styles.loginButton, { opacity: isValid ? 1 : 0.6 }]}
-              tone={isValid ? 'accent' : 'outline'}
+              style={[styles.loginButton, { opacity: isValid && !isSubmitting ? 1 : 0.6 }]}
+              tone={isValid && !isSubmitting ? 'accent' : 'outline'}
             />
 
             <Pressable

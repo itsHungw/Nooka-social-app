@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -71,6 +71,7 @@ export function PostAlbum({ photos, caption, onOpenSpot }: PostAlbumProps) {
   const safePhotos: PhotoTint[] = photos.length ? photos : ['photoWarm'];
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
+  const tapPressed = useSharedValue(0);
   const translateX = useSharedValue(0);
   const current = safePhotos[activeIndex];
   const previous = activeIndex > 0 ? safePhotos[activeIndex - 1] : null;
@@ -122,7 +123,27 @@ export function PostAlbum({ photos, caption, onOpenSpot }: PostAlbumProps) {
     [activeIndex, commitSwipe, isAlbum, safePhotos.length, translateX],
   );
 
+  const tap = useMemo(
+    () =>
+      Gesture.Tap()
+        .maxDistance(8)
+        .maxDuration(350)
+        .onBegin(() => {
+          tapPressed.value = 1;
+        })
+        .onFinalize(() => {
+          tapPressed.value = 0;
+        })
+        .onEnd((_, success) => {
+          if (success) runOnJS(onOpenSpot)();
+        }),
+    [onOpenSpot, tapPressed],
+  );
+
+  const composedGesture = useMemo(() => Gesture.Race(pan, tap), [pan, tap]);
+
   const frontStyle = useAnimatedStyle(() => ({
+    opacity: tapPressed.value ? 0.94 : 1,
     transform: reduceMotion
       ? [{ translateX: translateX.value }]
       : [
@@ -179,15 +200,17 @@ export function PostAlbum({ photos, caption, onOpenSpot }: PostAlbumProps) {
         </Animated.View>
       ) : null}
 
-      <GestureDetector gesture={pan}>
-        <Animated.View style={[styles.frontCard, frontStyle]}>
-          <Pressable
-            accessibilityLabel={t('feed.openAlbumPhoto', { count: activeIndex + 1, total: safePhotos.length })}
-            accessibilityRole="button"
-            onPress={onOpenSpot}
-            style={({ pressed }) => [styles.fill, { opacity: pressed ? 0.94 : 1 }]}>
-            <AlbumSurface caption={caption} index={activeIndex} photo={current} total={safePhotos.length} />
-          </Pressable>
+      <GestureDetector gesture={composedGesture}>
+        <Animated.View
+          accessibilityActions={[{ name: 'activate' }]}
+          accessibilityLabel={t('feed.openAlbumPhoto', { count: activeIndex + 1, total: safePhotos.length })}
+          accessibilityRole="button"
+          accessible
+          onAccessibilityAction={(event) => {
+            if (event.nativeEvent.actionName === 'activate') onOpenSpot();
+          }}
+          style={[styles.frontCard, frontStyle]}>
+          <AlbumSurface caption={caption} index={activeIndex} photo={current} total={safePhotos.length} />
         </Animated.View>
       </GestureDetector>
 
@@ -199,7 +222,6 @@ export function PostAlbum({ photos, caption, onOpenSpot }: PostAlbumProps) {
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
   shell: { flex: 1, marginHorizontal: 4, marginTop: 6, marginBottom: 2 },
   albumShell: { marginHorizontal: 10, marginTop: 16, marginBottom: 7 },
   backCard: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 22, overflow: 'hidden' },

@@ -1,22 +1,92 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  Vibration,
+} from 'react-native';
 
 import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
+import { checkEmailAvailability } from '@/lib/auth-api';
 import { t } from '@/lib/i18n';
+
+type EmailStatus = 'idle' | 'invalid' | 'checking' | 'available' | 'taken' | 'error';
 
 export default function EmailInputScreen() {
   const router = useRouter();
   const { colors } = useNookaTheme();
   const [email, setEmail] = useState('');
   const [isFocused, setIsFocused] = useState(true);
+  const [availability, setAvailability] = useState<EmailStatus>('idle');
 
-  const isValid = email.trim().length > 3 && email.includes('@');
+  useEffect(() => {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      setAvailability('idle');
+      return;
+    }
+
+    const simpleEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!normalizedEmail.includes('@') || normalizedEmail.length < 5 || !simpleEmailRegex.test(normalizedEmail)) {
+      setAvailability('invalid');
+      return;
+    }
+
+    let cancelled = false;
+    setAvailability('checking');
+    const timeout = setTimeout(async () => {
+      try {
+        const available = await checkEmailAvailability(normalizedEmail);
+        if (!cancelled) {
+          setAvailability(available ? 'available' : 'taken');
+        }
+      } catch {
+        if (!cancelled) {
+          setAvailability('error');
+        }
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [email]);
+
+  useEffect(() => {
+    if (availability === 'taken') {
+      Vibration.vibrate(120);
+    }
+  }, [availability]);
+
+  const isAvailable = availability === 'available';
+  const hasValidationError = availability === 'invalid' || availability === 'taken' || availability === 'error';
+  const statusMessage =
+    availability === 'invalid'
+      ? t('auth.emailInvalid')
+      : availability === 'taken'
+        ? t('auth.emailTaken')
+        : availability === 'error'
+          ? t('auth.emailCheckError')
+          : null;
 
   const handleNext = () => {
-    if (!isValid) return;
-    router.push({ pathname: '/auth/password', params: { email } });
+    if (!isAvailable) {
+      if (availability === 'taken') {
+        Vibration.vibrate(120);
+      }
+      return;
+    }
+    router.push({ pathname: '/auth/password', params: { email: email.trim() } });
   };
 
   return (
@@ -34,13 +104,18 @@ export default function EmailInputScreen() {
           {/* Tiêu đề */}
           <Text style={[styles.title, { color: colors.text }]}>{t('auth.whatIsYourEmail')}</Text>
 
-          {/* Khung Nhập Email */}
+          {/* Khung Nhập Email với nhãn Còn trống / Báo lỗi */}
           <View
             style={[
               styles.inputBox,
               {
                 backgroundColor: colors.surfaceMuted,
-                borderColor: isFocused ? colors.accent : colors.borderSubtle,
+                borderColor:
+                  hasValidationError && email.trim().length > 0
+                    ? colors.mascotMouth
+                    : isFocused
+                      ? colors.accent
+                      : colors.borderSubtle,
               },
             ]}>
             <TextInput
@@ -57,7 +132,23 @@ export default function EmailInputScreen() {
               style={[styles.input, { color: colors.text }]}
               value={email}
             />
+            {availability === 'checking' && <ActivityIndicator color={colors.accentInk} size="small" />}
+            {isAvailable && (
+              <View style={styles.availableBadge}>
+                <Ionicons color={colors.online} name="checkmark-circle" size={20} />
+              </View>
+            )}
           </View>
+
+          {/* Dòng cảnh báo lỗi dạng icon × và chữ đỏ */}
+          {statusMessage && email.trim().length > 0 && (
+            <View style={styles.statusRow}>
+              <View style={[styles.statusIcon, { backgroundColor: colors.mascotMouth }]}>
+                <Text style={[styles.statusIconText, { color: colors.onAccent }]}>{'\u00d7'}</Text>
+              </View>
+              <Text style={[styles.statusText, { color: colors.mascotMouth }]}>{statusMessage}</Text>
+            </View>
+          )}
 
           {/* Chú thích email */}
           <Text style={[styles.subtext, { color: colors.textMuted }]}>{t('auth.emailSubtext')}</Text>
@@ -73,10 +164,11 @@ export default function EmailInputScreen() {
 
             <Button
               accessibilityLabel={t('auth.continueArrow')}
+              disabled={!isAvailable}
               label={t('auth.continueArrow')}
               onPress={handleNext}
-              style={[styles.continueButton, { opacity: isValid ? 1 : 0.5 }]}
-              tone="accent"
+              style={[styles.continueButton, { opacity: isAvailable ? 1 : 0.5 }]}
+              tone={isAvailable ? 'accent' : 'outline'}
             />
           </View>
         </ScrollView>
@@ -113,12 +205,43 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1.5,
     paddingHorizontal: 16,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   input: {
+    flex: 1,
     fontSize: 16,
     lineHeight: 22,
     fontWeight: '600',
+  },
+  availableBadge: {
+    paddingLeft: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 14,
+  },
+  statusIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusIconText: {
+    fontSize: 17,
+    lineHeight: 20,
+    fontWeight: '900',
+  },
+  statusText: {
+    flex: 1,
+    fontSize: 13.5,
+    lineHeight: 19,
+    fontWeight: '700',
   },
   subtext: {
     fontSize: 13,

@@ -1,11 +1,41 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  Vibration,
+} from 'react-native';
 
 import { Button, CircleButton, ScreenShell } from '@/components/nooka/ui';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { AuthApiError, login } from '@/lib/auth-api';
 import { t } from '@/lib/i18n';
+
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_UNTIL_KEY = '@nooka/login-lockout-until';
+const FAILED_ATTEMPTS_KEY = '@nooka/login-failed-attempts';
+const LOCKOUT_LEVEL_KEY = '@nooka/login-lockout-level';
+
+function getLockoutDurationSeconds(level: number): number {
+  if (level <= 1) return 180; // 3 minutes for 1st lockout
+  if (level === 2) return 300; // 5 minutes for 2nd lockout
+  if (level === 3) return 900; // 15 minutes for 3rd lockout
+  return 1800; // 30 minutes for 4th+ lockout
+}
+
+function formatCountdown(totalSeconds: number): string {
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
 
 export default function EmailLoginScreen() {
   const router = useRouter();
@@ -18,19 +48,115 @@ export default function EmailLoginScreen() {
   const [focusedField, setFocusedField] = useState<'email' | 'password' | null>('email');
   const [showError, setShowError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutLevel, setLockoutLevel] = useState(0);
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
 
+  const isLockedOut = lockoutSeconds > 0;
   const isValid = email.trim().length > 3 && password.length >= 1;
 
+  useEffect(() => {
+    let active = true;
+    const checkPersistedLockout = async () => {
+      try {
+        const [untilStr, failedStr, levelStr] = await Promise.all([
+          AsyncStorage.getItem(LOCKOUT_UNTIL_KEY),
+          AsyncStorage.getItem(FAILED_ATTEMPTS_KEY),
+          AsyncStorage.getItem(LOCKOUT_LEVEL_KEY),
+        ]);
+
+        if (!active) return;
+
+        if (levelStr) {
+          setLockoutLevel(Number(levelStr));
+        }
+
+        if (untilStr) {
+          const until = Number(untilStr);
+          const remainingMs = until - Date.now();
+          if (remainingMs > 0) {
+            const remainingSecs = Math.ceil(remainingMs / 1000);
+            setLockoutSeconds(remainingSecs);
+            setFailedAttempts(MAX_FAILED_ATTEMPTS);
+            return;
+          } else {
+            await Promise.all([
+              AsyncStorage.removeItem(LOCKOUT_UNTIL_KEY),
+              AsyncStorage.removeItem(FAILED_ATTEMPTS_KEY),
+            ]);
+          }
+        }
+
+        if (failedStr) {
+          setFailedAttempts(Number(failedStr));
+        }
+      } catch {
+        // Fallback silently if storage read fails
+      }
+    };
+
+    void checkPersistedLockout();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setLockoutSeconds((prev) => {
+        if (prev <= 1) {
+          setFailedAttempts(0);
+          void Promise.all([
+            AsyncStorage.removeItem(LOCKOUT_UNTIL_KEY),
+            AsyncStorage.removeItem(FAILED_ATTEMPTS_KEY),
+          ]).catch(() => undefined);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutSeconds]);
+
   const handleLogin = async () => {
-    if (!isValid || isSubmitting) return;
+    if (!isValid || isSubmitting || isLockedOut) return;
 
     setIsSubmitting(true);
     setShowError(false);
     try {
       await login({ email: email.trim(), password });
+      setFailedAttempts(0);
+      setLockoutLevel(0);
+      void Promise.all([
+        AsyncStorage.removeItem(LOCKOUT_UNTIL_KEY),
+        AsyncStorage.removeItem(FAILED_ATTEMPTS_KEY),
+        AsyncStorage.removeItem(LOCKOUT_LEVEL_KEY),
+      ]).catch(() => undefined);
       router.replace('/(tabs)');
     } catch (error) {
-      setShowError(error instanceof AuthApiError || error instanceof Error);
+      const nextFailed = failedAttempts + 1;
+      setFailedAttempts(nextFailed);
+      void AsyncStorage.setItem(FAILED_ATTEMPTS_KEY, String(nextFailed)).catch(() => undefined);
+
+      if (nextFailed >= MAX_FAILED_ATTEMPTS || (error instanceof AuthApiError && error.status === 429)) {
+        const nextLevel = lockoutLevel + 1;
+        setLockoutLevel(nextLevel);
+        const durationSecs = getLockoutDurationSeconds(nextLevel);
+        const lockoutUntil = Date.now() + durationSecs * 1000;
+
+        void Promise.all([
+          AsyncStorage.setItem(LOCKOUT_LEVEL_KEY, String(nextLevel)),
+          AsyncStorage.setItem(LOCKOUT_UNTIL_KEY, String(lockoutUntil)),
+        ]).catch(() => undefined);
+
+        setLockoutSeconds(durationSecs);
+        Vibration.vibrate(120);
+        setShowError(false);
+      } else {
+        setShowError(true);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -67,6 +193,7 @@ export default function EmailLoginScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoFocus
+                editable={!isLockedOut}
                 keyboardType="email-address"
                 onBlur={() => setFocusedField(null)}
                 onChangeText={setEmail}
@@ -91,6 +218,7 @@ export default function EmailLoginScreen() {
                 accessibilityLabel={t('auth.passwordPlaceholder')}
                 autoCapitalize="none"
                 autoCorrect={false}
+                editable={!isLockedOut}
                 onBlur={() => setFocusedField(null)}
                 onChangeText={setPassword}
                 onFocus={() => setFocusedField('password')}
@@ -108,16 +236,24 @@ export default function EmailLoginScreen() {
             </View>
           </View>
 
-          {/* Thẻ Cảnh báo sai mật khẩu (Màn 3f) */}
-          {showError && (
-            <View
-              style={[styles.errorBanner, { backgroundColor: colors.accentSoft, borderColor: colors.accentStrong }]}>
-              <View style={[styles.errorIconCircle, { backgroundColor: colors.accent }]}>
-                <Text style={[styles.errorIconText, { color: colors.onAccent }]}>!</Text>
+          {/* Cảnh báo sai mật khẩu / Thử quá nhiều lần có đếm ngược (dạng status row không khung) */}
+          {isLockedOut ? (
+            <View style={styles.statusRow}>
+              <View style={[styles.statusIcon, { backgroundColor: colors.mascotMouth }]}>
+                <Ionicons color={colors.onAccent} name="time-outline" size={14} />
               </View>
-              <Text style={[styles.errorText, { color: colors.text }]}>{t('auth.emailLoginError')}</Text>
+              <Text style={[styles.statusText, { color: colors.mascotMouth }]}>
+                {t('auth.tooManyAttemptsDesc', { time: formatCountdown(lockoutSeconds) })}
+              </Text>
             </View>
-          )}
+          ) : showError ? (
+            <View style={styles.statusRow}>
+              <View style={[styles.statusIcon, { backgroundColor: colors.mascotMouth }]}>
+                <Text style={[styles.statusIconText, { color: colors.onAccent }]}>{'\u00d7'}</Text>
+              </View>
+              <Text style={[styles.statusText, { color: colors.mascotMouth }]}>{t('auth.emailLoginError')}</Text>
+            </View>
+          ) : null}
 
           {/* Link Quên mật khẩu? */}
           <Pressable
@@ -131,10 +267,21 @@ export default function EmailLoginScreen() {
           <View style={styles.bottomSection}>
             <Button
               accessibilityLabel={t('auth.logInArrow')}
-              label={isSubmitting ? t('auth.verifyingOtp') : t('auth.logInArrow')}
+              disabled={!isValid || isSubmitting || isLockedOut}
+              label={
+                isLockedOut
+                  ? t('auth.lockoutButtonText', { time: formatCountdown(lockoutSeconds) })
+                  : isSubmitting
+                    ? t('auth.verifyingOtp')
+                    : t('auth.logInArrow')
+              }
+              loading={isSubmitting}
               onPress={handleLogin}
-              style={[styles.loginButton, { opacity: isValid && !isSubmitting ? 1 : 0.6 }]}
-              tone={isValid && !isSubmitting ? 'accent' : 'outline'}
+              style={[
+                styles.loginButton,
+                { opacity: isValid && !isSubmitting && !isLockedOut ? 1 : 0.5 },
+              ]}
+              tone={isValid && !isSubmitting && !isLockedOut ? 'accent' : 'outline'}
             />
 
             <Pressable
@@ -201,37 +348,32 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     fontWeight: '700',
   },
-  errorBanner: {
-    width: '100%',
-    marginTop: 16,
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 14,
+  statusRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 10,
+    marginTop: 14,
   },
-  errorIconCircle: {
+  statusIcon: {
     width: 22,
     height: 22,
     borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 1,
   },
-  errorIconText: {
-    fontSize: 13,
+  statusIconText: {
+    fontSize: 17,
+    lineHeight: 20,
     fontWeight: '900',
-    lineHeight: 16,
   },
-  errorText: {
+  statusText: {
     flex: 1,
-    fontSize: 12.5,
-    lineHeight: 17,
-    fontWeight: '500',
+    fontSize: 13.5,
+    lineHeight: 19,
+    fontWeight: '700',
   },
   forgotButton: {
-    marginTop: 14,
+    marginTop: 26,
     alignSelf: 'center',
   },
   forgotText: {

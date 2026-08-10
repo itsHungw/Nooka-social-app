@@ -1,7 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -105,6 +104,7 @@ export default function PasswordInputScreen() {
             <Button
               accessibilityLabel={t('auth.continueArrow')}
               label={isSubmitting ? t('auth.registerSubmitting') : t('auth.continueArrow')}
+              loading={isSubmitting}
               onPress={handleNext}
               style={[
                 styles.continueButton,
@@ -115,7 +115,6 @@ export default function PasswordInputScreen() {
               ]}
               tone={isValid && !isSubmitting ? 'accent' : 'outline'}
             />
-            {isSubmitting && <ActivityIndicator color={colors.accentInk} />}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

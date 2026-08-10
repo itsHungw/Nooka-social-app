@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -96,12 +95,10 @@ export default function ForgotPasswordScreen() {
           )}
 
           <View style={styles.bottomSection}>
-            {isSubmitting && (
-              <ActivityIndicator color={colors.accentInk} size="small" style={styles.loadingIndicator} />
-            )}
             <Button
               accessibilityLabel={t('auth.sendOtpBtn')}
               label={isSubmitting ? t('auth.sendingResetCode') : t('auth.sendOtpBtn')}
+              loading={isSubmitting}
               onPress={handleSendOtp}
               style={[
                 styles.sendButton,
@@ -183,9 +180,6 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     alignItems: 'center',
     gap: 10,
-  },
-  loadingIndicator: {
-    marginBottom: 2,
   },
   sendButton: {
     width: '100%',

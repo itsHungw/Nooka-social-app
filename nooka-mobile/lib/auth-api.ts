@@ -57,6 +57,13 @@ export async function checkUsernameAvailability(username: string) {
   return response.available;
 }
 
+export async function checkEmailAvailability(email: string) {
+  const response = await getRequest<{ available: boolean }>(
+    `/auth/email-availability?email=${encodeURIComponent(email.trim())}`,
+  );
+  return response.available;
+}
+
 export async function resendVerification(email: string) {
   return request<{ message: string }>('/auth/resend-verification', { email });
 }

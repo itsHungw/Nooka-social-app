@@ -532,6 +532,8 @@
     "account": "Tài khoản",
     "logout": "Đăng xuất",
     "logoutDescription": "Đăng xuất khỏi tài khoản trên thiết bị này",
+    "logoutConfirmTitle": "Đăng xuất khỏi Nooka?",
+    "logoutConfirmMessage": "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản trên thiết bị này không?",
     "logoutToast": "Đã đăng xuất khỏi Nooka"
   },
   "mascot": {

@@ -532,6 +532,8 @@
     "account": "Account",
     "logout": "Log out",
     "logoutDescription": "Log out of your account on this device",
+    "logoutConfirmTitle": "Log out of Nooka?",
+    "logoutConfirmMessage": "Are you sure you want to log out of your account on this device?",
     "logoutToast": "Logged out of Nooka"
   },
   "mascot": {

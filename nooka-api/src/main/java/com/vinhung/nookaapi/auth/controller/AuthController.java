@@ -2,6 +2,7 @@ package com.vinhung.nookaapi.auth.controller;
 
 import com.vinhung.nookaapi.auth.model.dto.AuthResponse;
 import com.vinhung.nookaapi.auth.model.dto.CompleteRegistrationRequest;
+import com.vinhung.nookaapi.auth.model.dto.EmailAvailabilityResponse;
 import com.vinhung.nookaapi.auth.model.dto.ForgotPasswordRequest;
 import com.vinhung.nookaapi.auth.model.dto.LoginRequest;
 import com.vinhung.nookaapi.auth.model.dto.OAuthLoginRequest;
@@ -47,6 +48,11 @@ public class AuthController {
     @GetMapping("/username-availability")
     UsernameAvailabilityResponse usernameAvailability(@RequestParam("username") String username) {
         return new UsernameAvailabilityResponse(authService.isUsernameAvailable(username));
+    }
+
+    @GetMapping("/email-availability")
+    EmailAvailabilityResponse emailAvailability(@RequestParam("email") String email) {
+        return new EmailAvailabilityResponse(authService.isEmailAvailable(email));
     }
 
     @PostMapping("/verify-email")

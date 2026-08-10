@@ -57,6 +57,7 @@ public class AuthService {
     private final EmailSender emailSender;
     private final Clock clock;
     private final List<OAuthIdentityVerifier> oauthVerifiers;
+    private final LoginRateLimiter rateLimiter;
 
     @Transactional
     public VerificationRequiredResponse register(RegisterRequest request) {
@@ -139,6 +140,17 @@ public class AuthService {
                 && !users.existsByUsernameIgnoreCase(normalizedUsername);
     }
 
+    @Transactional(readOnly = true)
+    public boolean isEmailAvailable(String email) {
+        if (email == null) {
+            return false;
+        }
+        String normalizedEmail = normalizeEmail(email);
+        return normalizedEmail.contains("@")
+                && normalizedEmail.length() >= 5
+                && !users.existsByEmailIgnoreCase(normalizedEmail);
+    }
+
     @Transactional
     public void resendVerification(String email) {
         String normalizedEmail = normalizeEmail(email);
@@ -166,14 +178,27 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        User user = users.findByEmailIgnoreCase(normalizeEmail(request.email()))
-                .orElseThrow(() -> new AuthException(HttpStatus.UNAUTHORIZED, INVALID_CREDENTIALS));
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        String normalizedEmail = normalizeEmail(request.email());
+
+        long remainingLockoutSeconds = rateLimiter.getRemainingLockoutSeconds(normalizedEmail);
+        if (remainingLockoutSeconds > 0) {
+            throw new AuthException(HttpStatus.TOO_MANY_REQUESTS, "Too many failed login attempts. Please try again later.");
+        }
+
+        User user = users.findByEmailIgnoreCase(normalizedEmail).orElse(null);
+        if (user == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            long lockoutDuration = rateLimiter.recordFailedAttempt(normalizedEmail);
+            if (lockoutDuration > 0) {
+                throw new AuthException(HttpStatus.TOO_MANY_REQUESTS, "Too many failed login attempts. Please try again later.");
+            }
             throw new AuthException(HttpStatus.UNAUTHORIZED, INVALID_CREDENTIALS);
         }
+
         if (!user.isEmailVerified()) {
             throw new AuthException(HttpStatus.FORBIDDEN, "Email verification is required");
         }
+
+        rateLimiter.resetOnSuccess(normalizedEmail);
         return createSession(user);
     }
 

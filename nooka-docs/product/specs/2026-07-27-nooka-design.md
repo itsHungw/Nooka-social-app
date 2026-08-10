@@ -4,7 +4,8 @@
 |---|---|
 | **Codename** | Nooka *(tạm thời — chờ bài test 5 người + tra nhãn hiệu)* |
 | **Ngày** | 2026-07-27 |
-| **Trạng thái** | Concept đã khóa, chờ review trước khi lập kế hoạch triển khai |
+| **Cập nhật gần nhất** | 2026-08-10 — khóa Create/check-in album, Spot suggestion, feed cold start và default privacy |
+| **Trạng thái** | Concept MVP đang được triển khai; các câu hỏi mở ở §18 vẫn phải chốt trước màn hình liên quan |
 | **Bối cảnh** | Pet project làm chuẩn, để ngỏ khả năng thành startup nhỏ |
 | **Thị trường đầu** | TP.HCM |
 | **Ngôn ngữ UI** | Tiếng Anh là locale gốc; i18n từ ngày đầu; tiếng Việt thêm sau |
@@ -43,9 +44,9 @@ Someone goes somewhere
 
 1. Visual-first. Ảnh là nội dung chính; chữ chỉ xuất hiện khi user chủ động mở.
 2. **Mọi bài đăng phải gắn với một địa điểm thật.** Không có social post tự do.
-3. Social graph là **follow một chiều**; mutual follow được đối xử như quan hệ bạn bè. Close Friends là danh sách riêng tư một chiều để kiểm soát nội dung nhạy cảm.
+3. Social graph là **follow một chiều**; mutual follow tạo trạng thái bạn bè. Private profile dùng follow request một chiều; Close Friends chỉ hợp lệ trong khi hai người còn follow lẫn nhau.
 4. Feed là **vertical scroll**. Tinder-style swipe không có trong bản đầu; có thể thử sau trong một mode riêng.
-5. Hai chế độ sử dụng, **một loại card duy nhất** — chỉ khác đơn vị xếp hạng.
+5. Hai chế độ sử dụng dùng **một visual language, hai biến thể card theo ngữ cảnh**: Home là post-first; Search và `Ask Nooka` là spot-first. Không ép hai đối tượng khác nhau vào cùng một hierarchy.
 6. Search là hybrid: universal search cho truy vấn rõ + `Ask Nooka` cho nhu cầu mơ hồ.
 7. Đơn vị xếp hạng khác nhau theo bề mặt: Home là post-first, Intent/Search là place-first.
 8. Hierarchy dữ liệu: `City → Area → Place → Post`. Topic **không** sở hữu dữ liệu, nó chỉ là một lăng kính lọc.
@@ -54,6 +55,15 @@ Someone goes somewhere
 11. User kiểm soát audience của từng bài đăng.
 12. MVP tập trung TP.HCM, và trong TP.HCM còn thu hẹp thêm (xem §11).
 13. Place là engine giữ chân. Experience là engine doanh thu.
+14. Một check-in Post có **1 Spot, 1 caption chung, 1 visibility và 1–5 ảnh có thứ tự**; ảnh đầu tiên là cover.
+15. Check-in nghĩa là user đã thật sự ghé, nhưng có thể đăng sau chuyến đi và có thể dùng ảnh từ gallery. Không hiển thị nhãn `Verified Visit`.
+16. Từ nút `+`, app chỉ xin **một lần foreground location** để gợi ý Spot gần nhất; không cập nhật liên tục trong composer và không bắt buộc GPS.
+17. Spot chưa tồn tại đi qua luồng **đề xuất Spot**: chống trùng trước, chờ duyệt/merge trước khi xuất hiện công khai.
+18. Bài đầu của tài khoản mới mặc định `Public`; các bài sau nhớ lựa chọn audience gần nhất, nhưng user luôn có thể đổi trước khi đăng.
+19. User mới chưa follow ai vẫn có Home feed: ưu tiên Post public gần khu vực hoặc popular trong khu vực. Khi đã có follow/mutual follow, feed chuyển sang friend-first.
+20. Hashtag là metadata tự do của Post, tối đa 10 hashtag; có field riêng trong composer và bấm được để mở Search theo hashtag. Hashtag không phải Spot tag và chưa có follow hashtag ở MVP.
+21. Home là một feed hữu hạn: sau khi hết nội dung friend/nearby/popular đủ chất lượng, hiển thị trạng thái đã xem hết và gợi ý kết nối thay vì lặp lại bài.
+22. Chỉ có một check-in draft local; draft hết hạn 7 ngày sau lần chỉnh sửa gần nhất. Upload dở được giữ local và tự tiếp tục, nhưng Post chưa công khai trước khi publish hoàn tất.
 
 ---
 
@@ -64,11 +74,14 @@ Someone goes somewhere
 ```
 Follow (một chiều)     → thấy bài của người đó
 Mutual follow          → được đối xử như bạn bè
-Close Friends          → danh sách một chiều, riêng tư, không thông báo cho người được thêm
+Private profile        → follow tạo request; accept mới tạo Follow
+Close Friends          → danh sách riêng tư, chỉ hợp lệ khi mutual follow
 Block                  → chặn mọi tương tác hai chiều
 ```
 
-Không có friend request hai chiều. Lý do: cơ chế đó tạo cold start rất nặng và giới hạn Nooka thành một group chat có hình ảnh.
+Không có friend request hai chiều hoặc entity Friend độc lập. `Friend` là trạng thái suy ra khi hai Follow cùng tồn tại. Nếu một phía unfollow thì trạng thái Friend kết thúc và mọi Close Friends relation giữa hai account bị gỡ. Public profile tạo Follow ngay; private profile tạo Follow Request để chủ tài khoản accept/reject.
+
+Follow Request không tự hết hạn; người gửi được cancel, người nhận được accept/reject. Nếu account chuyển từ public sang private thì follower hiện có vẫn được giữ. Mutual follow lại sau một lần unfollow không tự khôi phục Close Friends cũ.
 
 Mỗi bài đăng phải cho user biết **vì sao mình thấy nó**:
 
@@ -82,11 +95,18 @@ New around Bình Thạnh this week
 ### Điều Nooka không sao chép từ mạng xã hội thường
 
 - Không lấy số follower làm tín hiệu nổi bật.
-- Không lấy Like làm hành động chính.
+- Không lấy Like làm hành động chính hoặc tín hiệu xếp hạng chính.
 - Không biến mọi người thành creator.
 - Không để ảnh đẹp thắng trải nghiệm hữu ích.
 
-Hành động được ưu tiên: `Want to go`, `Been`, `Ask`, `Invite`.
+Nooka vẫn dùng mental model quen thuộc để user không phải học lại:
+
+- Trên **Post**: `React`, `Comment`, `Share`.
+- Trên **Spot**: `Want to go`; `Directions` và `Check in` ở trang chi tiết.
+- `Been` là trạng thái được xác nhận bởi check-in/Post, **không phải nút bấm**.
+- `Ask author` là một entry point mở composer Comment với context của Post, không phải interaction riêng.
+
+`Repost` chưa có trong MVP. Nó tạo thêm bài trong feed nhưng không giúp chứng minh vòng lặp đi thật, đồng thời kéo theo visibility, attribution, moderation và xử lý khi bài gốc bị xoá.
 
 ---
 
@@ -97,11 +117,18 @@ Hành động được ưu tiên: `Want to go`, `Been`, `Ask`, `Invite`.
 ```
 Open app
   → Scroll posts from people you follow + community
-  → React / Comment / Want to go / Share
+  → React / Comment / Share the post
+  → Want to go on the spot attached to that post
   → Follow people with similar taste
 ```
 
-Xếp hạng theo: người + độ mới.
+Home là **blended feed**, không phải màn Following rỗng và cũng không phải Explore thuần thuật toán. Xếp hạng thay đổi theo trạng thái social graph:
+
+- **User mới / chưa follow ai:** ưu tiên Post `Public` gần khu vực hiện tại hoặc khu vực onboarding, sau đó là popular trong cụm đang mở, sau đó là nội dung seed chất lượng. Không để feed trống chỉ vì user chưa có bạn.
+- **User đã follow hoặc có mutual follow:** ưu tiên Post từ người user follow/mutual follow, sau đó mới đến người cùng gu/cùng khu vực và nội dung public chất lượng.
+- Khi không còn Post đủ chất lượng, feed kết thúc bằng `Bạn đã xem hết` và section gợi ý người để follow. Gợi ý dùng mutual connection, gu tương đồng và **thành phố/khu vực thô**; không dùng vị trí chính xác hay lịch sử di chuyển.
+
+Mọi card được đưa vào Home phải có dòng giải thích ngắn như `New around Bình Thạnh`, `Popular near you`, `You follow each other`, hoặc `3 people you follow have been here`.
 
 Nguồn nội dung, theo thứ tự ưu tiên:
 1. Người user follow, hoặc follow lẫn nhau
@@ -143,7 +170,12 @@ AI **không** trả về đoạn văn. Output luôn là feed hình ảnh.
 
 ## 5. Hệ thống card
 
-Một loại card duy nhất cho cả hai chế độ. Điều này quan trọng: hai giao diện khác nhau sẽ khiến user cảm thấy đang dùng hai app.
+Hai chế độ dùng cùng token, typography, media treatment và cách trình bày bằng chứng xã hội, nhưng hierarchy phải theo đúng đối tượng:
+
+- **Home — `PostFeedCard`, post-first:** tác giả → media/caption → React/Comment/Share → Spot attachment có `Want to go`.
+- **Search và Ask Nooka — `SpotResultCard`, spot-first:** Spot → lý do phù hợp → bằng chứng từ Post/review → `Want to go`.
+
+Search và `Ask Nooka` phải dùng cùng một `SpotResultCard`. Home không được dùng card spot-first vì sẽ làm mờ người đang kể trải nghiệm; ngược lại Search không được dựng như một social Post vì user đang ra quyết định về địa điểm.
 
 **Tầng 1 — Glance** (hiểu trong 1–2 giây, không cần đọc):
 
@@ -152,13 +184,13 @@ Một loại card duy nhất cho cả hai chế độ. Điều này quan trọng
 │                             │
 │      [ photo / video ]      │
 │                             │
-│  The Workshop Coffee        │
-│  District 1 · Quiet · Date  │
-│                             │
-│  Spotted by Linh            │
+│  Linh · checked in          │
 │  You follow each other      │
 │                             │
-│  [♡]  [Want to go]  [↗]     │
+│  [♡ React] [Comment] [Share]│
+│  ─────────────────────────  │
+│  The Workshop Coffee        │
+│  D1 · Quiet     [Want to go]│
 └─────────────────────────────┘
 ```
 
@@ -168,7 +200,7 @@ Trong Intent Mode, thêm một dòng lý do phù hợp:
 Matches: quiet, under 500K, 2 friends have been
 ```
 
-**Tầng 2 — Quick context** (một thao tác): tags, occasion, khoảng giá, một điều cần biết, những người đã đi.
+**Tầng 2 — Quick context** (một thao tác): tags, occasion, khoảng giá, một điều cần biết, những người đã đi. Bấm tên/khối Spot mở Spot detail; bấm media không được âm thầm thay đổi trạng thái Spot.
 
 **Tầng 3 — Decision detail** (chỉ khi user thật sự cân nhắc): các bài đăng khác của place, insight tổng hợp, comment và reaction, ý kiến trái chiều, bản đồ, hỏi người đăng, rủ bạn.
 
@@ -253,19 +285,49 @@ Topic / Selection  ──lọc──▶  nhiều Place và Experience
 
 ### Place đến từ đâu — đã chốt
 
-**User-created + seed thủ công. Không dùng Google Places API làm nguồn dữ liệu gốc.**
+**Seed thủ công + user-suggested. Không dùng Google Places API làm nguồn dữ liệu gốc.**
 
 Lý do: điều khoản của Google cấm xây dựng và lưu trữ database địa điểm riêng từ dữ liệu của họ, tức là nó phá đúng moat ở §12; §11 vốn đã yêu cầu seed 300–500 place bằng tay; và ở quy mô ba quận thì làm tay khả thi.
 
-OpenStreetMap có thể dùng để đối chiếu tọa độ. Google Places autocomplete chỉ được thêm sau, như tiện ích tìm kiếm, không phải nguồn lưu trữ.
+OpenStreetMap có thể dùng để lookup/đối chiếu tên và tọa độ, nhưng Nooka vẫn giữ canonical Spot database độc lập. Không crawl/bulk import Google Maps; Google Places autocomplete nếu được thêm sau chỉ là tiện ích tìm kiếm tuân thủ điều khoản, không phải nguồn lưu trữ.
 
-Hệ quả: cần cơ chế **chống trùng place** ngay từ đầu (so tên + tọa độ trong bán kính, gợi ý merge), vì user tạo place tự do sẽ sinh ra bản trùng.
+User thường không "tạo Spot chính thức" ngay. Họ **đề xuất Spot còn thiếu** trong lúc check-in hoặc từ Search; hệ thống so tên + tọa độ + area + loại hình trong bán kính gần, gợi ý Spot trùng trước, rồi mới cho gửi đề xuất.
+
+Vòng đời đề xuất:
+
+| Trạng thái | Ý nghĩa | Hiển thị |
+|---|---|---|
+| `PENDING` | User gửi Spot mới, đang chờ kiểm duyệt/chống trùng | Chỉ người đề xuất thấy trong draft/Post của họ; không vào Search, Home, Spot detail công khai hoặc public insight |
+| `APPROVED` | Moderator/admin duyệt thành Spot chính thức | Được dùng như Spot bình thường |
+| `MERGED` | Đề xuất trùng Spot đã có | Post/draft chuyển sang Spot đích; không tạo bản trùng |
+| `REJECTED` | Spam, phá hoại, không phải địa điểm thật, hoặc dữ liệu không đủ | Không công khai; user thấy lý do ngắn và có thể chọn Spot khác |
+
+Vai trò:
+
+- User thường được đề xuất Spot và check-in vào đề xuất của chính mình, nhưng đề xuất chưa duyệt không tạo nội dung cộng đồng.
+- Moderator duyệt, reject, merge Spot suggestion và xử lý report trong phạm vi thành phố/khu vực được Admin giao.
+- Admin quản lý taxonomy, quyền moderator, seed dữ liệu và các thao tác sửa/merge nhạy cảm.
+- Chủ quán/owner xuất hiện qua flow claim ở §12: họ được sửa thông tin vận hành của Spot đã duyệt, nhưng **không phải con đường duy nhất để thêm Spot**. Owner cũng không được tự tạo Spot công khai để tránh spam/trùng/lợi dụng quảng cáo.
+
+Mô hình này gần với mental model của Google Maps: người dùng có thể gửi địa điểm còn thiếu hoặc đề xuất sửa, nhưng nội dung đóng góp phải qua kiểm tra chính sách/chống spam trước khi trở thành dữ liệu tin cậy. Nooka học cơ chế kiểm duyệt đó, không dùng Google làm nguồn database.
 
 ---
 
 **Place và Experience là hai loại `Spot` ngang hàng**, cùng nhận Post, cùng nhận `Want to go` và `Been`, cùng xuất hiện trong feed dưới một loại card. Khác nhau ở chỗ Experience có giá vé và có thể gắn với nhiều địa điểm hoặc không có địa điểm cố định.
 
 Bản đầu **chưa có booking**, nhưng Experience phải tồn tại như một object riêng ngay từ schema đầu tiên — xem §12. Nếu nhét Experience vào chung bảng Place thì khi thêm booking sẽ phải migrate lại toàn bộ.
+
+### Tag của Spot — taxonomy có kiểm soát
+
+Tag dùng để mô tả và xếp hạng Spot là **danh mục do hệ thống quản lý**, không phải hashtag tự do. Admin có thể thêm, dịch, sắp xếp hoặc archive tag; user chỉ chọn/xác nhận các lựa chọn đang hoạt động sau check-in hoặc trong structured review.
+
+- Một lựa chọn của user là **một phiếu bằng chứng**, không lập tức trở thành “sự thật” của Spot.
+- UI tổng hợp phải kèm social proof như `18 người xác nhận Yên tĩnh`; không trình bày như tag do riêng người đăng sở hữu.
+- Giai đoạn đầu tính trực tiếp từ Post tag và review answer; chưa tạo bảng aggregate/cache khi chưa đo thấy query chậm.
+- User không tự tạo tag Spot trong MVP. Cơ chế đề xuất tag mới cho admin duyệt để sau khi có nhu cầu thật.
+- Hashtag tự do chỉ thuộc **Post** và không tự động trở thành tag chính thức của Spot. Composer có field riêng, user nhập tự do tối đa 10 hashtag. Bấm hashtag mở Search ở chế độ hashtag; kết quả Spot được suy ra bằng cách nhóm các Post mà viewer có quyền xem theo Spot. Khóa tìm kiếm normalize Unicode NFC + lowercase để không phân biệt hoa thường, còn UI giữ cách viết gốc của user. Không có bảng `spot_hashtag`, không follow hashtag và chưa dùng hashtag để boost Home trong MVP.
+
+Vì tag là dữ liệu động dùng cho Search/Ask Nooka, taxonomy, bản dịch và synonym thuộc backend. Mobile prototype được phép giữ catalog demo cục bộ cho đến khi có OpenAPI, nhưng client production không được tự phát minh tag ID.
 
 ### Interaction bind vào đâu
 
@@ -275,26 +337,46 @@ Bản đầu **chưa có booking**, nhưng Experience phải tồn tại như m�
 |---|---|
 | React | Post |
 | Comment | Post |
+| Share | Post; deep link luôn kiểm tra lại visibility |
 | Follow | User |
-| **Want to go** | **Place** |
-| **Been** | **Place** |
-| Ask | Post (giữ context) |
+| **Want to go** | **Spot** |
+| **Been** | **Spot**, nhưng chỉ được sinh từ Post/check-in hợp lệ |
+| Ask author | Comment của Post (giữ context), không có bảng/domain riêng |
 | Invite | Place |
 
-> User thích một *bài đăng*, nhưng thứ họ muốn đi và lưu là một *địa điểm*.
+> User phản hồi một *bài đăng*, nhưng thứ họ muốn đi là một *địa điểm*. UI phải tách hai vùng action; không đặt `Want to go` cạnh `React/Comment/Share` như thể cả bốn cùng sửa Post.
+
+Luật visibility vẫn áp sau khi chia sẻ: `Share` không bao giờ mở rộng audience của Post. Post `PRIVATE` không có action Share; link của Post bị giới hạn chỉ mở cho viewer vốn có quyền xem.
 
 ---
 
 ## 8. Trạng thái địa điểm — quyết định đã chốt
 
-Tài liệu SRS cũ có cả `Save` và `Want to Go` trỏ vào cùng một danh sách, gây trùng lặp. Bản đầu **gộp còn hai trạng thái**:
+Tài liệu SRS cũ có cả `Save` và `Want to Go` trỏ vào cùng một danh sách, gây trùng lặp. Bản đầu **gộp còn hai trạng thái Spot**:
 
 | Trạng thái | UI string | Cách bật |
 |---|---|---|
-| Ý định đi | `Want to go` | User bấm |
-| Đã đi | `Been` | Tự động bật khi user đăng bài tại place đó |
+| Ý định đi | `Want to go` | User bấm trên khối Spot ở Feed/Search/Spot detail |
+| Đã đi | `Been` | Tự động bật khi user đăng Post hợp lệ tại Spot đó; không có nút bật tay |
 
-`Saved`, danh sách tùy chỉnh, và ghi chú riêng để giai đoạn sau — chỉ thêm khi có user thật đòi. Hai nút thì không ai phải hỏi chúng khác nhau ở đâu.
+`Saved`, danh sách tùy chỉnh, và ghi chú riêng để giai đoạn sau — chỉ thêm khi có user thật đòi. `Want to go` vừa là intent vừa là danh sách quay lại; UI không đổi nhãn active thành `Saved`, vì như vậy làm sống lại hai khái niệm đã gộp.
+
+`Want to go` và `Been` **được phép cùng tồn tại**:
+
+| Been | Want to go | Ý nghĩa |
+|---|---|---|
+| Không | Không | Chưa có trạng thái |
+| Không | Có | Muốn ghé lần đầu |
+| Có | Không | Đã ghé |
+| Có | Có | Đã ghé và muốn quay lại; UI đọc là `Want to return` / `Muốn quay lại` |
+
+Khi Post thành công, hệ thống tự bật `Been` nhưng **không âm thầm xoá `Want to go`**. Nếu Spot đang nằm trong danh sách, sheet thành công hỏi: “Bạn vừa ghé {spot}. Bạn có muốn giữ chỗ này để quay lại?” với hai lựa chọn `Giữ để quay lại` và `Bỏ khỏi Muốn đi`. Đóng sheet hoặc bấm Back mặc định là **giữ**; chỉ xoá sau lựa chọn tường minh của user.
+
+`Been` là dữ liệu cá nhân. Bề mặt công khai chỉ được suy ra việc một người đã ghé từ những Post mà viewer có quyền xem; không được dùng row `Been` sinh từ Post riêng tư để làm lộ chuyến đi qua profile, map, count, notification hay insight.
+
+Nếu `Want to go` được bấm từ một Post, hệ thống ghi nhận `source_post_id` để đo recommendation → visit và phản hồi cho tác giả ở dạng tổng hợp. Không công khai danh tính người bấm cho tác giả. Bấm từ Search/Spot detail thì nguồn có thể để trống hoặc gắn discovery session.
+
+Khi tạo Post, backend copy nguồn đó sang `posts.inspired_by_post_id` trong cùng transaction. Sau khi Post thành công: nếu user chọn bỏ thì xoá row `Want to go`; nếu giữ để quay lại thì giữ row nhưng clear `source_post_id`, tránh quy chuyến ghé tiếp theo cho cùng một Post cũ. `source_post_id` chỉ được trỏ tới Post của chính Spot đó.
 
 *Ghi chú i18n:* khi thêm locale tiếng Việt, ba trạng thái có thể dùng chung một gốc từ và trở nên gọn hơn bản tiếng Anh: `Ghé sau` / `Sẽ ghé` / `Đã ghé`.
 
@@ -340,31 +422,83 @@ A posts a place with a photo
 | Màn hình | Nội dung |
 |---|---|
 | **Home** | Vertical feed, một loại card |
-| **Create** | Đăng một place trong ≤ 4 thao tác |
+| **Create** | Đăng check-in bằng album 1–5 ảnh; giữ flow nhẹ, không nhét map vào luồng chính |
 | **Search** | Universal search + `Ask Nooka` |
-| **Saved** | Want to go / Been |
+| **Want to go** | Danh sách Spot user đang có ý định ghé; `Been` nằm trong map/profile cá nhân |
 | **Profile** | My Nooka Map + lịch sử bài đăng |
 | **Place detail** | Media cộng đồng, insight, comment, hỏi người đăng |
 
 ### Capability nghiệp vụ bắt buộc
 
-Account · Follow / Close Friends · Post gắn Place · Feed · Place page · Want to go · Been · Follow-up link · Privacy per post · Notification cơ bản · Report và Block.
+Account · Follow / Close Friends · Post gắn Place · Spot suggestion chờ duyệt · Feed · Place page · React / Comment / Share · Want to go · Been tự động · Follow-up link · Privacy per post · Notification cơ bản · Report và Block.
 
 ### Bắt buộc khi đăng
 
 ```
-Required   ≥ 1 photo
-           Place
+Required   1–5 photos
+           Place hoặc Spot suggestion đang chờ duyệt
            Visibility
 Optional   Price, occasion, vibe tags, one thing to know,
            caption, party size, would return
 ```
 
+### Create/check-in flow — đã chốt
+
+Một check-in Post:
+
+- Có đúng **một Spot**.
+- Có **một caption chung** cho cả album; không có caption riêng từng ảnh.
+- Có **1–5 ảnh** có thứ tự; ảnh đầu tiên là cover trên Feed/Spot detail.
+- Có thể trộn ảnh chụp trực tiếp và ảnh từ gallery, miễn tổng số ảnh không quá 5.
+- Không có `Verified Visit` public. Check-in là soft signal rằng user nói họ đã ghé; hệ thống không bảo đảm tuyệt đối.
+
+Entry point:
+
+- Từ Spot detail → mở camera/composer với Spot đã biết; ở Review Post vẫn có `Change`.
+- Từ nút `+` → mở camera/media trước; app xin một lần foreground location để gợi ý Spot gần nhất. Nếu user từ chối, vẫn cho tìm Spot thủ công.
+- Location trong composer là snapshot để gợi ý, không phải tracking: không cập nhật liên tục, không gửi tọa độ định kỳ, không lưu lịch sử di chuyển.
+
+Màn Camera/Album:
+
+- Có `Cancel`, album strip, shutter, gallery, và `Next`.
+- Sau khi có 5 ảnh, không cho chụp/chọn thêm cho đến khi user xoá ảnh.
+- User có thể thêm, xoá, xem lại, và sắp xếp ảnh trước khi đăng; kéo sắp xếp lại là cách đổi cover.
+- UI album trên card dùng cảm giác "stack" để báo có nhiều ảnh, sau đó cho vuốt ngang xem từng ảnh.
+
+Màn Review Post:
+
+- Preview album.
+- Caption optional.
+- Hashtag optional, field riêng với giới hạn 10; một caption chung và một bộ hashtag chung cho toàn album.
+- `Place: {spot} ›`.
+- `Audience: Public / Followers / Close Friends / Private ›`.
+- `Visit time: Hidden ›` mặc định, user có thể đổi để hiển thị.
+- Primary CTA có chữ rõ: `Post check-in`.
+
+Spot picker là bottom sheet riêng:
+
+- Search.
+- Spot gần đây/gần tọa độ snapshot.
+- Danh sách radio, một lựa chọn duy nhất.
+- `Can't find this place? Suggest a new spot`.
+
+Map chỉ xuất hiện trong flow **Suggest a new spot**, không nằm trong main check-in flow. Khi gửi đề xuất Spot, draft album vẫn được giữ. Nếu đề xuất đang `PENDING`, Post được giữ như nội dung của chính người đăng và chưa xuất hiện trong Home/Search/Spot detail công khai cho đến khi đề xuất được duyệt hoặc merge.
+
+Sau khi đăng:
+
+- Backend tạo Post và bật `Been` trong cùng luồng nghiệp vụ.
+- Nếu Spot từng nằm trong `Want to go`, chỉ hỏi `Keep to return` hoặc `Remove from Want to go`; đóng sheet mặc định là giữ.
+- Tag/review là optional follow-up, không chặn hoàn tất Post.
+- Nếu user bấm `Cancel` sau khi đã có ảnh/caption/hashtag, hỏi ba lựa chọn `Lưu bản nháp / Bỏ / Tiếp tục chỉnh sửa`.
+- Chỉ giữ một draft local. Khi bấm `+` mà đã có draft, hỏi `Tiếp tục bản nháp / Bỏ và tạo mới / Hủy`.
+- Draft hết hạn 7 ngày sau lần chỉnh sửa gần nhất; UI luôn cho biết thời gian còn lại trước khi user resume.
+- Post upload dở có trạng thái pending local và tự tiếp tục khi có mạng. Chỉ chủ bài thấy pending; audience chỉ thấy sau khi publish hoàn tất.
+
 ### Ngoài phạm vi bản đầu
 
-Inbox đầy đủ và message request · Invite với RSVP nhiều người · User tự tạo và quản lý Topic · Recap cá nhân · Insight tổng hợp phức tạp · Video · Swipe mode · Public creator profile · Business actor · Booking · Thanh toán · Chỉ đường · Tìm trọ · Marketplace.
+Inbox đầy đủ và message request · Repost · Save/collection riêng với `Want to go` · Invite với RSVP nhiều người · User tự tạo và quản lý Topic · Recap cá nhân · Insight tổng hợp phức tạp · Video · Swipe mode · Public creator profile · Business actor · Booking · Thanh toán · Chỉ đường · Tìm trọ · Marketplace.
 
-**Hỏi người đăng** ở bản đầu chỉ là một câu hỏi công khai dưới bài, không phải chat riêng. Chat 1-1 chỉ làm khi có bằng chứng người ta thật sự cần.
+**Hỏi người đăng** ở bản đầu chỉ là shortcut mở composer Comment công khai dưới Post, với placeholder hướng người dùng đặt câu hỏi. Nó dùng cùng visibility, moderation, block và notification với Comment; không phải chat riêng và không có entity `Question`. Chat 1-1 chỉ làm khi có bằng chứng người ta thật sự cần.
 
 ---
 
@@ -457,14 +591,22 @@ Số 2 là lý do bài đăng phải có tag và chip, không chỉ có ảnh. �
 | `Close Friends` | Danh sách được chọn |
 | `Private` | Chỉ chủ sở hữu |
 
-- Mặc định **không** phải Public với tài khoản mới.
+- Bài đầu của tài khoản mới mặc định `Public` để feed cộng đồng có supply; từ bài thứ hai trở đi composer nhớ lựa chọn audience gần nhất của user.
+- Private profile là cổng ngoài cùng và override visibility của từng Post: người chưa được accept không xem được cả Post mang audience `Public` của account đó. Khi profile private, composer không được tạo kỳ vọng rằng `Public` sẽ xuất hiện trong discovery công khai.
 - Đổi visibility có hiệu lực ngay.
 - Share link không được bypass visibility.
 - Không real-time location.
 - Không public địa chỉ nhà riêng.
 - Nội dung Private không được dùng cho public insight.
+- Audience `Close Friends` chỉ nhận các account hiện đang mutual follow và được chủ bài thêm vào danh sách. Unfollow ở bất kỳ phía nào lập tức làm account đó mất quyền Close Friends cho các lần kiểm tra visibility tiếp theo.
+- Xóa Post không xóa row `Been` đã tạo từ check-in đó; hai object có vòng đời độc lập. Tuy nhiên không được dùng Been còn lại để làm lộ nội dung/visit vốn chỉ xuất hiện trong Post không công khai.
 
-**Xung đột cần xử lý:** dù không chia sẻ vị trí real-time, `ảnh + địa điểm + thời gian đăng` vẫn tiết lộ user đang ở đâu ngay lúc này. Bản đầu chốt: **cho phép ẩn thời gian**, và không hiển thị "đang ở đây".
+Visibility và thời gian hiển thị là hai control riêng:
+
+- `Visibility` quyết định ai xem được Post.
+- `Visit time` quyết định có hiển thị thời gian ghé/đăng trên UI hay không.
+
+Dù Post là `Public`, `Visit time` mặc định **ẩn**. `ảnh + địa điểm + thời gian đăng` có thể tiết lộ user đang ở đâu ngay lúc này, nên UI không dùng câu như "đang ở đây" hoặc "vừa xong tại {spot}" nếu user chưa bật hiển thị thời gian. Backend vẫn lưu `created_at`/metadata cần thiết cho audit và ranking, nhưng public UI chỉ được render theo control này.
 
 **"Verified Visit" — bỏ khái niệm này.** Nếu không dùng GPS bắt buộc và cho phép ảnh từ gallery thì hệ thống không xác thực được gì. Gọi nó là *soft signal* nội bộ, không hiển thị nhãn nào cho user hàm ý hệ thống bảo đảm.
 
@@ -534,7 +676,7 @@ Report rate · Block rate · Tỷ lệ bỏ giữa chừng khi đăng · Notific
 
 | Rủi ro | Mức | Giảm thiểu |
 |---|---|---|
-| Không ai đăng, chỉ lướt | **Cao** | My Nooka Map, đăng ≤ 4 thao tác, feedback loop "{n} people want to go after your post" |
+| Không ai đăng, chỉ lướt | **Cao** | My Nooka Map, flow Create nhẹ, feedback loop tổng hợp "{n} people want to go after your post" từ attribution của `Want to go` |
 | Nội dung không đủ dày | **Cao** | Quy tắc 20 place, seed 300–500 bài, đi theo cụm quận |
 | Trở thành Instagram tệ hơn | Trung bình | Mọi post gắn place, ẩn số follower, không lấy Like làm tín hiệu chính |
 | Scope quá rộng, không xong được | **Cao** | Vertical slice ở §10, cắt inbox / topic / recap / invite |
@@ -547,14 +689,12 @@ Report rate · Block rate · Tỷ lệ bỏ giữa chừng khi đăng · Notific
 
 Chưa cần chốt trước khi lập kế hoạch, nhưng phải chốt trước khi làm màn hình liên quan:
 
-- Ảnh bắt buộc chụp trực tiếp, hay cho phép gallery?
 - Verdict: giữ ba mức `Worth it / Depends / Not worth it`, hay dùng thang khác? *(Ba mức có rủi ro làm user ngại đăng và gây tranh cãi với quán.)*
 - Giá là số chính xác hay khoảng giá?
-- Public feed có tồn tại ngay từ bản đầu, hay chỉ có Following + Nearby?
-- Mở app vào Following hay vào Explore?
 - Có giới hạn số bài đăng mỗi ngày?
-- Cho đăng bài về chuyến đi cũ (backdate) không?
 - Hiển thị số follower không? *(Khuyến nghị: không.)*
+- Home có cần filter/segmented control `Following` / `Nearby` / `Popular`, hay chỉ một blended feed có lý do hiển thị?
+- Spot suggestion cần SLA/UX kiểm duyệt thế nào: duyệt thủ công trong bao lâu, và user thấy gì nếu bị merge/reject?
 - **Gọi người đăng bài là gì?** `Nooka` không cho sẵn một danh xưng cho cộng đồng người đóng góp — đây là thứ `Scout` cho miễn phí mà `Nooka` thì không. Cần đặt một từ, vì §9 dựa vào việc người đăng có danh tính. Ứng viên: `Spotters`, `Locals`, `Regulars`.
 - **Gọi một bài đăng là gì trên UI?** Tài liệu này dùng `Post` làm thuật ngữ nội bộ. UI có thể dùng `spot` (danh từ) — cần chốt trước khi viết chuỗi i18n, vì đổi sau sẽ phải sửa toàn bộ locale file.
 
@@ -582,7 +722,7 @@ Chưa cần chốt trước khi lập kế hoạch, nhưng phải chốt trướ
 |---|---|
 | Mobile | **React Native + Expo** (EAS build iOS trên cloud — máy dev là Windows) |
 | Backend | **Spring Boot + PostgreSQL** |
-| Auth | **Firebase Auth** phát hành token, Spring Boot verify JWT. Không tự viết auth |
+| Auth | **Custom auth** trong Spring Boot: BCrypt password hash, email OTP, password reset, access/refresh session token; Google/Apple/Facebook OAuth được verify server-side và map qua `oauth_accounts` |
 | Lưu media | **Cloudflare R2** (không phí egress) |
 | Push | FCM |
 | Hosting | Railway hoặc Fly.io cho backend, Neon cho Postgres |
@@ -604,8 +744,14 @@ Home
   Spotted by {name}
   You follow each other
   {n} people you follow have been here
+  React
+  Comment
+  Share
   Want to go
-  Been
+  Want to go ✓
+  Want to return
+  Want to return ✓
+  You have been here
 
 Create
   Where were you?

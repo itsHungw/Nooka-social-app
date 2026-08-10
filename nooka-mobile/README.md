@@ -25,6 +25,22 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
+## Authentication providers
+
+Email/password, email verification, password reset and OAuth are handled by the Nooka API. Set these public build-time variables for the mobile app; do not put Facebook's app secret or any backend credential here:
+
+```dotenv
+EXPO_PUBLIC_API_URL=http://localhost:8080
+EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=
+EXPO_PUBLIC_FACEBOOK_APP_ID=
+```
+
+Google client IDs must be registered for the Android package, iOS bundle identifier and web client as applicable. Apple Sign In requires an Apple capability and the bundle identifier configured in Apple Developer; it is available on iOS only. Facebook must have the mobile redirect URI and Android/iOS platform settings configured in the Facebook app. The corresponding backend variables are documented in `../nooka-api/README.md`.
+
+The mobile app exchanges the provider credential with `/auth/oauth/google`, `/auth/oauth/apple` or `/auth/oauth/facebook`; it never stores or sends the Facebook app secret.
+
 ## Get a fresh project
 
 When you're ready, run:

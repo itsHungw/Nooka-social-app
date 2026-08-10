@@ -1,0 +1,10 @@
+.git
+.gitattributes
+.github
+target
+*.iml
+.idea
+.vscode
+.env
+.env.*
+service-account*.json

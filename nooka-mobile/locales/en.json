@@ -3,95 +3,518 @@
     "name": "Nooka"
   },
   "common": {
-    "back": "Back"
+    "back": "Back",
+    "cancel": "Cancel",
+    "done": "Done",
+    "next": "Next",
+    "later": "Later",
+    "optional": "Optional",
+    "close": "Close",
+    "retry": "Retry"
   },
   "navigation": {
     "home": "Home",
     "search": "Search",
-    "create": "Create",
-    "saved": "Saved",
-    "profile": "Profile"
+    "create": "Check in",
+    "messages": "Messages",
+    "saved": "Want to go",
+    "profile": "You",
+    "settings": "Settings"
+  },
+  "unit": {
+    "meters": "{{value}} m",
+    "kilometers": "{{value}} km"
+  },
+  "time": {
+    "justNow": "just now",
+    "now": "now",
+    "twoHours": "2h",
+    "yesterday": "yesterday",
+    "twoDaysAgo": "2 days ago",
+    "threeDaysAgo": "3 days ago"
+  },
+  "tags": {
+    "quiet": "Quiet",
+    "workFriendly": "Work friendly",
+    "outdoor": "Outdoor",
+    "goodPrice": "Fair price",
+    "noisyWeekend": "Loud on weekends",
+    "openLate": "Open late",
+    "niceView": "Great view",
+    "quietMusic": "Music kept low",
+    "fast": "Fast",
+    "takeaway": "Takeaway"
   },
   "home": {
     "location": "Binh Thanh",
-    "workshopName": "The Workshop Coffee",
-    "author": {
-      "name": "Linh",
-      "postedAt": "Yesterday"
-    },
-    "caption": "A quiet corner for an afternoon of work.",
-    "locationDetail": "District 1, Ho Chi Minh City",
-    "like": "Like",
-    "wantToGo": "Want to go",
-    "ask": "Ask",
-    "been": "Been",
-    "friendsVisited": "3 friends have visited",
-    "categories": {
-      "quiet": "Quiet",
-      "work": "Work friendly",
-      "outdoor": "Outdoor"
-    },
-    "hashtags": "#coffeeDistrict1 #workcorner #quietspace"
-  },
-  "create": {
-    "title": "Add a place",
-    "stepCount": "4 steps",
-    "steps": {
-      "photo": "Photo",
-      "place": "Place",
-      "details": "Details",
-      "share": "Share"
-    },
-    "addPhoto": "Add photo",
-    "tapUpload": "Tap to upload",
-    "photoAdded": "Photo added",
-    "pickPlace": "Choose a place",
-    "search": "Search",
-    "needToKnow": "Good to know",
-    "optional": "Optional",
-    "visibility": {
-      "followers": "Followers",
-      "followersDesc": "Default",
-      "closeFriends": "Close friends",
-      "closeFriendsDesc": "Separate list",
-      "public": "Public",
-      "publicDesc": "Anyone can discover",
-      "private": "Private",
-      "privateDesc": "Only me"
-    },
-    "hideTime": "Hide time",
-    "publish": "Publish"
-  },
-  "search": {
-    "title": "Search",
-    "askNooka": "Ask Nooka",
-    "placeholder": "Places, food, or atmosphere...",
-    "filters": {
-      "district": "D1–D3",
-      "quiet": "Quiet",
-      "under500": "Under 500K",
-      "indoor": "Indoor"
-    },
-    "summary": "Results: quiet, under 500K, 2 friends have been",
-    "friendBeen": {
-      "one": "{{count}} friend has been",
-      "other": "{{count}} friends have been"
+    "askNooka": "Ask Nooka: where tonight?",
+    "checkin": "Check in",
+    "postedBy": "checked in · {{time}}",
+    "photoBadge": "photo · spot",
+    "emptyTitle": "No friends have checked in today.",
+    "emptyBody": "Check in first, or let Nooka suggest something from what others already reviewed.",
+    "emptyCta": "Ask Nooka",
+    "avatarLabel": "Your profile",
+    "caughtUp": {
+      "title": "You're all caught up",
+      "body": "There are no more relevant posts nearby. Connect with people who share your taste to make the feed better.",
+      "sameCity": "Also in HCMC",
+      "seePeople": "See people for you"
     }
   },
+  "feed": {
+    "you": "You",
+    "myCaption": "At {{spot}}",
+    "openSpot": "Open {{spot}}",
+    "openAlbum": "Open check-in album",
+    "openAlbumPhoto": "Open photo {{count}} of {{total}} in the check-in album",
+    "searchHashtag": "Search this hashtag",
+    "shareMessage": "{{author}} checked in at {{spot}} on Nooka: {{caption}}",
+    "reactionAccessibility": "React to this post, {{count}} reactions",
+    "commentAccessibility": "Open comments, {{count}} comments",
+    "linh": {
+      "caption": "A quiet corner for an afternoon of work.",
+      "hashtags": "#coffeeDistrict1 #workcorner #quiet"
+    },
+    "nam": {
+      "caption": "After 8pm it empties out — the left corner table is quietest.",
+      "hashtags": "#rooftopD3 #firstdate"
+    },
+    "me": {
+      "caption": "Good prices, open late, and calm enough to catch up."
+    }
+  },
+  "comments": {
+    "title": "Comments",
+    "context": "{{author}} at {{spot}}",
+    "sample": {
+      "one": {
+        "author": "Trang",
+        "body": "That corner really is the quietest one."
+      },
+      "two": {
+        "author": "Huy",
+        "body": "Is it still easy to find a seat around 7pm?"
+      }
+    },
+    "empty": "No comments yet. Start the conversation.",
+    "placeholder": "Write a comment…",
+    "send": "Send comment"
+  },
+  "friends": {
+    "linh": "Linh",
+    "nam": "Nam",
+    "trang": "Trang",
+    "huy": "Huy"
+  },
+  "story": {
+    "linh": "A quiet corner for an afternoon of work.",
+    "nam": "After 8pm it empties out — the left corner table is quietest.",
+    "trang": "Grabbed it to go, fast.",
+    "huy": "New spot, nobody has reviewed it yet.",
+    "openSpot": "See {{spot}}",
+    "next": "Next"
+  },
+  "actions": {
+    "react": "React",
+    "comment": "Comment",
+    "share": "Share",
+    "want": "Want to go",
+    "wantDone": "Want to go ✓",
+    "wantRemove": "Remove from Want to go",
+    "wantReturn": "Want to return",
+    "wantReturnDone": "Want to return ✓",
+    "wantReturnRemove": "Remove from Want to return"
+  },
+  "toast": {
+    "wantAdded": "Added to Want to go",
+    "wantRemoved": "Removed from Want to go",
+    "commentOpened": "Comments on {{name}}'s post",
+    "postShared": "Post shared",
+    "shareFailed": "Couldn't open sharing. Try again.",
+    "route": "Opening directions to {{spot}}",
+    "tagsAdded": "Your answers now contribute to the spot summary",
+    "reviewSent": "Review sent · it feeds the spot page",
+    "needPhoto": "Take a photo first",
+    "noLocation": "No location — pick the spot on the map",
+    "fontChanged": "Caption font changed"
+  },
+  "map": {
+    "youAreHere": "Your location",
+    "pinLabel": "{{count}} check-ins at {{spot}}",
+    "recenter": "Back to your location",
+    "layerVisited": "Places you've been",
+    "nearbyCount": {
+      "one": "{{count}} place near you",
+      "other": "{{count}} places near you"
+    },
+    "nearbySource": "from community tag confirmations",
+    "dragForMore": "Drag up to see all",
+    "googlePinLabel": "{{count}} places from Google",
+    "googleError": "Google Places unavailable",
+    "googleLoading": "Finding places nearby",
+    "googleEmpty": "No places found",
+    "sort": {
+      "busy": "Busiest",
+      "near": "Nearest",
+      "friends": "Friends have been"
+    }
+  },
+  "search": {
+    "title": "Ask Nooka",
+    "prompt": "What kind of place do you need tonight?",
+    "placeholder": "first date, quiet, near D1…",
+    "universalPlaceholder": "Search places, people, posts…",
+    "askShort": "Ask Nooka",
+    "edit": "Edit",
+    "viewMap": "View map",
+    "nudge": "Looks like you're exploring. Build a selection with Ask Nooka?",
+    "aiBoundary": "Nooka only reorders what real people wrote — no AI-written reviews.",
+    "empty": "Nothing matches yet. Try another sentence, or drop a tag.",
+    "tabs": {
+      "top": "Top",
+      "places": "Places",
+      "people": "People",
+      "posts": "Posts",
+      "topics": "Topics"
+    },
+    "sections": {
+      "places": "Places",
+      "people": "People",
+      "posts": "Posts"
+    },
+    "opening": "What kind of place do you need tonight?",
+    "quickPick": "Or pick one",
+    "composer": "Message Nooka…",
+    "send": "Send",
+    "reading": "reading reviews…",
+    "readCount": {
+      "one": "Read {{count}} review within 3 km.",
+      "other": "Read {{count}} reviews within 3 km."
+    },
+    "leftCount": {
+      "one": "{{count}} place left.",
+      "other": "{{count}} places left."
+    },
+    "understood": "Nooka understood",
+    "nothingLeft": "Nothing matches now. Drop one of the tags above.",
+    "subtitle": "reads tags & reviews from real people",
+    "restart": "Start over",
+    "personMeta": "@{{handle}} · {{count}} mutual follows",
+    "postMeta": "{{who}} · {{spot}} · {{time}}",
+    "cta": "Find a spot",
+    "noAnswer": "Nooka reads the tags and reviews people left behind — it does not rank by ads. Type a sentence or pick an idea above.",
+    "answerLine": {
+      "one": "{{count}} closest match, filtered from community tag confirmations and reviews within 3 km.",
+      "other": "{{count}} closest matches, filtered from community tag confirmations and reviews within 3 km."
+    },
+    "reasonNew": "New on Nooka, no reviews yet — you could be the first",
+    "reason": "{{count}} people say {{tag}}",
+    "reasonWithFriends": "{{count}} people say {{tag}} · {{friends}} friends have been",
+    "intents": {
+      "firstDate": "First date",
+      "work": "Sit and work",
+      "lateNight": "Late night food",
+      "visitor": "Friend visiting"
+    },
+    "synonyms": {
+      "quiet": "quiet,calm,peaceful,first date",
+      "workFriendly": "work,laptop,study,power outlet,outlet",
+      "outdoor": "outdoor,outside,garden",
+      "goodPrice": "cheap,price,budget,affordable",
+      "noisyWeekend": "noisy,loud",
+      "openLate": "late,late night,open late",
+      "niceView": "view,scenic,rooftop,pretty",
+      "quietMusic": "music",
+      "fast": "fast,quick",
+      "takeaway": "takeaway,to go,takeout"
+    },
+    "noTags": "I didn't catch a tag in that. Here are the busiest places near you."
+  },
+  "spots": {
+    "workshop": {
+      "name": "The Workshop Coffee",
+      "shortName": "Workshop",
+      "district": "District 1",
+      "open": "Open · until 10pm",
+      "busy": "18 check-ins in 2 hours",
+      "review": {
+        "who": "Nam",
+        "when": "2 days ago",
+        "text": "The left corner table is the quietest, and after 8pm it clears out. Sat three hours, nobody asked."
+      }
+    },
+    "bloom": {
+      "name": "Bloom Rooftop",
+      "shortName": "Bloom",
+      "district": "District 3",
+      "open": "Open · until midnight",
+      "busy": "14 check-ins in 2 hours",
+      "review": {
+        "who": "Linh",
+        "when": "yesterday",
+        "text": "Get there before 7pm and you still get an edge table looking at the bridge."
+      }
+    },
+    "sansau": {
+      "name": "Ca phe San Sau",
+      "shortName": "San Sau",
+      "district": "Binh Thanh",
+      "open": "7am–10pm",
+      "busy": "New on Nooka",
+      "review": {
+        "who": "",
+        "when": "",
+        "text": ""
+      }
+    },
+    "muoi43": {
+      "name": "Ca phe Muoi 43",
+      "shortName": "Muoi 43",
+      "district": "Binh Thanh",
+      "open": "Open · until 11pm",
+      "busy": "9 check-ins in 2 hours",
+      "review": {
+        "who": "Huy",
+        "when": "3 days ago",
+        "text": "Quick for takeaway, few seats, but it stays open late."
+      }
+    }
+  },
+  "spot": {
+    "meta": "{{open}} · {{distance}} away",
+    "checkinPhotos": "{{count}} check-in photos",
+    "checkins": {
+      "one": "{{count}} person checked in",
+      "other": "{{count}} people checked in"
+    },
+    "newOnNooka": "New on Nooka",
+    "newNoReview": "New on Nooka — nobody has checked in yet",
+    "viewSpot": "View this spot",
+    "communityTitle": "Community check-ins",
+    "publicOnly": "Public posts only",
+    "publicPostCount": {
+      "one": "{{count}} public post",
+      "other": "{{count}} public posts"
+    },
+    "communityEmpty": "No public check-ins yet. Be the first to show what this place feels like.",
+    "privatePostNote": "Your {{count}} non-public check-in still builds your Been map, but is not shown in this public gallery.",
+    "whatPeopleSay": "What people say",
+    "moreReviews": "See {{count}} more reviews",
+    "noReview": "No reviews yet. One sentence from you right now is worth more than ten once the place is packed.",
+    "writeOne": "Write one line",
+    "directions": "Directions",
+    "routePreview": "Route preview",
+    "routeFromCurrent": "From your current location",
+    "routeLoading": "Finding the best route…",
+    "routeError": "Route preview is unavailable right now.",
+    "routeDistance": "distance",
+    "routeEta": "estimated time",
+    "drive": "Drive",
+    "walk": "Walk",
+    "openInMaps": "Open in Maps",
+    "viewRouteDetails": "View route details",
+    "friendsBeen": {
+      "one": "{{count}} friend has been",
+      "other": "{{count}} friends have been"
+    },
+    "noFriends": "No friends have been here yet",
+    "normalConditions": "Normal conditions · no live traffic"
+  },
   "saved": {
-    "title": "Saved",
-    "locationCount": "18 places",
-    "wantToGo": "Want to go",
-    "been": "Been"
+    "title": "Want to go",
+    "empty": "No places here yet. Tap “Want to go” on a spot in Home, Search, or its detail page.",
+    "explore": "Explore spots",
+    "firstVisitTitle": "For a first visit",
+    "firstVisitBody": "Places you saved but have not checked in at yet.",
+    "returnTitle": "Worth returning to",
+    "returnBody": "Places you have visited and deliberately kept for another time.",
+    "firstVisitBadge": "First visit",
+    "returnBadge": "Return"
   },
   "profile": {
-    "displayName": "Mai Anh",
-    "username": "@maianh.nooka",
-    "bio": "Quiet corners, strong coffee, and places worth returning to.",
-    "menu": "Open menu",
-    "posts": "Posts",
-    "followers": "Followers",
-    "following": "Following"
+    "title": "You",
+    "handle": "@duchoang",
+    "name": "Duc Hoang",
+    "meta": "Binh Thanh · joined Mar 2026",
+    "bio": "Sits three hours, orders one coffee.\nQuiet corners in D1 and Binh Thanh.",
+    "stats": {
+      "checkins": "check-ins",
+      "been": "places been",
+      "saved": "want to go"
+    },
+    "editProfile": "Edit profile",
+    "shareMap": "Share map",
+    "addFriend": "Add friend",
+    "tabs": {
+      "map": "Map",
+      "checkins": "Check-Ins",
+      "wantToGo": "Want to go"
+    },
+    "mapOverlay": {
+      "summary": "{{places}} places · {{districts}} districts",
+      "been": "Been",
+      "wantToGo": "Want to go"
+    },
+    "placesYouHaveBeen": "PLACES YOU HAVE BEEN",
+    "seeAll": "See all",
+    "checkinsSubheader": "{{checkins}} check-ins · {{places}} places",
+    "newest": "Newest",
+    "latest": "Latest",
+    "filters": {
+      "all": "All {{count}}",
+      "nearby": "Nearby",
+      "openLate": "Open late",
+      "cheap": "Cheap"
+    },
+    "assistantBanner": "3 of these are open right now near you.\nAsk Nooka to narrow it down",
+    "emptyBeen": "No places yet. A spot moves here after you publish a check-in.",
+    "emptyCheckins": "No check-in posts yet. Tap + to try the posting flow.",
+    "emptyWantToGo": "Nothing saved yet. Open a spot and tap Want to go.",
+    "yourCheckins": "Your check-ins",
+    "noCheckins": "No check-ins yet. Tap + to try the posting flow.",
+    "beenPlaces": "Places you have been",
+    "noBeen": "No check-ins yet. A place appears here after you post from it."
+  },
+  "editProfile": {
+    "title": "Edit profile",
+    "changePhoto": "Change photo",
+    "name": "Name",
+    "namePlaceholder": "Your display name",
+    "username": "Username",
+    "usernamePlaceholder": "@username",
+    "location": "Location",
+    "locationPlaceholder": "Your district or city",
+    "bio": "Bio",
+    "bioPlaceholder": "Tell people about your vibe…",
+    "save": "Save",
+    "savedToast": "Profile updated"
+  },
+  "addFriends": {
+    "title": "Add friends",
+    "searchPlaceholder": "Search by name or @handle…",
+    "suggestions": "Suggestions for you",
+    "yourFriends": "Your friends ({{count}})",
+    "inviteTitle": "Invite friends to Nooka",
+    "inviteDesc": "Share your personal profile link with friends",
+    "shareLink": "Share link",
+    "syncContacts": "Sync phone contacts",
+    "syncDesc": "Find friends from your contacts",
+    "add": "Add",
+    "requested": "Requested",
+    "message": "Message",
+    "mutualFriends": "{{count}} mutual friends",
+    "copiedToast": "Invite link copied to clipboard"
+  },
+  "shareMap": {
+    "title": "Share map",
+    "mapCardTitle": "Duc Hoang's Map",
+    "mapCardSubtitle": "{{places}} places visited in {{districts}} districts",
+    "privacySection": "Who can view this map?",
+    "privacyPublic": "Public",
+    "privacyPublicDesc": "Anyone with the link can view your map",
+    "privacyFriends": "Friends only",
+    "privacyFriendsDesc": "Only friends you follow back can view",
+    "privacyPrivate": "Private",
+    "privacyPrivateDesc": "Only visible to you",
+    "copyLink": "Copy map link",
+    "sendInMessages": "Send in messages",
+    "savePoster": "Save map poster",
+    "moreOptions": "More options…",
+    "linkCopiedToast": "Map link copied to clipboard",
+    "posterSavedToast": "Map poster saved to Photos"
+  },
+  "camera": {
+    "title": "Check in",
+    "shotCount": "{{count}} / 5",
+    "change": "Change",
+    "autoLocated": "Auto-located · {{distance}}",
+    "viewfinder": "viewfinder",
+    "library": "Library",
+    "shootFirst": "Take a photo to continue",
+    "shutter": "Take photo",
+    "removePhoto": "Remove photo {{count}}"
+  },
+  "pin": {
+    "hint": "Drag the map to the right spot",
+    "yourPin": "Where you dropped it",
+    "nearPin": "Spots near the pin",
+    "onNooka": "{{distance}} · {{count}} check-ins on Nooka",
+    "fromMaps": "From Google Maps · nobody has checked in",
+    "new": "New",
+    "notListed": "Not here — create a new spot",
+    "confirm": "Confirm · back to camera"
+  },
+  "caption": {
+    "title": "Post to…",
+    "placeholder": "Add a line",
+    "hashtags": {
+      "title": "Hashtags",
+      "placeholder": "#workcorner #quiet",
+      "count": "{{count}}/10"
+    },
+    "visibility": {
+      "title": "Who can see this post?",
+      "hint": "Only public posts appear in a spot's community gallery.",
+      "options": {
+        "PUBLIC": "Public",
+        "FOLLOWERS": "Followers",
+        "CLOSE_FRIENDS": "Close friends",
+        "PRIVATE": "Only me"
+      }
+    },
+    "mapDestination": "Map",
+    "toggleFont": "Change caption font",
+    "fontLabel": "Aa",
+    "post": "Post"
+  },
+  "draft": {
+    "exitTitle": "Save this check-in?",
+    "exitBody": "The draft stays on this device for 7 days after your latest edit.",
+    "save": "Save draft",
+    "discard": "Discard",
+    "continueEditing": "Keep editing",
+    "resumeTitle": "You have a draft",
+    "resumeBody": "This draft has {{days}} days left before it is deleted.",
+    "resume": "Continue draft",
+    "newDraft": "Discard and start new"
+  },
+  "sheet": {
+    "title": "It is on the feed",
+    "body": "What fits this spot? Choose from Nooka's categories. Your answers join the community summary; skipping is fine.",
+    "writeReview": "Write a review",
+    "revisitTitle": "Keep it for another visit?",
+    "revisitBody": "You just visited {{spot}}. Keep it in your list if you want to return.",
+    "keepForRevisit": "Keep for revisit",
+    "removeWantToGo": "Remove from list"
+  },
+  "review": {
+    "title": "Review",
+    "notRequired": "Optional",
+    "notifTitle": "Nooka · 18:40",
+    "notifBody": "You just left {{spot}}. How was it?",
+    "hereFor": "You were here 2 hours, Tuesday afternoon",
+    "threeQuestions": "Three things the next person asks",
+    "questions": {
+      "power": "Are there power outlets?",
+      "stay": "Do they nudge you to leave?",
+      "price": "Price"
+    },
+    "answers": {
+      "yes": "Yes",
+      "no": "No",
+      "cheap": "Cheap",
+      "fair": "Fair",
+      "high": "High"
+    },
+    "placeholder": "One line for the next person…",
+    "submit": "Send review"
+  },
+  "permission": {
+    "title": "Nooka wants to use your location",
+    "body": "So it can recognise the spot you are sitting in. If it guesses wrong, drag the pin on the map.",
+    "deny": "Don't allow",
+    "allow": "While using the app"
   },
   "settings": {
     "title": "Settings",
@@ -102,39 +525,177 @@
     "light": "Light",
     "lightDescription": "Always use the light appearance",
     "dark": "Dark",
-    "darkDescription": "Always use the dark appearance"
+    "darkDescription": "Always use the dark appearance",
+    "preview": "Onboarding & Auth Screens",
+    "welcomeScreen": "View Start Screen",
+    "loginScreen": "View Login Screen",
+    "account": "Account",
+    "logout": "Log out",
+    "logoutDescription": "Log out of your account on this device",
+    "logoutToast": "Logged out of Nooka"
   },
-  "post": {
-    "title": "Post",
-    "notFound": "This post is no longer available.",
+  "mascot": {
+    "idle": "Nooka is waiting for your question",
+    "searching": "Nooka is searching",
+    "found": "Nooka found results",
+    "resting": "Nooka is resting",
+    "haul": "Nooka is leaning a ladder against the box",
+    "catch": "Nooka is reaching for a balloon",
+    "climb": "Nooka is climbing the ladder",
+    "float": "Nooka is floating up on a balloon",
+    "hop": "Nooka is jumping across to the box",
+    "grip": "Nooka is hanging on the box, looking over",
+    "doze": "Nooka is getting sleepy",
+    "sleep": "Nooka has fallen asleep"
+  },
+  "messages": {
+    "title": "Messages",
+    "searchPlaceholder": "Search messages and places",
+    "filterAll": "All",
+    "filterInvites": "Invites",
+    "filterPosts": "From your posts",
+    "assistantTitle": "Nooka ASSISTANT",
+    "assistantDesc": "3 quiet spots near Binh Thanh, filtered from what real people wrote",
+    "inviteBadge": "INVITE",
+    "requestsHeader": "MESSAGE REQUESTS {{count}}",
+    "requestsSubtext": "You do not follow each other yet.",
+    "privacyFootnote": "Only people you follow each other with can message you. Everything else lands in requests."
+  },
+  "chat": {
+    "mutualStatus": "Active 5m ago",
+    "onlineNow": "Active now",
+    "activeAgo": "Active {{time}} ago",
+    "optionsTitle": "Chat options",
+    "changeNickname": "Edit nickname",
+    "changeWallpaper": "Change chat wallpaper",
+    "muteNotifications": "Mute notifications",
+    "blockUser": "Block user",
+    "blockedToast": "Blocked {{name}}",
+    "nicknameUpdated": "Updated nickname for {{name}}",
+    "pinnedSpotDesc": "District 1 · you have both been",
     "today": "Today",
-    "threeDaysAgo": "3 days ago",
-    "oneWeekAgo": "1 week ago",
-    "twoWeeksAgo": "2 weeks ago",
-    "threeWeeksAgo": "3 weeks ago",
-    "oneMonthAgo": "1 month ago",
-    "twoMonthsAgo": "2 months ago"
+    "linhMsg1": "Went to Workshop after your post. The corner table is real.",
+    "myMsg1": "Told you. Did you get the left one by the window?",
+    "linhMsg2": "Yes. Sat three hours.",
+    "linhMsg3": "Friday works. Adding it.",
+    "seenStatus": "Seen {{time}}",
+    "inputPlaceholder": "Message {{name}}…",
+    "spotPreviewDesc": "District 3 · Great view",
+    "spotPreviewBadge": "Friday then?"
   },
-  "places": {
-    "blank": {
-      "name": "Blank Lounge",
-      "meta": "District 3 · Good for conversation",
-      "social": "From Anh's photo set · 2 weeks ago"
+  "welcome": {
+    "title": "Nooka",
+    "headline": "Going out today? Ask someone who's been.",
+    "subtitle": "Real photos from places people actually visited, right in your city.",
+    "features": {
+      "preview": {
+        "title": "Preview before going",
+        "desc": "Photos & reviews from real visitors"
+      },
+      "friends": {
+        "title": "Where friends just went",
+        "desc": "Feed from people you follow, not ads"
+      },
+      "saved": {
+        "title": "Plan the next place",
+        "desc": "Keep Want to go now; check-ins build your visited map"
+      }
     },
-    "littleHanoi": {
-      "name": "Little Hanoi Cafe",
-      "meta": "District 1 · Good drinks",
-      "social": "Followed by Nam · 3 days ago"
-    },
-    "saigon": {
-      "name": "Saigon Coffee Roastery",
-      "meta": "District 2 · Spacious",
-      "social": "Followed by Linh · 1 week ago"
-    },
-    "workshop": {
-      "name": "The Workshop Coffee",
-      "meta": "District 1 · Work friendly",
-      "social": "Been"
-    }
+    "cta": "Get started",
+    "footer": "Now open in HCMC, expanding district by district"
+  },
+  "auth": {
+    "loginTitle": "Welcome to Nooka",
+    "loginSubtitle": "One tap in. Nooka doesn't store passwords — log in with your existing account.",
+    "loginSubtitleOptions": "Choose how you want to sign in. Change anytime.",
+    "continueGoogle": "Continue with Google",
+    "retryGoogle": "Retry with Google",
+    "connectingGoogle": "Connecting Google...",
+    "openingGoogle": "Opening Google window...",
+    "continueApple": "Apple",
+    "continueFacebook": "Facebook",
+    "continueEmail": "Continue with email",
+    "or": "OR",
+    "lastUsedGoogle": "LAST TIME YOU USED GOOGLE",
+    "errorTitle": "Couldn't log in",
+    "errorDesc": "Google closed the window before finishing. Check your network and try again.",
+    "termsNoticePrefix": "Continuing means you agree to ",
+    "termsNoticeAnd": " and ",
+    "termsNoticeSuffix": ". New posts default to followers only.",
+    "terms": "Terms",
+    "privacy": "Privacy Policy",
+    "stillErrorPrefix": "Still broken? ",
+    "reportError": "Report to Nooka",
+    "toastLoggedIn": "Welcome back!",
+    "toastReported": "Thanks, our team has been notified",
+    "noAccountPrefix": "Don't have an account? ",
+    "createAccount": "Create account",
+    "alreadyHaveAccountPrefix": "Already have an account? ",
+    "signIn": "Log in",
+    "whatIsYourEmail": "What is your email?",
+    "emailSubtext": "Nooka will send a verification code to this email. We won't show your email to others.",
+    "termsNoticeEmailPrefix": "Tapping Continue means you agree to ",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "continueArrow": "Continue →",
+    "emailPlaceholder": "you@gmail.com",
+    "choosePassword": "Choose a password",
+    "passwordPlaceholder": "Password",
+    "show": "Show",
+    "hide": "Hide",
+    "passwordMinLengthPrefix": "Password must be at least ",
+    "passwordMinLengthNumber": "8 characters",
+    "whatIsYourName": "What is your name?",
+    "firstNamePlaceholder": "First name",
+    "lastNamePlaceholder": "Last name",
+    "nameSubtext": "This name will appear on your posts.",
+    "chooseUsername": "Choose a username",
+    "usernamePlaceholder": "@username",
+    "usernameAvailable": "Available",
+    "usernameSubtext": "Friends find you on Nooka by this name.",
+    "later": "Later",
+    "logInWithEmail": "Log in with email",
+    "emailLoginError": "Incorrect email or password. 4 attempts remaining before account is temporarily locked for 15 minutes.",
+    "forgotPassword": "Forgot password?",
+    "logInArrow": "Log in →",
+    "verifyEmailTitle": "Verify your email",
+    "verifyEmailSubtext": "Enter the 6-digit code we sent to your email.",
+    "verificationCodePlaceholder": "6-digit code",
+    "verifyEmailButton": "Verify email",
+    "invalidVerificationCode": "That code is invalid or expired.",
+    "emailVerified": "Email verified",
+    "registerError": "Could not create your account. Check your details and try again.",
+    "forgotPasswordTitle": "Reset your password",
+    "forgotPasswordSubtext": "We will send a one-time code to your email.",
+    "sendResetCode": "Send reset code",
+    "resetPasswordButton": "Reset password",
+    "resetCodeSent": "Reset code sent",
+    "passwordReset": "Password reset",
+    "resetPasswordError": "That code is invalid or the reset request failed.",
+    "enterOtpTitle": "Enter 6-digit code",
+    "otpSentToPrefix": "Nooka sent a code to ",
+    "resendCodeIn": "Resend code in ",
+    "resendCode": "Resend code",
+    "wrongEmailQuestion": "Wrong email? ",
+    "changeEmail": "Change email",
+    "confirmOtpBtn": "Confirm →",
+    "verifyingOtp": "Verifying code...",
+    "retryOtpBtn": "Try again →",
+    "otpErrorBanner": "Incorrect or expired code. 2 attempts left, then you'll need to request a new code.",
+    "resetPasswordTitle": "Reset password",
+    "resetPasswordSubtitle": "Enter the email you used to create your account. Nooka will send you a reset OTP code.",
+    "sendOtpBtn": "Send OTP code →",
+    "rememberedPassword": "Remembered? ",
+    "backToLogin": "Back to log in",
+    "newPasswordTitle": "New password",
+    "newPasswordPlaceholder": "New password",
+    "confirmPasswordPlaceholder": "Confirm password",
+    "passwordStrengthSubtext": "Strong enough · min 8 characters, include numbers",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "resetPasswordDisclaimer": "Changing password will log out Nooka on other devices.",
+    "savePasswordBtn": "Save password →",
+    "resetSuccessTitle": "All set",
+    "resetSuccessSubtitle": "Your new password is saved. Log in with this password next time.",
+    "enterNookaBtn": "Enter Nooka"
   }
 }

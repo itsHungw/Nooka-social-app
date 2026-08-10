@@ -35,15 +35,4 @@ module.exports = defineConfig([
       ],
     },
   },
-  {
-    // XOÁ BLOCK NÀY khi thay ba màn hình demo của template bằng màn hình Nooka
-    // thật. Chúng được miễn trừ để luật có hiệu lực ngay với mọi file MỚI,
-    // thay vì phải chờ dọn xong demo — file mới không nằm trong danh sách này
-    // nên bị kiểm từ dòng đầu tiên.
-    files: ['app/(tabs)/index.tsx', 'app/(tabs)/explore.tsx', 'app/modal.tsx'],
-    rules: {
-      'i18next/no-literal-string': 'off',
-      'no-restricted-syntax': 'off',
-    },
-  },
 ]);

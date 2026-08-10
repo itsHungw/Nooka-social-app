@@ -91,9 +91,112 @@ npx expo-doctor
 
 `app/` là route — expo-router dùng file-based routing, mỗi file là một màn hình. `components/`, `hooks/`, `constants/` cho phần dùng lại.
 
-Màn hình theo §10 của spec: Home (feed), Create, Search, Saved, Profile, Place detail.
+UI hiện tại dựng từ prototype `Nooka - prototype.dc.html` (Claude Design). Bốn tab và nút + ở giữa:
 
-Code trong scaffold (`explore.tsx`, `hello-wave`, `parallax-scroll-view`, `modal.tsx`...) là **demo của template**, không phải kiến trúc đã chốt. Xoá khi thay bằng màn hình thật; `npm run reset-project` dọn một lượt.
+| Route | Là gì |
+|---|---|
+| `app/(tabs)/index.tsx` | Feed check-in, dải bạn bè, sheet chọn tag sau khi đăng |
+| `app/(tabs)/search.tsx` | Tab **Tìm**: bản đồ thật + sheet ba điểm dừng + universal search |
+| `app/(tabs)/saved.tsx`, `profile.tsx` | Muốn đi, và trang cá nhân |
+| `app/ask.tsx` | Hỏi Nooka — câu hỏi tự do hoặc intent, ra kết quả xếp hạng |
+| `app/spot/[id].tsx` | Trang địa điểm |
+| `app/create.tsx` → `app/pin.tsx` → `app/caption.tsx` | Luồng check-in: camera → sửa địa điểm → caption → đăng |
+| `app/review.tsx`, `app/story/[index].tsx` | Ba câu review, và xem check-in của bạn bè |
+
+**Tên route `ask` không đổi tuỳ tiện được.** `(tabs)` là group nên `app/(tabs)/search.tsx` đã chiếm `/search`; đặt màn Hỏi Nooka ở `app/search.tsx` là hai file cùng trỏ một đường dẫn. Đó là lý do nó tên `ask.tsx`.
+
+Trạng thái dùng chung nằm ở `providers/nooka-demo-provider.tsx`, không phải ở từng màn hình. Xếp hạng của "Hỏi Nooka" nằm ở `features/nooka/ranking.ts`, phần địa lý ở `geo.ts`, linh vật ở `mascot.ts`, biểu cảm ở `mood.ts`, màn kịch leo lên ở `ascent.ts` với hai đạo cụ `ladder.ts` và `balloon.ts` — đều là hàm thuần, test chạy bằng:
+
+```bash
+node --test features/nooka/ranking.test.ts features/nooka/geo.test.ts features/nooka/mascot.test.ts features/nooka/ascent.test.ts features/nooka/ladder.test.ts features/nooka/balloon.test.ts features/nooka/mood.test.ts
+```
+
+(Truyền cả thư mục thay vì từng file thì Node trên Windows báo `Cannot find module` — kể tên file ra.)
+
+**Danh sách kết quả Spot chỉ có một component.** `ResultRow` ở `components/nooka/ui.tsx` dùng chung cho sheet của tab Tìm và kết quả Hỏi Nooka. §5 của spec khóa Search và Hỏi Nooka vào cùng `SpotResultCard`; Home dùng `PostFeedCard` post-first riêng. Dựng thêm một hàng Spot khác cho Search hoặc Hỏi Nooka là phá luật đó.
+
+**Tag của Spot là taxonomy do backend quản lý; user chỉ chọn/xác nhận, không tự tạo.** Bản production nhận tag ID, bản dịch và synonym từ API. Prototype chưa có OpenAPI nên tạm giữ `search.synonyms.<tagId>` trong `locales/`; `ranking.ts` chỉ nhận danh sách đó và không hardcode tiếng Việt. Hashtag tự do chỉ thuộc caption của Post, không tự trở thành tag Spot.
+
+Code trong scaffold (`hello-wave`, `parallax-scroll-view`...) là **demo của template**, không phải kiến trúc đã chốt. Xoá khi thay bằng màn hình thật; `npm run reset-project` dọn một lượt.
+
+## Bản đồ
+
+`react-native-maps` 1.20.1 — bản khớp SDK 54, có New Architecture, và **chạy được trong Expo Go** nên không ai phải dựng development build. Đừng đổi sang `expo-maps`: nó còn alpha và **không** chạy trong Expo Go, tức là đổi xong cả team mất khả năng mở app — đúng cái luật số một ở trên chặn.
+
+- `components/nooka/nooka-map.tsx` là chỗ duy nhất chạm `MapView`. Màn khác cần bản đồ thì dùng component này.
+- `components/nooka/fake-map.tsx` vẫn còn, nhưng **chỉ** cho màn đặt pin lúc check-in. Đó là bản đồ trang trí, không phải bản đồ thật.
+- Style bản đồ dựng từ token theme ở `features/nooka/map-style.ts`. Không có hex nào trong đó — bản đồ đổi theo light/dark như mọi bề mặt khác. `customMapStyle` chỉ ăn với `PROVIDER_GOOGLE`.
+- **Không dùng `<Marker>` có view con.** Trên Android + New Architecture, nội dung ghim bị xén theo một khổ cố định: mất nửa phải của tên và mất luôn mép bo. Đây là lỗi thư viện — [issue #5877](https://github.com/react-native-maps/react-native-maps/issues/5877), đúng tổ hợp Expo SDK 54 / RN 0.81 / Fabric, đã bị đóng "not planned". Cách duy nhất issue đó nêu là tắt New Architecture, mà Expo Go bản SDK 54 chỉ chạy New Architecture. Đã thử và **không** ăn thua: giữ `tracksViewChanges={true}` mãi, và đóng cứng width/height đo được — cả hai đều vẫn bị xén, vì đây là lỗi đo chứ không phải lỗi thời điểm chụp. iOS không dính nên đừng tin vào việc "máy mình nhìn ổn".
+- Nên ghim là **view thường trong lớp phủ trên bản đồ**, chiếu toạ độ sang pixel theo `region`. Đánh đổi: ghim bám `onRegionChange` nên vuốt rất nhanh có thể trễ một nhịp. Vài ghim thì không thấy; hàng trăm ghim thì phải làm lại chỗ này.
+- **Prop chỉ đọc lúc mount không đáng tin.** `initialRegion` bị bỏ qua khi `MapView` remount (đổi theme làm remount vì Android không áp lại `customMapStyle`), do Fabric tái dùng view trong pool — bản đồ hiện ra ở camera thừa kế của view cũ. Khôi phục bằng `onMapReady`, đừng tin `initialRegion`.
+- Vùng khởi tạo là bán kính quanh người dùng, **không** phải `regionFor` ôm hết địa điểm: màn hình cao và hẹp nên Google nới bề dọc cho vừa bề ngang rồi làm tròn lên mức zoom kế tiếp, kết quả là lùi ra tận Long An và ghim dồn thành một cục.
+- Toạ độ địa điểm nằm ở `features/nooka/spots.ts`; `distanceM` **tính từ toạ độ**, không viết tay. Sửa toạ độ là khoảng cách tự đúng theo.
+
+**API key.** Expo Go không cần key. Build độc lập thì cần, và key **không được commit** — `app.config.js` đọc từ `GOOGLE_MAPS_ANDROID_KEY` / `GOOGLE_MAPS_IOS_KEY` và chỉ thêm plugin khi có. Đặt qua `eas secret:create` hoặc `.env.local`.
+
+**Vị trí người dùng.** Tab Search dùng `expo-location` để đọc GPS foreground khi màn hình đang mở và cập nhật chấm xanh theo chuyển động. Không đăng ký background location, không lưu lịch sử di chuyển, không gửi tọa độ định kỳ hay gửi tọa độ lên server. `showsUserLocation` vẫn để tắt vì chấm xanh được vẽ bằng lớp phủ Nooka; `nooka-map.tsx` nhận tọa độ live qua prop.
+
+Sheet ba điểm dừng ở `components/nooka/bottom-sheet.tsx` dùng gesture-handler + Reanimated, nên `GestureHandlerRootView` phải ở `app/_layout.tsx`. Bỏ nó ra thì cử chỉ im lặng không chạy, không có lỗi nào hiện.
+
+## Linh vật
+
+Có **hai** linh vật, làm hai việc khác nhau — đừng gộp:
+
+- `components/nooka/nooka-mascot.tsx` — ảnh xuất từ clip, đứng yên ở thanh "Hỏi Nooka" ngoài Home. Là nhãn thương hiệu.
+- `components/nooka/nooka-sprite.tsx` — Nooka pixel, chạy theo trạng thái ở thanh nhắn tin của `app/ask.tsx`. Báo **máy đang làm gì**: vẫy tay khi chờ, cầm kính lúp khi đọc review, reo khi có kết quả, rồi đứng im.
+
+**Chỗ ở của Nooka là bên trái ô nhập, không phải sau ô nhập.** Ở `app/ask.tsx` nó có hai chỗ đứng (`MascotSpot`): `beside` — đứng trọn con bên trái ô nhập, và `behind` — nấp sau ô nhập rồi thò lên theo tư thế bốc thăm (`PeekPose`). Vào màn là đứng bên trái vẫy tay; thỉnh thoảng nó ra sau ô nhập một lát rồi **về lại bên trái**. `HOME_DWELL` khoá điều đó: mỗi lượt nấp luôn ngắn hơn một lượt đứng nhà, có test giữ.
+
+Chỉ đi trốn **lúc đang chờ** (`isWaiting`). Người dùng hỏi một câu là `useMascotStage` đưa nó về bên trái, không đợi hết lượt — nấp sau ô nhập mà suy nghĩ hay reo mừng thì không ai thấy nó đang làm gì, mà đó mới là việc của con sprite này.
+
+**Lên xuống chỉ được diễn ở sau ô nhập.** Đường đi nằm ở `nextStage`, là hàm thuần và có test: từ nhà chỉ chui được sang bám mép ô nhập chứ không chìm thẳng, và đang chìm thì phải trồi lên tại chỗ rồi mới đi về. Ba đoạn `MASCOT_MOVE` (`walk` → `lift` → `dip`) chạy nối tiếp, không chồng nhau: đi ngang vào sau ô nhập rồi mới nhô lên, hạ xuống hết rồi mới đi về. Cho chạy song song thì Nooka đi chéo và cú lên xuống rơi ra ngay bên trái ô nhập — chỗ chẳng có gì che, thành ra nhân vật hiện ra từ hư không.
+
+**Ô nhập không đổi kích cỡ.** Chỗ của Nooka chừa cứng bằng `paddingLeft` trong `inputRow`. Nooka đi hay trốn thì ô nhập và nút gửi vẫn đứng yên — ô nhập co giãn theo bước chân của một món trang trí là thứ mắt bắt được ngay.
+
+Hai chỗ đó là **hai điểm neo của cùng một lớp phủ**, đi lại bằng phép dịch. Dựng hai nơi riêng thì lúc chuyển là một con biến mất và một con hiện ra — người xem không đọc ra đó là cùng một nhân vật.
+
+**Gõ quá dài thì Nooka phải leo lên mới nhìn qua được.** Ô nhập là multiline nên nó cao dần theo số dòng. Tới dòng thứ ba thì mép trên vượt hẳn tầm với và Nooka chìm nghỉm sau bức tường chữ. Lúc đó nó lấy một đạo cụ từ mép trái màn hình, lên tới mép, **nhảy sang bám vào khung ô nhập**, rồi treo ở đó nhìn qua.
+
+- **Có hai phương tiện, bốc thăm mỗi lượt**: vác thang tới dựa vào khung rồi trèo, hoặc tóm một quả bóng bay rồi để nó nhấc lên. `pickMeans` ở `features/nooka/ascent.ts`. Cố định một màn kịch thì tới lần thứ ba người dùng thôi không nhìn nữa. Hai cách đi **chung một đường và chung một máy trạng thái** — chỉ khác đạo cụ, tư thế và nhịp.
+- Máy trạng thái tám chặng ở `ascent.ts`, chạy bằng `hooks/use-nooka-ascent.ts`. **Đường về đi ngược đúng đường lên**, không có lối tắt: từ `away` không nhảy thẳng tới `gripping`, và buông khung là phải nhảy về đạo cụ trước chứ không rơi thẳng xuống đất. Đó là thứ giữ cho đạo cụ không biến mất dưới chân Nooka lúc người dùng xoá bớt chữ. Có test khoá cả hai chiều.
+- `hopping` **dùng chung cho cả hai chiều**. Chiều nào là do ý định lúc đó quyết định, không phải do tên chặng — nhờ vậy người dùng đổi ý ngay giữa cú nhảy thì Nooka quay đầu tại chỗ.
+- **Đường đi thẳng đứng cho chiếc thang.** Thang nhôm được dựng thẳng đứng bên cạnh ô nhập, Nooka trèo thẳng đứng lên theo thân thang rồi mới nhảy bám sang mép ô nhập.
+- **Nooka dừng thấp hơn đầu đạo cụ một quãng** (`climbStop`) rồi mới nhảy. Chỗ ở của nó rộng đúng bằng chính nó, nên trèo tới sát đầu thang là đã lọt nửa người ra sau ô nhập và cú nhảy chỉ còn là một cú trượt ngang mắt không đọc ra.
+- **Ô nhập cao thêm giữa chừng thì thang không dài ra.** Kích thước đạo cụ chốt lúc mở màn; Nooka lên hết đạo cụ, bám vào khung rồi **bò dọc mép** theo `rim`. Một chiếc thang đang có người đứng trên không tự mọc thêm bậc dưới chân họ.
+- **Nooka tự quyết định lúc nào xuống, không đợi người dùng gửi tin.** Treo trên khung một lúc thì tụt xuống nghỉ, nghỉ chán thì leo lại. `possible` truyền vào `useNookaAscent` là **hoàn cảnh** (ô nhập còn cao), còn ý định nằm trong hook. Đồng hồ chỉ chạy ở hai chặng nghỉ (`ascentResting`) — bấm giờ lúc mới có ý định thì quãng leo ăn mất một phần lượt treo. Lượt treo **luôn** dài hơn lượt nghỉ (`PERCH_DWELL.min > GROUND_DWELL.max`), cùng luật với `HOME_DWELL`/`PEEK_DWELL`.
+- **Biểu cảm buồn ngủ đếm theo thời gian người dùng để yên**, từ phím gõ cuối cùng (`useNookaMood`), **không** theo chặng của màn kịch leo. Đó là cách phá vòng phụ thuộc: màn kịch leo cần biết Nooka còn thức không (`restless`) để đứng yên khi nó ngủ, nên cơn buồn ngủ phải tính được trước. Lim dim thì biểu cảm chỉ nằm ở **đôi mắt**, `perch` chọn tư thế thân — nhờ vậy một tâm trạng dùng được cả lúc bám khung lẫn lúc đứng dưới đất mà không phải vẽ hai bộ nhân vật. Có test khoá việc thân không đổi giữa khung thức và khung lim dim.
+- **Muốn ngủ hay muốn vẫy tay thì phải đu lên khỏi mép đã.** Không ai làm hai việc đó trong lúc treo người bằng hai bàn tay. Tới mức `sleep` Nooka đu lên **ngồi hẳn lên mép** (dùng chung bộ khung với lúc ngồi dưới đất); còn trên mép nó thỉnh thoảng đu lên **đứng vẫy tay**, dùng lại nguyên khung `IDLE` — `PERCH_POSE_DWELL` giữ nhịp đổi tư thế, lấy chung `PEEK_DWELL` vì cùng một nhân vật thì không nên đổi ý nhanh chậm tuỳ chỗ đang đứng. Cả hai đu lên đúng **một** quãng, `RIM_LIFT` ở `app/ask.tsx` (tên cũ `SIT_LIFT`), đúng bằng khoảng mà tư thế treo thấp hơn mép. **Đừng dựng khung "vừa bám mép vừa vẫy"** — đã thử ba biến thể và xem bằng mắt: lưới rộng 34 ô mà cái đầu chiếm cột 3–31, để tay thấp thì cú vẫy lọt vào bóng cái đầu, đưa lên cao thì cánh tay cắt chéo qua mặt. Ghi chú nằm trong `scripts/build-mascot-sprite.js`. Tư thế ngồi đọc ra được là nhờ **hình dáng chân đế** — bè ngang, hai bàn chân duỗi ra trước — chứ không phải nhờ hạ chiều cao: lưới chỉ có 44 hàng và cái đầu chibi đã chiếm 20, hạ nhiều hàng thì nửa dưới nén thành mấy sợi mảnh. `SIT_DROP` là **một** hàng.
+- **Ngủ hẳn thì không đổi ý, nhưng lim dim thì vẫn.** `restless` nhận `!isAsleep(mood)`, **không** phải `!isDrowsy(mood)` — và khác biệt đó là toàn bộ chỗ ngẫu nhiên của nhân vật. Người dùng ngừng gõ là đồng hồ ngủ đua với lượt treo/lượt nghỉ; ai về đích trước quyết định lần này thấy gì: ngủ luôn trên mép, tụt xuống rồi ngủ dưới đất, hay kịp xuống và leo lên lại. Khoá bằng mốc lim dim (9s) thì cuộc đua có sẵn kết quả — mốc đó tới trước cả vòng xuống–lên nhanh nhất, nên người dùng ngồi yên là Nooka **luôn** ngủ tại chỗ đang đứng và hai việc kia không bao giờ xảy ra. Vì vậy `PERCH_DWELL` phải **vắt qua** mốc ngủ: `max` vượt qua nó, `min` đủ sớm để trọn vòng xuống–lên vẫn lọt. Ba test giữ ba vế; tỉ lệ hiện tại ~32/40/28 là chủ ý, đổi số thì đo lại rồi hãy chốt. Hệ đi lại quanh ô nhập vẫn dừng ở `drowsy` — đi lang thang với đôi mắt lim dim thì đọc ra là mộng du.
+- **Chỗ đứng của Nooka do đúng một hệ quyết định tại một thời điểm.** Hai hệ cùng dịch một lớp phủ: `useMascotStage` đưa nó đi trốn quanh ô nhập, `useNookaAscent` đưa nó dọc đạo cụ rồi lên mép. Luật nằm ở `ascentPins` — còn cớ để lên, hoặc đạo cụ còn trên màn hình, thì hệ đi lại mất quyền. Ghim từ lúc **mới có ý định** (để Nooka kịp đi về chỗ ở trước khi đạo cụ tới) và suốt lúc đạo cụ còn đó (để không trượt ngang ra khỏi thang lúc đang tụt). Cộng hai phép dịch vào nhau thì Nooka rời khỏi thang đúng bằng quãng đi trốn, và lúc bám khung nó vọt lên cao hơn mép đúng một quãng nhô — tới mức ngủ là ngồi trên không.
+- **Đi trốn là một ý muốn, hai động tác — chỗ đứng chọn động tác.** Dưới đất thì đi ngang vào sau ô nhập (`hide` ở `useMascotStage`); trên mép thì buông tay tụt xuống sau bức tường chữ (`duck` ở `useNookaAscent`), vì trên mép mà đi ngang là rời khỏi chính cái mép đang giữ mình. Mỗi hàm **tự từ chối** khi không phải chỗ của nó, nên `app/ask.tsx` gọi nối tiếp bằng `||` chứ không hỏi trước Nooka đang ở đâu — hỏi trước là dựng lại điều kiện của hai hook ở chỗ thứ ba, và bản dựng lại lệch ngay lần đầu một trong hai đổi luật. Quãng thả suy ra từ hình (`perchSink` = phần thân trên hai bàn tay) nên đỉnh đầu hạ xuống **khít mép**, và ô nhập vốn vẽ sau lớp linh vật nên che nốt phần còn lại: không cần xén, không cần lớp phủ riêng. Đồng hồ lượt treo tạm dừng trong lúc trốn, còn đồng hồ trồi lên thì **không** nghe `restless` — chuyến do cú chạm mở ra thì phải về, chứ ngủ quên lúc đang chìm nghỉm là mất hẳn nhân vật khỏi màn hình và không còn gì để chạm cho nó tỉnh.
+- **Nấp xong thì trồi lên ở chỗ khác dọc mép** (`RimSpot`, `nextRimSpot`) — chìm xuống rồi hiện lại đúng chỗ cũ thì cú nấp chỉ là một nhịp nhấp nháy. Hai luật đi kèm, thiếu vế nào cũng lộ: **cú dịch ngang chỉ được diễn trong lúc Nooka đang chìm** (màn hình hoãn đúng một nhịp `dip`, và `DUCK_DWELL.min` dài hơn `dip + walk` nên nó xong hẳn trước lúc trồi lên) — một nhân vật đang bám mép bằng hai tay mà lướt ngang thì mắt đọc ra ngay là sai; và **rời mép thì phải bò về trên đầu đạo cụ trước**, `ASCENT_MOVE.rimHome` là quãng chờ cho việc đó, cùng dạng với `lead`. Bỏ quãng chờ thì cú nhảy về gánh thêm cả quãng lệch trong đúng `hop` mili giây, và nó đọc thành trượt ngang chứ không phải nhảy. Quãng lệch (`RIM_STEP`) giữ nhỏ chính vì vậy. Chỗ lệch nằm **trong** ngoặc nhân với `perched` ở `app/ask.tsx` nên buông mép là nó tự tan — cộng ra ngoài thì Nooka mang quãng lệch xuống tận mặt đất.
+- **`hide` chỉ đi được khi lịch đi lại còn chạy, và người gọi phải xử lý lúc nó từ chối.** Cú chạm của người dùng đi thẳng vào `useMascotStage`, không qua đồng hồ — nhưng đường **về** thì vẫn phải mượn chính đồng hồ đó: `scheduleNext` thoát ngay khi hết quyền đi lại, còn effect đưa về nhà chỉ chạy lúc quyền *đổi*. Một `hide` chạy lọt trong quãng đã tắt là chuyến **một chiều**, và Nooka nằm lại chỗ trốn cho tới khi quyền bật lại — ô nhập cao thì `ascentPins` giữ nó tắt mãi, nên là vĩnh viễn. Vì vậy điều kiện của `hide` **đúng bằng** tham số `roaming`, không liệt kê lại từng lý do: liệt kê là chép một danh sách đã có ở người gọi, và bản chép thiếu vế nào thì đúng vế đó mở lại chuyến một chiều. `app/ask.tsx` rơi về phản ứng tại chỗ khi bị từ chối: Nooka reo mừng, hết cớ để lên, rồi tụt xuống theo đúng đường đã lên.
+- **Quả bóng chịu mọi phép dịch mà nhân vật chịu**, không phải chỉ phép dịch của màn kịch leo — nó đang nằm trong tay. Kể cả quãng thả lúc trốn ở mép: lên khung bằng bóng thì trốn cũng phải cầm bóng tụt xuống theo. `stageShift` và `PERCH_SINK` ở `app/ask.tsx` là chỗ duy nhất tính hai phép dịch đó, và cả hai lớp đọc từ đấy. Dựng riêng cho mỗi lớp thì sợi dây tuột khỏi tay đúng bằng phần chênh, và cả hai cùng bay lên trong lúc cách nhau một quãng.
+- **Quãng nhô lên khi chưa có đạo cụ bám theo mép thật**, chặn ở `PEEK_REACH` = tầm với kiễng chân. `BEHIND_OFFSET.y` một mình chỉ đúng lúc ô nhập ở `minHeight`; gõ sang dòng thứ hai là tư thế `grip` bám vào khoảng không dưới mép mà chưa tới ngưỡng gọi đạo cụ nên chẳng có gì bù. Chặn trên đặt đúng bằng ngưỡng của `needsAscent` để hai bên nối liền, không có khe.
+- **Quả bóng neo vào bàn tay, không vào tâm nhân vật.** `BALLOON_HAND` / `BALLOON_HAND_GRIP` ở `balloon.ts` là hàng/cột của **đệm bàn tay trong lưới sprite**, đã tính 3 hàng headroom mà `liftFrame` chèn vào — quên phần đó là đáy dây rơi vào bụng, dây chui sau thân và quả bóng trông như bị cắm vào người. Có test khoá đúng ô neo là ô đệm bàn tay, ở cả khung bay lẫn khung bám khung.
+- **Bóng ngả quanh chính bàn tay** (`BALLOON_LEAN`, xoay quanh đáy ảnh). Bàn tay giơ lên nằm lọt trong bóng của cái đầu, nên một sợi dây thẳng đứng sẽ chui sau đầu rồi biến mất. Ngả ra thì cả đoạn dây chạy ngoài thân và mắt đọc ra ngay là nó đang được cầm.
+- **Đạo cụ không có file khung hình sinh sẵn** — khác linh vật. Kích thước chỉ biết lúc chạy, nên `ladderRows`/`balloonRows` dựng lưới đúng cỡ cần và ô pixel luôn vuông. Kéo dãn một khung hình cố định là ô thành hình chữ nhật dẹt và cả món đồ hết là pixel art. Xem bằng mắt: `node scripts/preview-props.ts /tmp/p.json && node scripts/preview-mascot-sprite.js /tmp/p.json /tmp/p.png`.
+- **Ba lưới pixel dùng chung một bảng màu ở công cụ xem**, nên ký tự của chúng không được đụng nhau (trừ `o` viền và `h` đốm sáng, cùng nghĩa ở cả ba). Có test khoá.
+- Ngưỡng lấy từ **chiều cao thật của ô nhập** (`onLayout`), không phải số ký tự — xuống dòng, dán một đoạn dài hay đổi cỡ chữ hệ thống đều làm ô nhập cao lên và chỉ chiều cao mới kể đúng cả ba.
+- `spritePaths` nhận bảng màu qua tham số nên thang và bóng dùng chung thuật toán gộp dải với linh vật. Chép nó sang file thứ hai thì đến lúc sửa cách gộp sẽ có một bản bị bỏ quên.
+
+**Chi thì phải liền thân, và nối bằng `stitch` chứ không bằng cách nới chi ra.** Chi và thân đều bo góc, nên ở mấy hàng bo giữa chúng hở ra đúng một ô trong suốt và cánh tay đọc thành một khối rời lơ lửng. Cách sửa hiển nhiên — nới cánh tay cho cắm vào thân — **làm cánh tay to lên**, vì `blob` bo góc theo bề ngang nên đổi bề ngang là đổi luôn dáng nhìn thấy. Đã thử và bị trả lại. `stitch(g, y0, y1)` lấp đúng ô hở bằng màu viền, dáng không suy suyển một ô. Nó chỉ lấp **một ô** — hở rộng hơn nghĩa là đặt sai chỗ chứ không phải khe bo góc, lấp đi là giấu mất lỗi thật. Có test quét mọi khung nghỉ tìm ô trong suốt kẹp giữa hai mảng đặc; ngoại lệ duy nhất là khe ngăn cổ áo với áo choàng — cố ý, xem ghi chú trong `cape`.
+
+**Khung hình sinh tự động.** `features/nooka/mascot-frames.ts` là file sinh ra, đừng sửa tay — lệch một cột là hỏng cả hình mà nhìn code không thấy. Sửa hình thì sửa `scripts/build-mascot-sprite.js` rồi chạy `node scripts/build-mascot-sprite.js`. Xem lại bằng mắt trước khi commit:
+
+```bash
+node scripts/build-mascot-sprite.js /tmp/f.json && node scripts/preview-mascot-sprite.js /tmp/f.json /tmp/f.png
+```
+
+**Vẽ bằng SVG, không phải View.** Một khung hình có ~150 dải pixel; vẽ bằng `View` là 150 view dựng lại ba lần mỗi giây cho một món trang trí. `spritePaths` gộp theo màu ra ~13 `Path`, cả con linh vật còn một view native. `react-native-svg` 15.12.1 có sẵn trong Expo Go nên không cần development build.
+
+**Reo mừng phải hữu hạn.** `MASCOT_ANIMATION.found` chạy 3 vòng rồi tự chuyển sang `resting`. Một linh vật nhảy không ngừng cạnh ô nhập là thứ người ta tắt app vì nó. Component cũng tôn trọng "giảm chuyển động" của hệ thống — bật lên là đứng khung đầu.
+
+## Hỏi Nooka là một đoạn chat
+
+`app/ask.tsx` giữ một mảng lượt nói, không phải một lần hỏi–đáp. Lý do là **trí nhớ**: tag của lượt trước còn hiệu lực nên hỏi tiếp là thu hẹp thêm, không phải hỏi lại từ đầu.
+
+**Lượt của Nooka chỉ được nói nó vừa làm gì** — đọc bao nhiêu review, hiểu ra tag nào, còn mấy chỗ. Mọi câu mô tả một quán phải nằm trong `ResultRow` hoặc ô trích dẫn, và phải thuộc về một người có tên. Thêm một câu kiểu "chỗ này hợp để làm việc" vào bong bóng là phá đúng thứ §6.2 khoá, dù nghe thân thiện hơn.
 
 ## Light/dark mode
 
@@ -110,7 +213,9 @@ useThemeColor({ light: ..., dark: ... }, 'text')   // hook, khi cần màu lẻ
 <ThemedText> / <ThemedView>                        // component, cho hầu hết trường hợp
 ```
 
-**Không viết màu cứng trong component.** Màu cứng chỉ đúng ở một trong hai chế độ, và không ai phát hiện ra cho tới khi có người mở chế độ còn lại. Luật này được eslint chặn (`no-restricted-syntax` bắt literal dạng `#rrggbb`); `constants/theme.ts` là nơi duy nhất được miễn trừ.
+**Không viết màu cứng trong component.** Màu cứng chỉ đúng ở một trong hai chế độ, và không ai phát hiện ra cho tới khi có người mở chế độ còn lại. Luật này được eslint chặn (`no-restricted-syntax` bắt literal dạng `#rrggbb`); `constants/theme.ts` là nơi duy nhất được miễn trừ. Danh sách miễn trừ cho màn hình demo của template đã được xoá — mọi file đều bị kiểm.
+
+Ba nhóm token cần biết trước khi thêm màu: `inverseSurface`/`onInverse` cho nút chính (light là mực trên kem, dark thì lật lại), `camera*` cho ba màn luôn tối bất kể theme (camera, caption, story), và `photo*` là tint nền giả cho ảnh chưa tải.
 
 **Cái bẫy đã cắn một lần:** React Native flatten mảng `style` từ trái sang phải, style sau đè style trước. Một `color` nằm trong `StyleSheet.create` đặt sau `{ color }` lấy từ theme sẽ nuốt luôn màu theme mà không báo gì. Đây đúng là lỗi từng có ở `components/themed-text.tsx` với `type="link"`. Khi trộn theme color và `StyleSheet`, kiểm thứ tự trong mảng.
 
@@ -125,15 +230,13 @@ Không viết chuỗi hiển thị thẳng vào JSX, kể cả tiếng Anh, kể
 ## Privacy — không được lười ở đây
 
 - **R1: EXIF strip nằm ở server.** Client không được coi là đã sạch. Không viết code giả định ảnh gửi lên đã hết metadata, và không quảng cáo với user rằng đã xoá.
-- **§13: không có real-time location tracking.** Không thêm background location, không gửi toạ độ định kỳ. Vị trí chỉ được đọc khi user chủ động chọn địa điểm.
+- **Location privacy:** Search được phép cập nhật GPS foreground khi màn đang mở. Home và flow Create chỉ được lấy **một snapshot foreground** khi mở phiên/mở composer để chọn nội dung gần hoặc gợi ý Spot; không subscribe liên tục ở hai bề mặt này. Không thêm background location, không gửi tọa độ định kỳ lên backend, không log tọa độ, không lưu lịch sử di chuyển. Khi rời Search, subscription phải được remove.
 - Nội dung `PRIVATE` không vào log, analytics, crash report hay context gửi cho AI.
 - Không log token, không log toạ độ, không log nội dung bài viết.
 
 ## Auth
 
-Firebase Auth phát hành token; gửi kèm request bằng `Authorization: Bearer`. Không tự xây login/password, không thêm màn hình đăng ký bằng mật khẩu.
-
-Không dùng `userId` phía client làm định danh tin cậy — backend map từ token đã verify. Client giữ id chỉ để hiển thị.
+Mobile gọi custom auth API bằng email/password. Access token gửi kèm request bằng Authorization: Bearer; refresh token lưu bằng SecureStore trên native và được rotate qua backend. Email verification OTP, forgot password, password reset và Google/Apple/Facebook OAuth đều đi qua backend. Không tin userId từ client để xác định identity.
 
 ## API
 

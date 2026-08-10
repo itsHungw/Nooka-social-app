@@ -3,14 +3,17 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
+import { NookaDemoProvider } from '@/providers/nooka-demo-provider';
 import { NookaThemeProvider } from '@/providers/nooka-theme-provider';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  initialRouteName: 'welcome',
 };
 
 export default function RootLayout() {
@@ -18,12 +21,18 @@ export default function RootLayout() {
 
   if (!fontsLoaded) return null;
 
+  // `GestureHandlerRootView` phải bọc ngoài cùng — sheet ba điểm dừng ở tab Tìm
+  // dùng pan gesture, và không có root view này thì cử chỉ im lặng không chạy.
   return (
-    <SafeAreaProvider>
-      <NookaThemeProvider>
-        <RootNavigator />
-      </NookaThemeProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <SafeAreaProvider>
+        <NookaThemeProvider>
+          <NookaDemoProvider>
+            <RootNavigator />
+          </NookaDemoProvider>
+        </NookaThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -47,11 +56,36 @@ function RootNavigator() {
     <ThemeProvider value={navigationTheme}>
       <Stack screenOptions={{ contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="welcome" options={{ animation: 'fade', headerShown: false }} />
+        <Stack.Screen name="login" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/email" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/password" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/name" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/username" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/email-login" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/otp" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/forgot-password" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/reset-password" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="auth/reset-success" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="ask" options={{ animation: 'slide_from_bottom', headerShown: false }} />
+        <Stack.Screen name="spot/[id]" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="story/[index]" options={{ animation: 'fade', headerShown: false }} />
         <Stack.Screen name="create" options={{ animation: 'slide_from_bottom', headerShown: false }} />
+        <Stack.Screen name="pin" options={{ animation: 'slide_from_bottom', headerShown: false }} />
+        <Stack.Screen name="caption" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="review" options={{ animation: 'slide_from_bottom', headerShown: false }} />
         <Stack.Screen name="settings" options={{ animation: 'slide_from_right', headerShown: false }} />
-        <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="edit-profile" options={{ animation: 'slide_from_right', headerShown: false }} />
+        <Stack.Screen name="add-friends" options={{ animation: 'slide_from_bottom', headerShown: false }} />
+        <Stack.Screen name="share-map" options={{ animation: 'slide_from_bottom', headerShown: false }} />
+        <Stack.Screen name="chat/[id]" options={{ animation: 'slide_from_right', headerShown: false }} />
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});

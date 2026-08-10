@@ -2,6 +2,16 @@ spring:
   application:
     name: nooka-api
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      username: ${REDIS_USERNAME:}
+      password: ${REDIS_PASSWORD:}
+      repositories:
+        enabled: false
+
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:nooka}
     username: ${DB_USER:nooka}
@@ -9,11 +19,7 @@ spring:
 
   jpa:
     hibernate:
-      # Flyway sở hữu schema. Không bao giờ để Hibernate tự sửa bảng —
-      # `update` sẽ âm thầm làm hỏng dữ liệu khi entity đổi.
       ddl-auto: validate
-    # Tắt Open Session In View: tránh lazy loading xảy ra ở tầng controller,
-    # nơi không kiểm soát được số query.
     open-in-view: false
     properties:
       hibernate:
@@ -22,6 +28,62 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+  modulith:
+    events:
+      completion-mode: delete
+      jdbc:
+        schema-initialization:
+          enabled: false
+
+  mvc:
+    problemdetails:
+      enabled: true
+
+nooka:
+  security:
+    enabled: ${AUTH_ENABLED:true}
+  auth:
+    access-token-ttl: ${AUTH_ACCESS_TOKEN_TTL:PT15M}
+    refresh-token-ttl: ${AUTH_REFRESH_TOKEN_TTL:P30D}
+    verification-code-ttl: ${AUTH_VERIFICATION_CODE_TTL:PT10M}
+    reset-code-ttl: ${AUTH_RESET_CODE_TTL:PT10M}
+    max-code-attempts: ${AUTH_MAX_CODE_ATTEMPTS:5}
+    email:
+      enabled: ${AUTH_EMAIL_ENABLED:false}
+      host: ${AUTH_EMAIL_HOST:}
+      port: ${AUTH_EMAIL_PORT:587}
+      username: ${AUTH_EMAIL_USERNAME:}
+      password: ${AUTH_EMAIL_PASSWORD:}
+      from: ${AUTH_EMAIL_FROM:}
+    oauth:
+      google-client-id: ${OAUTH_GOOGLE_CLIENT_ID:}
+      apple-client-id: ${OAUTH_APPLE_CLIENT_ID:}
+      facebook:
+        app-id: ${OAUTH_FACEBOOK_APP_ID:}
+        app-secret: ${OAUTH_FACEBOOK_APP_SECRET:}
+        graph-base-url: ${OAUTH_FACEBOOK_GRAPH_BASE_URL:https://graph.facebook.com}
+  directions:
+    provider: ${DIRECTIONS_PROVIDER:mapbox}
+    mapbox:
+      access-token: ${MAPBOX_ACCESS_TOKEN:}
+      base-url: ${MAPBOX_DIRECTIONS_BASE_URL:https://api.mapbox.com}
+    cache:
+      enabled: ${DIRECTIONS_CACHE_ENABLED:true}
+      ttl: "${DIRECTIONS_CACHE_TTL:PT15M}"
+      key-prefix: ${DIRECTIONS_CACHE_KEY_PREFIX:nooka:directions:route:v1}
+      origin-grid-decimals: ${DIRECTIONS_CACHE_ORIGIN_GRID_DECIMALS:3}
+      destination-grid-decimals: ${DIRECTIONS_CACHE_DESTINATION_GRID_DECIMALS:5}
+  routes:
+    google:
+      api-key: ${GOOGLE_ROUTES_API_KEY:}
+      base-url: ${GOOGLE_ROUTES_BASE_URL:https://routes.googleapis.com}
+
+springdoc:
+  api-docs:
+    enabled: ${OPENAPI_ENABLED:false}
+  swagger-ui:
+    enabled: ${OPENAPI_ENABLED:false}
 
 management:
   endpoints:

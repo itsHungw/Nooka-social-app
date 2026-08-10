@@ -1,78 +1,85 @@
-import { Image } from 'expo-image';
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { PlaceRow, ScreenShell } from '@/components/nooka/ui';
-import { savedMapImage, savedPlaces } from '@/features/nooka/prototype-data';
+import { Button, ScreenShell, SectionLabel, SpotRow } from '@/components/nooka/ui';
+import { spotDistrict, spotName, tagLabel } from '@/features/nooka/labels';
+import { spotTags } from '@/features/nooka/ranking';
+import { SPOTS, type SpotId } from '@/features/nooka/spots';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
-
-type SavedMode = 'wantToGo' | 'been';
+import { useNookaDemo } from '@/providers/nooka-demo-provider';
 
 export default function SavedScreen() {
+  const router = useRouter();
   const { colors } = useNookaTheme();
-  const [mode, setMode] = useState<SavedMode>('wantToGo');
-  const visiblePlaces = mode === 'wantToGo' ? savedPlaces : savedPlaces.slice(1);
+  const demo = useNookaDemo();
+  const firstVisits = demo.wantToGo.filter((id) => !demo.isBeen(id));
+  const returnVisits = demo.wantToGo.filter((id) => demo.isBeen(id));
+
+  const renderSpot = (id: SpotId, returning: boolean) => (
+    <SpotRow
+      key={id}
+      line={[spotDistrict(id), ...spotTags(id, demo.extraTags).slice(0, 2).map((tag) => tagLabel(tag.id))].join(' · ')}
+      onPress={() => router.push({ pathname: '/spot/[id]', params: { id } })}
+      radius={16}
+      square={56}
+      tint={SPOTS[id].photoTint}
+      title={spotName(id)}
+      trailing={(
+        <View style={[styles.statusBadge, { backgroundColor: returning ? colors.accentSoft : colors.surfaceMuted }]}>
+          <Text style={[styles.statusBadgeText, { color: returning ? colors.accentInk : colors.textMuted }]}>
+            {returning ? t('saved.returnBadge') : t('saved.firstVisitBadge')}
+          </Text>
+        </View>
+      )}
+    />
+  );
 
   return (
     <ScreenShell testID="saved-screen">
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>{t('saved.title')}</Text>
-        <View style={[styles.countPill, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.countLabel, { color: colors.textMuted }]}>{t('saved.locationCount')}</Text>
-        </View>
       </View>
 
-      <View style={styles.segmented}>
-        {(['wantToGo', 'been'] as SavedMode[]).map((item) => {
-          const selected = mode === item;
-          return (
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityState={{ selected }}
-              key={item}
-              onPress={() => setMode(item)}
-              style={[
-                styles.segment,
-                {
-                  backgroundColor: selected ? colors.mint : colors.surface,
-                  borderColor: selected ? colors.mintStrong : colors.border,
-                },
-              ]}>
-              <Text style={[styles.segmentLabel, { color: colors.text }]}>{t(`saved.${item}`)}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <View style={[styles.map, { backgroundColor: colors.mapBackground }]}>
-        <Image accessibilityLabel={t('navigation.map')} contentFit="cover" source={savedMapImage} style={StyleSheet.absoluteFill} transition={180} />
-      </View>
-
-      <View style={styles.list}>
-        {visiblePlaces.map((place) => (
-          <PlaceRow
-            image={place.image}
-            key={place.id}
-            metaKey={place.metaKey}
-            nameKey={place.nameKey}
-            saved
-            socialKey={place.socialKey}
-          />
-        ))}
-      </View>
+      <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        {demo.wantToGo.length === 0 ? (
+          <View style={[styles.emptyCard, { backgroundColor: colors.surfaceMuted }]}>
+            <Text style={[styles.empty, { color: colors.textMuted }]}>{t('saved.empty')}</Text>
+            <Button label={t('saved.explore')} onPress={() => router.push('/(tabs)/search')} style={styles.emptyButton} />
+          </View>
+        ) : (
+          <>
+            {firstVisits.length > 0 ? (
+              <View style={styles.section}>
+                <SectionLabel>{t('saved.firstVisitTitle')}</SectionLabel>
+                <Text style={[styles.sectionBody, { color: colors.textMuted }]}>{t('saved.firstVisitBody')}</Text>
+                <View style={styles.rows}>{firstVisits.map((id) => renderSpot(id, false))}</View>
+              </View>
+            ) : null}
+            {returnVisits.length > 0 ? (
+              <View style={styles.section}>
+                <SectionLabel>{t('saved.returnTitle')}</SectionLabel>
+                <Text style={[styles.sectionBody, { color: colors.textMuted }]}>{t('saved.returnBody')}</Text>
+                <View style={styles.rows}>{returnVisits.map((id) => renderSpot(id, true))}</View>
+              </View>
+            ) : null}
+          </>
+        )}
+      </ScrollView>
     </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { minHeight: 62, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  title: { fontSize: 25, lineHeight: 31, fontWeight: '800' },
-  countPill: { minHeight: 34, borderRadius: 17, borderWidth: 1, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center' },
-  countLabel: { fontSize: 10, lineHeight: 14, fontWeight: '600' },
-  segmented: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  segment: { minHeight: 36, borderRadius: 18, borderWidth: 1, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center' },
-  segmentLabel: { fontSize: 11, lineHeight: 15, fontWeight: '700' },
-  map: { height: 230, marginTop: 8, borderRadius: 18, overflow: 'hidden' },
-  list: { marginTop: 14, gap: 9 },
+  header: { minHeight: 44, paddingHorizontal: 20, justifyContent: 'center' },
+  title: { fontSize: 25, lineHeight: 32, fontWeight: '800', letterSpacing: -0.7 },
+  list: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, gap: 24 },
+  section: { gap: 6 },
+  sectionBody: { fontSize: 13, lineHeight: 19, fontWeight: '500' },
+  rows: { marginTop: 5, gap: 4 },
+  statusBadge: { minHeight: 28, borderRadius: 999, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' },
+  statusBadgeText: { fontSize: 10.5, lineHeight: 14, fontWeight: '700' },
+  emptyCard: { borderRadius: 20, padding: 18 },
+  empty: { fontSize: 14, lineHeight: 22, fontWeight: '500' },
+  emptyButton: { marginTop: 14, alignSelf: 'flex-start' },
 });

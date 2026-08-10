@@ -165,8 +165,9 @@ export const SPOTS: Record<SpotId, Spot> = Object.fromEntries(
 
 export type FriendId = 'linh' | 'nam' | 'trang' | 'huy';
 
-export const POST_VISIBILITIES = ['PUBLIC', 'FOLLOWERS', 'CLOSE_FRIENDS', 'PRIVATE'] as const;
+export const POST_VISIBILITIES = ['PUBLIC', 'FOLLOWERS', 'CLOSE_FRIENDS', 'SELECTED_FRIENDS', 'PRIVATE'] as const;
 export type PostVisibility = (typeof POST_VISIBILITIES)[number];
+export const COMPOSER_VISIBILITIES: PostVisibility[] = ['PUBLIC', 'FOLLOWERS', 'SELECTED_FRIENDS'];
 
 /** Dải check-in trên đầu feed. `live` = còn đang ở đó. */
 export const FRIENDS: { id: FriendId; spot: SpotId; tint: PhotoTint; live: boolean }[] = [
@@ -188,10 +189,12 @@ export type FeedPost = {
   hashtagsKey?: string;
   hashtags?: string[];
   photoTints: PhotoTint[];
+  photoAssets?: import('./draft-photo.ts').DraftPhoto[];
   tags: TagId[];
   reactionCount: number;
   commentCount: number;
   visibility: PostVisibility;
+  audienceFriendIds?: FriendId[];
 };
 
 export const INITIAL_FEED: FeedPost[] = [

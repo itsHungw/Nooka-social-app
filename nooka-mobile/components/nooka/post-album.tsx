@@ -14,13 +14,15 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { CroppedPhoto } from '@/components/nooka/cropped-photo';
 import { Photo } from '@/components/nooka/ui';
+import type { DraftPhoto } from '@/features/nooka/draft-photo';
 import type { PhotoTint } from '@/features/nooka/spots';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { t } from '@/lib/i18n';
 
 type PostAlbumProps = {
-  photos: PhotoTint[];
+  photos: PostPhoto[];
   caption: string;
   onOpenSpot: () => void;
 };
@@ -28,9 +30,11 @@ type PostAlbumProps = {
 type AlbumSurfaceProps = {
   caption: string;
   index: number;
-  photo: PhotoTint;
+  photo: PostPhoto;
   total: number;
 };
+
+type PostPhoto = PhotoTint | DraftPhoto;
 
 const SWIPE_DISTANCE = 78;
 const SWIPE_VELOCITY = 650;
@@ -44,9 +48,8 @@ const RETURN_SPRING = {
 
 function AlbumSurface({ caption, index, photo, total }: AlbumSurfaceProps) {
   const { colors } = useNookaTheme();
-
-  return (
-    <Photo style={styles.photo} tint={photo}>
+  const overlay = (
+    <>
       <View style={[styles.photoBadge, { backgroundColor: colors.background }]}>
         <Text style={[styles.photoBadgeText, { color: colors.textMuted }]}>{t('home.photoBadge')}</Text>
       </View>
@@ -58,8 +61,12 @@ function AlbumSurface({ caption, index, photo, total }: AlbumSurfaceProps) {
       <View style={[styles.captionBand, { backgroundColor: colors.photoScrim }]}>
         <Text numberOfLines={3} style={[styles.captionText, { color: colors.captionText }]}>{caption}</Text>
       </View>
-    </Photo>
+    </>
   );
+
+  return typeof photo === 'string'
+    ? <Photo style={styles.photo} tint={photo}>{overlay}</Photo>
+    : <CroppedPhoto photo={photo} style={styles.photo}>{overlay}</CroppedPhoto>;
 }
 
 /**
@@ -68,7 +75,7 @@ function AlbumSurface({ caption, index, photo, total }: AlbumSurfaceProps) {
  * mới mount ảnh kế tiếp.
  */
 export function PostAlbum({ photos, caption, onOpenSpot }: PostAlbumProps) {
-  const safePhotos: PhotoTint[] = photos.length ? photos : ['photoWarm'];
+  const safePhotos: PostPhoto[] = photos.length ? photos : ['photoWarm'];
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
   const tapPressed = useSharedValue(0);
@@ -186,7 +193,11 @@ export function PostAlbum({ photos, caption, onOpenSpot }: PostAlbumProps) {
 
   return (
     <View style={[styles.shell, isAlbum ? styles.albumShell : null]}>
-      {isAlbum ? <Photo style={[styles.backCard, styles.farBack]} tint={farBack} /> : null}
+      {isAlbum ? (
+        typeof farBack === 'string'
+          ? <Photo style={[styles.backCard, styles.farBack]} tint={farBack} />
+          : <CroppedPhoto photo={farBack} style={[styles.backCard, styles.farBack]} />
+      ) : null}
 
       {next ? (
         <Animated.View pointerEvents="none" style={[styles.backCard, nextStyle]}>
@@ -215,14 +226,16 @@ export function PostAlbum({ photos, caption, onOpenSpot }: PostAlbumProps) {
       </GestureDetector>
 
       <View pointerEvents="none" style={styles.preloadStrip}>
-        {safePhotos.map((photo, index) => <Photo key={`${photo}-${index}`} style={styles.preloadPhoto} tint={photo} />)}
+        {safePhotos.map((photo, index) => typeof photo === 'string'
+          ? <Photo key={`${photo}-${index}`} style={styles.preloadPhoto} tint={photo} />
+          : <CroppedPhoto key={photo.id} photo={photo} style={styles.preloadPhoto} />)}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  shell: { flex: 1, marginHorizontal: 4, marginTop: 6, marginBottom: 2 },
+  shell: { width: '100%', aspectRatio: 4 / 5, alignSelf: 'center', marginHorizontal: 4, marginTop: 6, marginBottom: 2 },
   albumShell: { marginHorizontal: 10, marginTop: 16, marginBottom: 7 },
   backCard: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 22, overflow: 'hidden' },
   farBack: {

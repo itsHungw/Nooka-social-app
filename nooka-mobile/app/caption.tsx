@@ -1,11 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { PhotoCropEditor } from '@/components/nooka/photo-crop-editor';
 import { DarkScreen, Photo } from '@/components/nooka/ui';
+import { audienceCanPost } from '@/features/nooka/checkin-audience';
 import { parseHashtags } from '@/features/nooka/checkin-draft';
-import { spotShortName } from '@/features/nooka/labels';
-import { POST_VISIBILITIES, SPOTS, SPOT_IDS } from '@/features/nooka/spots';
+import { COMPOSER_VISIBILITIES, FRIENDS } from '@/features/nooka/spots';
 import { useNookaTheme } from '@/hooks/use-nooka-theme';
 import { useExitCheckin } from '@/hooks/use-exit-checkin';
 import { t } from '@/lib/i18n';
@@ -17,9 +19,15 @@ export default function CaptionScreen() {
   const { colors } = useNookaTheme();
   const demo = useNookaDemo();
   const exitCheckin = useExitCheckin();
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const activePhoto = demo.draftPhotos[Math.min(activePhotoIndex, Math.max(0, demo.shots - 1))];
 
   const post = () => {
-    demo.post();
+    if (!audienceCanPost(demo.draftVisibility, demo.draftAudienceFriendIds)) {
+      demo.flash(t('toast.chooseAudienceFriend'));
+      return;
+    }
+    if (!demo.post()) return;
     router.dismissAll();
   };
 
@@ -33,7 +41,13 @@ export default function CaptionScreen() {
       </View>
 
       <View style={styles.stage}>
-        <Photo style={styles.preview} tint={demo.draftPhotos[0] ?? demo.draft.photoTint}>
+        <View style={[styles.preview, { backgroundColor: colors.cameraSurface }]}>
+          {activePhoto ? (
+            <PhotoCropEditor
+              onChange={(crop) => demo.updateDraftPhotoCrop(activePhoto.id, crop)}
+              photo={activePhoto}
+            />
+          ) : null}
           <View style={styles.captionAnchor}>
             <TextInput
               accessibilityLabel={t('caption.placeholder')}
@@ -44,13 +58,24 @@ export default function CaptionScreen() {
               value={demo.caption}
             />
           </View>
-        </Photo>
+          <View pointerEvents="none" style={[styles.cropHint, { backgroundColor: colors.cameraOverlay }]}>
+            <Text style={[styles.cropHintText, { color: colors.cameraTextMuted }]}>{t('caption.cropHint')}</Text>
+          </View>
+        </View>
         <View style={styles.dots}>
-          {Array.from({ length: Math.max(demo.shots, 1) }, (_, index) => (
-            <View
-              key={index}
-              style={[styles.dot, { backgroundColor: index === 0 ? colors.cameraText : colors.cameraChip }]}
-            />
+          {demo.draftPhotos.map((photo, index) => (
+            <Pressable
+              accessibilityLabel={t('caption.editPhoto', { count: index + 1 })}
+              accessibilityRole="button"
+              accessibilityState={{ selected: index === activePhotoIndex }}
+              key={photo.id}
+              onPress={() => setActivePhotoIndex(index)}
+              style={[
+                styles.photoThumb,
+                { borderColor: index === activePhotoIndex ? colors.accent : colors.cameraBorder },
+              ]}>
+              <Image source={{ uri: photo.uri }} style={StyleSheet.absoluteFill} />
+            </Pressable>
           ))}
         </View>
       </View>
@@ -109,7 +134,7 @@ export default function CaptionScreen() {
           contentContainerStyle={styles.visibilityOptions}
           horizontal
           showsHorizontalScrollIndicator={false}>
-          {POST_VISIBILITIES.map((visibility) => {
+          {COMPOSER_VISIBILITIES.map((visibility) => {
             const selected = demo.draftVisibility === visibility;
             return (
               <Pressable
@@ -136,49 +161,37 @@ export default function CaptionScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.destinations}
+        contentContainerStyle={styles.audienceFriends}
         horizontal
         showsHorizontalScrollIndicator={false}>
-        {SPOT_IDS.map((id) => {
-          const selected = demo.draftSpot === id;
+        {FRIENDS.map((friend) => {
+          const selected = demo.draftAudienceFriendIds.includes(friend.id);
           return (
             <Pressable
-              accessibilityLabel={spotShortName(id)}
-              accessibilityRole="button"
+              accessibilityLabel={t(`friends.${friend.id}`)}
+              accessibilityRole="checkbox"
               accessibilityState={{ selected }}
-              key={id}
-              onPress={() => demo.setDraftSpot(id)}
-              style={styles.destination}>
+              key={friend.id}
+              onPress={() => demo.toggleDraftAudienceFriend(friend.id)}
+              style={styles.audienceFriend}>
               <Photo
                 style={[
-                  styles.destinationCircle,
+                  styles.audienceAvatar,
                   { borderWidth: 2.5, borderColor: selected ? colors.accent : colors.cameraBorder },
                 ]}
-                tint={SPOTS[id].photoTint}
+                tint={friend.tint}
               />
               <Text
                 numberOfLines={1}
                 style={[
-                  styles.destinationLabel,
+                  styles.audienceName,
                   { color: selected ? colors.accent : colors.cameraTextMuted, fontWeight: selected ? '700' : '600' },
                 ]}>
-                {spotShortName(id)}
+                {t(`friends.${friend.id}`)}
               </Text>
             </Pressable>
           );
         })}
-        <Pressable
-          accessibilityLabel={t('caption.mapDestination')}
-          accessibilityRole="button"
-          onPress={() => router.push('/pin')}
-          style={styles.destination}>
-          <View style={[styles.destinationCircle, styles.destinationMap, { borderColor: colors.cameraBorder }]}>
-            <Ionicons color={colors.cameraTextMuted} name="map-outline" size={20} />
-          </View>
-          <Text numberOfLines={1} style={[styles.destinationLabel, { color: colors.cameraTextMuted }]}>
-            {t('caption.mapDestination')}
-          </Text>
-        </Pressable>
       </ScrollView>
     </DarkScreen>
   );
@@ -188,8 +201,10 @@ const styles = StyleSheet.create({
   header: { minHeight: 40, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontSize: 17, lineHeight: 22, fontWeight: '700' },
   shots: { fontSize: 13, lineHeight: 18, fontWeight: '600' },
-  stage: { flex: 1, minHeight: 0, paddingHorizontal: 20, paddingTop: 18 },
-  preview: { flex: 1, minHeight: 0, borderRadius: 30, overflow: 'hidden' },
+  stage: { flex: 1, minHeight: 230, paddingHorizontal: 20, paddingTop: 18, alignItems: 'center' },
+  preview: { flex: 1, maxWidth: '100%', aspectRatio: 4 / 5, borderRadius: 30, overflow: 'hidden' },
+  cropHint: { position: 'absolute', left: 14, top: 14, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
+  cropHintText: { fontSize: 10.5, lineHeight: 14, fontWeight: '600' },
   captionAnchor: { position: 'absolute', left: 22, right: 22, bottom: 34, alignItems: 'center' },
   captionInput: {
     maxWidth: '100%',
@@ -201,7 +216,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   dots: { paddingTop: 14, flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  dot: { width: 7, height: 7, borderRadius: 4 },
+  photoThumb: { width: 34, height: 34, borderRadius: 9, borderWidth: 2, overflow: 'hidden' },
   controls: { paddingHorizontal: 40, paddingTop: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   roundControl: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   fontToggle: { fontSize: 15, lineHeight: 20, fontWeight: '700' },
@@ -225,9 +240,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   visibilityOptionText: { fontSize: 12.5, lineHeight: 17, fontWeight: '700' },
-  destinations: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 26, gap: 14 },
-  destination: { width: 74, alignItems: 'center', gap: 7 },
-  destinationCircle: { width: 52, height: 52, borderRadius: 26 },
-  destinationMap: { borderWidth: 1.5, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
-  destinationLabel: { maxWidth: 74, fontSize: 11, lineHeight: 15 },
+  audienceFriends: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 26, gap: 14 },
+  audienceFriend: { width: 74, alignItems: 'center', gap: 7 },
+  audienceAvatar: { width: 52, height: 52, borderRadius: 26 },
+  audienceName: { maxWidth: 74, fontSize: 11, lineHeight: 15 },
 });

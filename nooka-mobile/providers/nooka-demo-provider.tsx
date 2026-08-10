@@ -10,13 +10,16 @@ import {
   writeCheckinDraft,
   type CheckinDraft,
 } from '@/features/nooka/checkin-draft';
+import { audienceCanPost, toggleAudienceFriend } from '@/features/nooka/checkin-audience';
+import { deleteDraftPhoto, type DraftPhoto } from '@/features/nooka/draft-photo';
+import type { CropState } from '@/features/nooka/photo-crop';
 import type { ExtraTagCounts } from '@/features/nooka/ranking';
 import {
   INITIAL_FEED,
   SPOTS,
   type FeedPost,
+  type FriendId,
   type IntentId,
-  type PhotoTint,
   type PostVisibility,
   type ReviewQuestionId,
   type SpotId,
@@ -41,10 +44,11 @@ type DemoState = {
   commentsByPostId: Partial<Record<string, string[]>>;
   extraTags: ExtraTagCounts;
   draftSpot: SpotId;
-  draftPhotos: PhotoTint[];
+  draftPhotos: DraftPhoto[];
   caption: string;
   hashtagText: string;
   draftVisibility: PostVisibility;
+  draftAudienceFriendIds: FriendId[];
   lastPostVisibility: PostVisibility;
   savedDraft: CheckinDraft | null;
   /** Bài vừa đăng, đang chờ chọn tag ở bottom sheet. */
@@ -73,6 +77,7 @@ const INITIAL: DemoState = {
   caption: '',
   hashtagText: '',
   draftVisibility: 'FOLLOWERS',
+  draftAudienceFriendIds: [],
   lastPostVisibility: 'FOLLOWERS',
   savedDraft: null,
   sheetPostId: null,
@@ -166,29 +171,38 @@ function useDemoValue() {
         caption: '',
         hashtagText: '',
         draftVisibility: prev.feed.some((post) => post.friend === null) ? prev.lastPostVisibility : 'PUBLIC',
+        draftAudienceFriendIds: [],
         sheetPostId: null,
         visitIntentPromptSpot: null,
       })),
-      shoot: () => setState((prev) => {
-        if (prev.draftPhotos.length >= 5) return prev;
-        const palette: PhotoTint[] = ['photoWarm', 'photoSand', 'photoSage', 'photoClay'];
-        return { ...prev, draftPhotos: [...prev.draftPhotos, palette[prev.draftPhotos.length % palette.length]] };
-      }),
-      addFromLibrary: () => setState((prev) => {
-        if (prev.draftPhotos.length >= 5) return prev;
-        const palette: PhotoTint[] = ['photoSage', 'photoClay', 'photoWarm', 'photoSand'];
-        return { ...prev, draftPhotos: [...prev.draftPhotos, palette[prev.draftPhotos.length % palette.length]] };
-      }),
-      removeDraftPhoto: (index: number) => setState((prev) => ({
+      addDraftPhotos: (photos: DraftPhoto[]) => setState((prev) => ({
         ...prev,
-        draftPhotos: prev.draftPhotos.filter((_, photoIndex) => photoIndex !== index),
+        draftPhotos: [...prev.draftPhotos, ...photos].slice(0, 5),
       })),
+      updateDraftPhotoCrop: (id: string, crop: CropState) => setState((prev) => ({
+        ...prev,
+        draftPhotos: prev.draftPhotos.map((photo) => photo.id === id ? { ...photo, crop } : photo),
+      })),
+      removeDraftPhoto: (index: number) => setState((prev) => {
+        const removed = prev.draftPhotos[index];
+        if (removed) deleteDraftPhoto(removed);
+        return { ...prev, draftPhotos: prev.draftPhotos.filter((_, photoIndex) => photoIndex !== index) };
+      }),
       setDraftSpot: (draftSpot: SpotId) => setState((prev) => ({ ...prev, draftSpot })),
       setCaption: (caption: string) => setState((prev) => ({ ...prev, caption })),
       setHashtagText: (hashtagText: string) =>
         setState((prev) => ({ ...prev, hashtagText: limitHashtagText(hashtagText) })),
       setDraftVisibility: (draftVisibility: PostVisibility) =>
-        setState((prev) => ({ ...prev, draftVisibility })),
+        setState((prev) => ({
+          ...prev,
+          draftVisibility,
+          draftAudienceFriendIds: draftVisibility === 'SELECTED_FRIENDS' ? prev.draftAudienceFriendIds : [],
+        })),
+      toggleDraftAudienceFriend: (friend: FriendId) => setState((prev) => ({
+        ...prev,
+        draftVisibility: 'SELECTED_FRIENDS',
+        draftAudienceFriendIds: toggleAudienceFriend(prev.draftAudienceFriendIds, friend),
+      })),
 
       async saveDraft() {
         const current = stateRef.current;
@@ -198,6 +212,7 @@ function useDemoValue() {
           caption: current.caption,
           hashtagText: current.hashtagText,
           visibility: current.draftVisibility,
+          audienceFriendIds: current.draftAudienceFriendIds,
           updatedAt: Date.now(),
         };
         await writeCheckinDraft(savedDraft);
@@ -212,10 +227,12 @@ function useDemoValue() {
           caption: prev.savedDraft.caption,
           hashtagText: prev.savedDraft.hashtagText,
           draftVisibility: prev.savedDraft.visibility,
+          draftAudienceFriendIds: prev.savedDraft.audienceFriendIds,
         }) : prev);
       },
 
       discardDraft() {
+        for (const photo of stateRef.current.draftPhotos) deleteDraftPhoto(photo);
         void removeCheckinDraft();
         setState((prev) => ({
           ...prev,
@@ -223,10 +240,16 @@ function useDemoValue() {
           caption: '',
           hashtagText: '',
           savedDraft: null,
+          draftAudienceFriendIds: [],
         }));
       },
 
       post() {
+        const current = stateRef.current;
+        if (!audienceCanPost(current.draftVisibility, current.draftAudienceFriendIds)) {
+          flash(t('toast.chooseAudienceFriend'));
+          return false;
+        }
         const id = `mine-${Date.now()}`;
         setState((prev) => ({
           ...prev,
@@ -238,11 +261,13 @@ function useDemoValue() {
               timeKey: 'time.justNow',
               caption: prev.caption.trim() || t('feed.myCaption', { spot: spotName(prev.draftSpot) }),
               hashtags: parseHashtags(prev.hashtagText),
-              photoTints: prev.draftPhotos.length ? prev.draftPhotos : [SPOTS[prev.draftSpot].photoTint],
+              photoTints: prev.draftPhotos.length ? [] : [SPOTS[prev.draftSpot].photoTint],
+              photoAssets: prev.draftPhotos,
               tags: [],
               reactionCount: 0,
               commentCount: 0,
               visibility: prev.draftVisibility,
+              audienceFriendIds: prev.draftAudienceFriendIds,
             },
             ...prev.feed,
           ],
@@ -251,6 +276,7 @@ function useDemoValue() {
           draftPhotos: [],
           caption: '',
           hashtagText: '',
+          draftAudienceFriendIds: [],
           lastPostVisibility: prev.draftVisibility,
           draftVisibility: prev.draftVisibility,
           savedDraft: null,
@@ -259,6 +285,7 @@ function useDemoValue() {
           visitIntentPromptSpot: prev.wantToGo.includes(prev.draftSpot) ? prev.draftSpot : null,
         }));
         void removeCheckinDraft();
+        return true;
       },
 
       keepWantToGoForRevisit() {

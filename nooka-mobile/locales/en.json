@@ -136,6 +136,9 @@
     "tagsAdded": "Your answers now contribute to the spot summary",
     "reviewSent": "Review sent · it feeds the spot page",
     "needPhoto": "Take a photo first",
+    "cameraFailed": "Couldn't take the photo. Try again.",
+    "libraryFailed": "Couldn't open your photo library. Try again.",
+    "chooseAudienceFriend": "Choose at least one friend who can see the post",
     "noLocation": "No location — pick the spot on the map",
     "fontChanged": "Caption font changed"
   },
@@ -433,7 +436,9 @@
     "library": "Library",
     "shootFirst": "Take a photo to continue",
     "shutter": "Take photo",
-    "removePhoto": "Remove photo {{count}}"
+    "removePhoto": "Remove photo {{count}}",
+    "permissionTitle": "Allow Nooka to use your camera",
+    "permissionBody": "Camera access is required to take a check-in photo."
   },
   "pin": {
     "hint": "Drag the map to the right spot",
@@ -460,9 +465,12 @@
         "PUBLIC": "Public",
         "FOLLOWERS": "Followers",
         "CLOSE_FRIENDS": "Close friends",
+        "SELECTED_FRIENDS": "Selected friends",
         "PRIVATE": "Only me"
       }
     },
+    "cropHint": "Drag to frame · pinch to zoom",
+    "editPhoto": "Frame photo {{count}}",
     "mapDestination": "Map",
     "toggleFont": "Change caption font",
     "fontLabel": "Aa",

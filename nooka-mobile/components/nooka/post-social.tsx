@@ -103,6 +103,7 @@ export function PostVisibilityBadge({ visibility }: { visibility: PostVisibility
     PUBLIC: 'earth-outline',
     FOLLOWERS: 'people-outline',
     CLOSE_FRIENDS: 'star-outline',
+    SELECTED_FRIENDS: 'person-add-outline',
     PRIVATE: 'lock-closed-outline',
   };
 

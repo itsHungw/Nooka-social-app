@@ -201,7 +201,11 @@ function FeedCard({ post, height, onComment }: { post: FeedPost; height: number;
       </View>
 
       <View style={styles.cardPhotoPress}>
-        <PostAlbum photos={post.photoTints} caption={caption} onOpenSpot={openSpot} />
+        <PostAlbum
+          photos={post.photoAssets?.length ? post.photoAssets : post.photoTints}
+          caption={caption}
+          onOpenSpot={openSpot}
+        />
       </View>
 
       {post.hashtagsKey || post.hashtags?.length ? (

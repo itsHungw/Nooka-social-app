@@ -136,6 +136,9 @@
     "tagsAdded": "Xác nhận của bạn đã góp vào tổng hợp địa điểm",
     "reviewSent": "Đã gửi review · dữ liệu vào trang địa điểm",
     "needPhoto": "Chụp một ảnh trước",
+    "cameraFailed": "Chưa chụp được ảnh. Thử lại nhé.",
+    "libraryFailed": "Chưa mở được thư viện ảnh. Thử lại nhé.",
+    "chooseAudienceFriend": "Chọn ít nhất một người bạn có thể xem bài",
     "noLocation": "Không có vị trí — chọn chỗ bằng bản đồ",
     "fontChanged": "Đổi kiểu chữ của caption"
   },
@@ -433,7 +436,9 @@
     "library": "Thư viện",
     "shootFirst": "Chụp một ảnh để tiếp tục",
     "shutter": "Chụp ảnh",
-    "removePhoto": "Xóa ảnh {{count}}"
+    "removePhoto": "Xóa ảnh {{count}}",
+    "permissionTitle": "Cho phép Nooka dùng camera",
+    "permissionBody": "Bạn cần cấp quyền camera để chụp ảnh check-in."
   },
   "pin": {
     "hint": "Kéo bản đồ để đặt đúng chỗ",
@@ -460,9 +465,12 @@
         "PUBLIC": "Công khai",
         "FOLLOWERS": "Người theo dõi",
         "CLOSE_FRIENDS": "Bạn thân",
+        "SELECTED_FRIENDS": "Bạn bè đã chọn",
         "PRIVATE": "Chỉ mình tôi"
       }
     },
+    "cropHint": "Kéo để căn · chụm để thu phóng",
+    "editPhoto": "Căn ảnh {{count}}",
     "mapDestination": "Bản đồ",
     "toggleFont": "Đổi kiểu chữ",
     "fontLabel": "Aa",

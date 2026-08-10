@@ -39,6 +39,14 @@ module.exports = ({ config }) => {
         'Allow $(PRODUCT_NAME) to use your location while you explore nearby places.',
     },
   ]);
+  plugins.push([
+    'expo-camera',
+    { cameraPermission: 'Allow $(PRODUCT_NAME) to take check-in photos.' },
+  ]);
+  plugins.push([
+    'expo-image-picker',
+    { photosPermission: 'Allow $(PRODUCT_NAME) to choose check-in photos.' },
+  ]);
 
   const extra = {
     ...(config.extra ?? {}),

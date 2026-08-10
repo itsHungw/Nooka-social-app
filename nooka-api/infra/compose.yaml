@@ -71,6 +71,13 @@ services:
       MAPBOX_DIRECTIONS_BASE_URL: "${MAPBOX_DIRECTIONS_BASE_URL:-https://api.mapbox.com}"
       GOOGLE_ROUTES_API_KEY: "${GOOGLE_ROUTES_API_KEY:-}"
       GOOGLE_ROUTES_BASE_URL: "${GOOGLE_ROUTES_BASE_URL:-https://routes.googleapis.com}"
+      MEDIA_PROVIDER: "${NOOKA_MEDIA_PROVIDER:-local}"
+      MEDIA_LOCAL_ROOT: "${NOOKA_MEDIA_LOCAL_ROOT:-/tmp/nooka-media}"
+      R2_ENDPOINT: "${NOOKA_R2_ENDPOINT:-}"
+      R2_REGION: "${NOOKA_R2_REGION:-auto}"
+      R2_BUCKET: "${NOOKA_R2_BUCKET:-}"
+      R2_ACCESS_KEY: "${NOOKA_R2_ACCESS_KEY:-}"
+      R2_SECRET_KEY: "${NOOKA_R2_SECRET_KEY:-}"
     ports:
       - "${NOOKA_API_PORT:-8080}:8080"
     depends_on:

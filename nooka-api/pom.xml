@@ -21,6 +21,7 @@
         <spring-modulith.version>2.1.0</spring-modulith.version>
         <archunit.version>1.4.2</archunit.version>
         <springdoc.version>3.0.3</springdoc.version>
+        <aws.sdk.version>2.49.6</aws.sdk.version>
     </properties>
 
     <dependencyManagement>
@@ -95,6 +96,16 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>${aws.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>url-connection-client</artifactId>
+            <version>${aws.sdk.version}</version>
         </dependency>
 
         <dependency>

@@ -14,6 +14,8 @@ Từ migration `V3_1`, schema cần hai extension `postgis` và `pg_trgm`. Chún
 
 Image `postgres:17-alpine` **không** có PostGIS, nên cả `infra/compose.yaml` lẫn Testcontainers đều dùng `postgis/postgis:17-3.5-alpine`.
 
+Image PostGIS chính chủ này hiện chỉ phát hành cho `linux/amd64`. Compose và Testcontainers đã ghim platform đó; Docker Desktop trên Mac Apple Silicon sẽ chạy database qua emulation, còn API và Redis vẫn chạy native. Lần pull/khởi động đầu tiên có thể chậm hơn máy Intel.
+
 Nếu bạn chạy một PostgreSQL cài sẵn ngoài Docker, cài PostGIS 3.5 trước khi chạy migration — không có nó thì `V3_1` thất bại ngay dòng đầu.
 
 ## Cấu hình local

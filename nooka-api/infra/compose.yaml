@@ -1,6 +1,10 @@
 services:
   postgres:
     image: postgis/postgis:17-3.5-alpine
+    # Upstream postgis/postgis currently publishes this tag for amd64 only.
+    # Docker Desktop emulates it on Apple Silicon; keep the official image so
+    # local Compose and Testcontainers use the same PostgreSQL/PostGIS build.
+    platform: linux/amd64
     environment:
       POSTGRES_DB: "${NOOKA_DB_NAME:-nooka}"
       POSTGRES_USER: "${NOOKA_DB_USER:-nooka}"

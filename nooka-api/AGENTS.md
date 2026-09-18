@@ -45,7 +45,7 @@ Nếu tài liệu mâu thuẫn với migration hoặc code đã được test, k
 
 - Java 21.
 - Spring Boot 4.1.0, Spring Web MVC, Spring Data JPA, Bean Validation và Actuator.
-- PostgreSQL 17 **có PostGIS** cho local và integration test. Image là `postgis/postgis:17-3.5-alpine`, không phải `postgres:17-alpine` — schema cần extension `postgis` và `pg_trgm` từ `V3_1`.
+- PostgreSQL 17 **có PostGIS** cho local và integration test. Image là `postgis/postgis:17-3.5-alpine`, không phải `postgres:17-alpine` — schema cần extension `postgis` và `pg_trgm` từ `V3_1`. Upstream chỉ publish tag này cho `linux/amd64`, nên Compose và Testcontainers phải giữ platform đó để chạy qua Docker Desktop emulation trên Apple Silicon.
 - Flyway sở hữu schema.
 - Maven Wrapper là cách chạy Maven chuẩn.
 - Testcontainers 1.21.3 + JUnit Jupiter cho test cần database.

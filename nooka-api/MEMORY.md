@@ -93,7 +93,7 @@ Chưa sửa; đây là lỗi cấu hình/hạ tầng nằm ngoài phạm vi thi�
 
 ### Quyết định bền vững của giai đoạn 1
 
-- PostgreSQL phải có PostGIS. Image `postgis/postgis:17-3.5-alpine` ở cả `infra/compose.yaml` lẫn `TestcontainersConfiguration`; extension `postgis` và `pg_trgm` bật ở `V3_1`.
+- PostgreSQL phải có PostGIS. Image `postgis/postgis:17-3.5-alpine` ở cả `infra/compose.yaml` lẫn `TestcontainersConfiguration`; extension `postgis` và `pg_trgm` bật ở `V3_1`. Image upstream chỉ có `linux/amd64`, nên cả Compose và Testcontainers ép platform này để Mac Apple Silicon chạy qua Docker Desktop emulation.
 - `BaseEntity` sinh UUID v7 qua `@UuidGenerator(style = VERSION_7)`. `Style.TIME` là UUID v1 và nhúng địa chỉ IP/MAC — không được dùng.
 - `posts.public_id` là định danh công khai riêng, vì v7 kể ra thời điểm tạo còn `hide_time` tồn tại để giấu nó.
 - **R9**: bài của tài khoản có `users.deleted_at` biến mất với mọi người; ép trong `PostVisibilityRules` ở cả hai nhánh, đi qua `RelationshipCriteria.deletedAuthorExists`.

@@ -29,6 +29,9 @@ public class TestcontainersConfiguration {
         // chối khởi động dù image hoàn toàn tương thích.
         return new PostgreSQLContainer<>(
                 DockerImageName.parse("postgis/postgis:17-3.5-alpine")
-                        .asCompatibleSubstituteFor("postgres"));
+                        .asCompatibleSubstituteFor("postgres"))
+                // Upstream chỉ publish tag này cho amd64. Ép cùng platform với
+                // local Compose để test chạy qua Docker Desktop trên Apple Silicon.
+                .withCreateContainerCmdModifier(cmd -> cmd.withPlatform("linux/amd64"));
     }
 }

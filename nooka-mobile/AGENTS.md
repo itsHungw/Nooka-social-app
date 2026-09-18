@@ -9,11 +9,11 @@ Quy tắc cho mọi agent và mọi người làm việc trong `nooka-mobile`.
 - Không tạo commit, branch hay worktree nếu chưa được yêu cầu.
 - Ưu tiên thay đổi nhỏ, sửa nguyên nhân gốc, giữ nguyên quy ước hiện có.
 
-## Luật số một: không nâng Expo SDK
+## Luật số một: giữ đồng bộ Expo SDK
 
-Project ghim **SDK 54**. Đây không phải "phiên bản cũ cần cập nhật" — đây là ràng buộc.
+Project ghim **SDK 57** để khớp Expo Go hiện hành trên thiết bị test. Không tự nâng sang SDK kế tiếp chỉ vì package mới đã phát hành.
 
-Expo Go trên App Store và Play Store chỉ chạy **đúng một SDK tại một thời điểm**, và hiện tại là 54 trong khi SDK mới nhất đã là 57. Nâng SDK nghĩa là app không mở được trên điện thoại của cả team cho tới khi ai đó dựng development build.
+Expo Go trên App Store và Play Store chỉ chạy **đúng một SDK tại một thời điểm**. Project và `Supported SDK` trong Expo Go phải trùng nhau; nếu lệch thì thống nhất cả team trước khi đổi project hoặc chuyển sang development build.
 
 Nguồn sự thật, kiểm trước khi động vào bất kỳ version nào:
 
@@ -28,7 +28,7 @@ Trường `expoGoSdkVersion` là con số duy nhất quyết định. Tài liệ
 - `npx expo install --fix` chạy mù khi chưa biết mình đang sửa gì.
 - `npm update`, `npm install <pkg>@latest` cho package thuộc hệ Expo/React Native.
 - Sửa tay số version trong `package.json`.
-- **`npm audit fix --force`.** `npm audit` hiện báo 13 moderate + 1 high (`postcss`, `@expo/prebuild-config` qua `expo-splash-screen`). Tất cả là công cụ build, không nằm trong bundle gửi lên điện thoại, và `--force` sẽ nâng version vượt SDK 54 — phá đúng luật này. Con số đó là đã biết và chấp nhận; đọc lại khi nâng SDK.
+- **`npm audit fix --force`.** Lệnh này có thể nâng package vượt ma trận tương thích của Expo. Đọc từng finding và xử lý có chủ đích; không đổi SDK để dọn audit tiện tay.
 
 **Nâng SDK là quyết định của cả team**, không phải việc dọn dẹp tiện tay. Khi làm: đọc release notes, `npx expo install --fix`, `npx expo-doctor`, và chạy thử trên máy thật trước khi merge.
 
@@ -39,9 +39,9 @@ npx expo install <package>     # đúng
 npm install <package>          # sai, với mọi package thuộc hệ Expo/RN
 ```
 
-`expo install` chọn version khớp SDK 54. `npm install` lấy `latest` và làm vỡ build theo kiểu chỉ lộ ra lúc chạy trên máy thật.
+`expo install` chọn version khớp SDK 57. `npm install` lấy `latest` và có thể làm vỡ build theo kiểu chỉ lộ ra lúc chạy trên máy thật.
 
-`newArchEnabled: true` đang bật. Thư viện native chưa hỗ trợ New Architecture sẽ **vỡ lúc chạy, không phải lúc cài** — kiểm compat trước khi thêm.
+SDK 57 chỉ dùng New Architecture; không còn cờ `newArchEnabled` để tắt. Thư viện native chưa hỗ trợ New Architecture sẽ **vỡ lúc chạy, không phải lúc cài** — kiểm compat trước khi thêm.
 
 Không thêm dependency nếu Expo SDK hoặc React Native đã có sẵn giải pháp đủ dùng.
 
@@ -50,7 +50,7 @@ Không thêm dependency nếu Expo SDK hoặc React Native đã có sẵn giải
 Khi làm việc với framework, thư viện, SDK hay API, đọc tài liệu hiện hành bằng Context7 **trước** khi viết code.
 
 1. `resolve-library-id` với tên chính thức và toàn bộ câu hỏi kỹ thuật.
-2. Ưu tiên tài liệu đúng phiên bản. Với Expo: `/expo/expo` có branch `sdk-54`; `/websites/expo_dev` là tài liệu chung.
+2. Ưu tiên tài liệu đúng phiên bản. Với Expo SDK 57, dùng `/websites/expo_dev` và release notes SDK 57; dùng branch `/expo/expo` đúng SDK khi Context7 cung cấp.
 3. `query-docs` với câu hỏi cụ thể, không truy vấn một từ chung chung.
 4. Đối chiếu tài liệu với `package.json` và source hiện tại trước khi sửa.
 5. Không nâng version chỉ vì tài liệu có bản mới hơn.
@@ -68,7 +68,7 @@ Tài liệu mâu thuẫn với code đang chạy thì nêu rõ mâu thuẫn, đ�
 
 ## Nền tảng
 
-Expo SDK 54, React Native, React, expo-router, TypeScript `strict`. **Version cụ thể đọc từ `package.json`** — không chép số vào file này, chép là để nó mục.
+Expo SDK 57, React Native, React, expo-router, TypeScript `strict`. **Version cụ thể đọc từ `package.json`** — không chép thêm số package vào file này, chép là để nó mục.
 
 - `npm` là package manager (có `package-lock.json`). Không trộn yarn/pnpm/bun.
 - Alias `@/*` trỏ về gốc project.
@@ -121,12 +121,12 @@ Code trong scaffold (`hello-wave`, `parallax-scroll-view`...) là **demo của t
 
 ## Bản đồ
 
-`react-native-maps` 1.20.1 — bản khớp SDK 54, có New Architecture, và **chạy được trong Expo Go** nên không ai phải dựng development build. Đừng đổi sang `expo-maps`: nó còn alpha và **không** chạy trong Expo Go, tức là đổi xong cả team mất khả năng mở app — đúng cái luật số một ở trên chặn.
+`react-native-maps` dùng đúng version do `expo install` chọn cho SDK 57 và **chạy được trong Expo Go**. Đừng đổi sang `expo-maps` khi chưa xác minh nó có trong Expo Go và chưa có quyết định kiến trúc của team.
 
 - `components/nooka/nooka-map.tsx` là chỗ duy nhất chạm `MapView`. Màn khác cần bản đồ thì dùng component này.
 - `components/nooka/fake-map.tsx` vẫn còn, nhưng **chỉ** cho màn đặt pin lúc check-in. Đó là bản đồ trang trí, không phải bản đồ thật.
 - Style bản đồ dựng từ token theme ở `features/nooka/map-style.ts`. Không có hex nào trong đó — bản đồ đổi theo light/dark như mọi bề mặt khác. `customMapStyle` chỉ ăn với `PROVIDER_GOOGLE`.
-- **Không dùng `<Marker>` có view con.** Trên Android + New Architecture, nội dung ghim bị xén theo một khổ cố định: mất nửa phải của tên và mất luôn mép bo. Đây là lỗi thư viện — [issue #5877](https://github.com/react-native-maps/react-native-maps/issues/5877), đúng tổ hợp Expo SDK 54 / RN 0.81 / Fabric, đã bị đóng "not planned". Cách duy nhất issue đó nêu là tắt New Architecture, mà Expo Go bản SDK 54 chỉ chạy New Architecture. Đã thử và **không** ăn thua: giữ `tracksViewChanges={true}` mãi, và đóng cứng width/height đo được — cả hai đều vẫn bị xén, vì đây là lỗi đo chứ không phải lỗi thời điểm chụp. iOS không dính nên đừng tin vào việc "máy mình nhìn ổn".
+- **Không dùng `<Marker>` có view con** nếu chưa kiểm lại trên Android thật. Cách này từng làm nội dung ghim bị xén với Fabric — [issue #5877](https://github.com/react-native-maps/react-native-maps/issues/5877) — nên app đang dùng lớp phủ riêng. Việc nâng SDK/library không đủ để kết luận lỗi đã hết; muốn bỏ workaround phải có test Android chứng minh.
 - Nên ghim là **view thường trong lớp phủ trên bản đồ**, chiếu toạ độ sang pixel theo `region`. Đánh đổi: ghim bám `onRegionChange` nên vuốt rất nhanh có thể trễ một nhịp. Vài ghim thì không thấy; hàng trăm ghim thì phải làm lại chỗ này.
 - **Prop chỉ đọc lúc mount không đáng tin.** `initialRegion` bị bỏ qua khi `MapView` remount (đổi theme làm remount vì Android không áp lại `customMapStyle`), do Fabric tái dùng view trong pool — bản đồ hiện ra ở camera thừa kế của view cũ. Khôi phục bằng `onMapReady`, đừng tin `initialRegion`.
 - Vùng khởi tạo là bán kính quanh người dùng, **không** phải `regionFor` ôm hết địa điểm: màn hình cao và hẹp nên Google nới bề dọc cho vừa bề ngang rồi làm tròn lên mức zoom kế tiếp, kết quả là lùi ra tận Long An và ghim dồn thành một cục.

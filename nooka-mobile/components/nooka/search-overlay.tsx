@@ -243,7 +243,7 @@ function CompactRow({
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject },
+  overlay: { ...StyleSheet.absoluteFill },
   headRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   field: {
     flex: 1,

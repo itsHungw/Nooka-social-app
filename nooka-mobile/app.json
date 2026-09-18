@@ -7,10 +7,10 @@
     "icon": "./assets/images/icon.png",
     "scheme": "nooka",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "bundleIdentifier": "com.anonymous.nooka"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +19,6 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -41,7 +40,12 @@
         }
       ],
       "expo-localization",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-font",
+      "expo-image",
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

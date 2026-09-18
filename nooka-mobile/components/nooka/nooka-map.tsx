@@ -418,6 +418,6 @@ const styles = StyleSheet.create({
   headSelected: { width: 15, height: 15, borderWidth: 3 },
   // Halo là anh em với chấm, không phải cha — opacity của cha sẽ nhân xuống con.
   userWrap: { position: 'absolute', width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  halo: { ...StyleSheet.absoluteFillObject, borderRadius: 22, opacity: 0.22 },
+  halo: { ...StyleSheet.absoluteFill, borderRadius: 22, opacity: 0.22 },
   userDot: { width: 16, height: 16, borderRadius: 8, borderWidth: 3 },
 });

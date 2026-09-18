@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   },
   visibilityText: { fontSize: 10.5, lineHeight: 14, fontWeight: '700' },
   modalRoot: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFillObject },
+  backdrop: { ...StyleSheet.absoluteFill },
   sheetAnchor: { justifyContent: 'flex-end' },
   commentSheet: { maxHeight: '82%', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 10 },
   sheetGrip: { width: 42, height: 4, borderRadius: 2, alignSelf: 'center' },

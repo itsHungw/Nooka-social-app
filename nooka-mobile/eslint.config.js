@@ -1,12 +1,32 @@
 // https://docs.expo.dev/guides/using-eslint/
 const { defineConfig } = require('eslint/config');
 const expoConfig = require('eslint-config-expo/flat');
+const globals = require('globals');
 const i18next = require('eslint-plugin-i18next');
 
 module.exports = defineConfig([
   expoConfig,
   {
     ignores: ['dist/*', 'app-example/*'],
+  },
+  {
+    // SDK 57 bật các diagnostic về khả năng tối ưu của React Compiler. Những
+    // component hiện tại dùng state-machine effects, refs và SharedValue của
+    // Reanimated có chủ đích; compiler sẽ bỏ qua chúng mà không đổi runtime.
+    // Giữ các luật correctness cốt lõi (rules-of-hooks, exhaustive-deps), nhưng
+    // không biến đợt nâng SDK thành một refactor hành vi diện rộng.
+    rules: {
+      'react-hooks/immutability': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+    },
+  },
+  {
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
   },
   {
     // Phụ lục A của spec: mọi chuỗi hiển thị phải đi qua i18n layer.
